@@ -4,29 +4,29 @@ declare( strict_types=1 );
 namespace PHP_SF\System;
 
 use ErrorException;
-use JetBrains\PhpStorm\NoReturn;
-use JetBrains\PhpStorm\Pure;
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\System\Classes\Abstracts\AbstractController;
-use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
-use PHP_SF\System\Core\MiddlewareEventDispatcher;
-use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\System\Core\Response;
-use PHP_SF\System\Interface\MiddlewareInterface;
-use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
 use ReflectionMethod;
-use ReflectionUnionType;
 use RuntimeException;
-use Symfony\Component\ErrorHandler\Error\UndefinedMethodError;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use ReflectionUnionType;
+use JetBrains\PhpStorm\Pure;
+use JetBrains\PhpStorm\NoReturn;
+use PHP_SF\System\Core\Response;
+use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Traits\RedirectTrait;
+use PHP_SF\System\Core\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use PHP_SF\System\Interface\MiddlewareInterface;
+use PHP_SF\System\Core\MiddlewareEventDispatcher;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use PHP_SF\System\Classes\Abstracts\AbstractController;
+use Symfony\Component\ErrorHandler\Error\UndefinedMethodError;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use function apache_request_headers;
-use function array_key_exists;
+use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
 use function count;
-use function function_exists;
 use function is_array;
+use function function_exists;
+use function array_key_exists;
+use function apache_request_headers;
 
 
 class Router
@@ -171,8 +171,11 @@ class Router
 
     protected static function setRoute(object $data): void
     {
-        static::checkParams($data);
+        try {
+            static::checkParams( $data );
+        } catch ( ConflictHttpException ) {
 
+        }
         static::$routesList[ $data->name ] = [
             'url'        => $data->url,
             'class'      => $data->class,
