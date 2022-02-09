@@ -1,0 +1,34 @@
+{
+  "authors": [
+    {
+      "name": "Dmytro Dyvulskyi",
+      "role": "CEO & Founder and Lead Developer of Nations Original",
+      "email": "eklerk397@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "PHP_SF\\System\\": "src/",
+      "PHP_SF\\Framework\\": "app/",
+      "PHP_SF\\Templates\\": "templates/",
+      "ApiPlatform\\Core\\": "CustomRepositories/CustomApiPlatformCore/",
+      "Symfony\\Bundle\\MakerBundle\\": "CustomRepositories/CustomMakerBundle/",
+      "Doctrine\\Bundle\\": "CustomRepositories/CustomDoctrineBundle/",
+      "Symfony\\Component\\": "CustomRepositories/CustomSymfonyComponent/"
+    }
+  },
+  "license": "ISC",
+  "minimum-stability": "stable",
+  "name": "nations-original/php-simple-framework-template",
+  "prefer-stable": true,
+  "require": {
+    "php": "8.1.*",
+    "ext-intl": "*",
+    "ext-json": "*",
+    "ext-curl": "*"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  },
+  "version": "v1.0.1-dev"
+}
