@@ -1,19 +1,9 @@
-<?php declare( strict_types=1 );
-
-/*
- * This file is part of the Symfony MakerBundle package.
- *
- * (c) Fabien Potencier <fabien@symfony.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+<?php
 
 namespace Symfony\Bundle\MakerBundle\Doctrine;
 
 use Symfony\Bundle\MakerBundle\Str;
 use Symfony\Bundle\MakerBundle\Generator;
-use Doctrine\Common\Persistence\ManagerRegistry;
 use Symfony\Bundle\MakerBundle\Util\ClassNameDetails;
 
 
