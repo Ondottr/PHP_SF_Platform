@@ -39,7 +39,6 @@ use const PHP_VERSION;
 use const E_USER_DEPRECATED;
 use const DIRECTORY_SEPARATOR;
 
-
 final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
 {
     private $fileManager;
@@ -58,7 +57,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
         $this->doctrineHelper = $doctrineHelper;
         // $projectDirectory is unused, argument kept for BC
 
-        if ( null === $generator ) {
+        if ( $generator === null ) {
             @trigger_error(
                 sprintf( 'Passing a "%s" instance as 4th argument is mandatory since version 1.5.', Generator::class ),
                 E_USER_DEPRECATED
@@ -69,7 +68,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             $this->generator = $generator;
         }
 
-        if ( null === $entityClassGenerator ) {
+        if ( $entityClassGenerator === null ) {
             @trigger_error(
                 sprintf(
                     'Passing a "%s" instance as 5th argument is mandatory since version 1.15.1',
@@ -125,7 +124,9 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             )
             ->addOption( 'overwrite', null, InputOption::VALUE_NONE, 'Overwrite any existing getter/setter methods' )
             ->setHelp(
-                file_get_contents( __DIR__ . '/../../../vendor/symfony/maker-bundle/src/Resources/help/MakeEntity.txt' )
+                file_get_contents(
+                    __DIR__ . '/../../../../vendor/symfony/maker-bundle/src/Resources/help/MakeEntity.txt'
+                )
             );
 
         $inputConf->setArgumentAsNonInteractive( 'name' );
@@ -294,7 +295,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             );
             $isFirstField = false;
 
-            if ( null === $newField ) {
+            if ( $newField === null ) {
                 break;
             }
 
@@ -526,22 +527,22 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
         // convert to snake case for simplicity
         $snakeCasedField = Str::asSnakeCase( $fieldName );
 
-        if ( '_at' === $suffix = substr( $snakeCasedField, -3 ) ) {
+        if ( $suffix = substr( $snakeCasedField, -3 ) === '_at' ) {
             $defaultType = 'datetime_immutable';
         }
-        elseif ( '_id' === $suffix ) {
+        elseif ( $suffix === '_id' ) {
             $defaultType = 'integer';
         }
-        elseif ( 0 === strpos( $snakeCasedField, 'is_' ) ) {
+        elseif ( strpos( $snakeCasedField, 'is_' ) === 0 ) {
             $defaultType = 'boolean';
         }
-        elseif ( 0 === strpos( $snakeCasedField, 'has_' ) ) {
+        elseif ( strpos( $snakeCasedField, 'has_' ) === 0 ) {
             $defaultType = 'boolean';
         }
-        elseif ( 'uuid' === $snakeCasedField ) {
+        elseif ( $snakeCasedField === 'uuid' ) {
             $defaultType = 'uuid';
         }
-        elseif ( 'guid' === $snakeCasedField ) {
+        elseif ( $snakeCasedField === 'guid' ) {
             $defaultType = 'guid';
         }
 
@@ -553,12 +554,12 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             EntityRelation::getValidRelationTypes(),
             [ 'relation' ]
         );
-        while ( null === $type ) {
+        while ( $type === null ) {
             $question = new Question( 'Field type (enter <comment>?</comment> to see all types)', $defaultType );
             $question->setAutocompleterValues( $allValidTypes );
             $type = $io->askQuestion( $question );
 
-            if ( '?' === $type ) {
+            if ( $type === '?' ) {
                 $this->printAvailableTypes( $io );
                 $io->writeln( '' );
 
@@ -573,21 +574,21 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             }
         }
 
-        if ( 'relation' === $type || in_array( $type, EntityRelation::getValidRelationTypes() ) ) {
+        if ( $type === 'relation' || in_array( $type, EntityRelation::getValidRelationTypes() ) ) {
             return $this->askRelationDetails( $io, $entityClass, $type, $fieldName );
         }
 
         // this is a normal field
         $data = [ 'fieldName' => $fieldName, 'type' => $type ];
-        if ( 'string' === $type ) {
+        if ( $type === 'string' ) {
             // default to 255, avoid the question
-            $data['length'] = $io->ask( 'Field length', 255, [ Validator::class, 'validateLength' ] );
+            $data['length'] = $io->ask( 'Field length', '255', [ Validator::class, 'validateLength' ] );
         }
-        elseif ( 'decimal' === $type ) {
+        elseif ( $type === 'decimal' ) {
             // 10 is the default value given in \Doctrine\DBAL\Schema\Column::$_precision
             $data['precision'] = $io->ask(
                 'Precision (total number of digits stored: 100.00 would be 5)',
-                10,
+                '10',
                 [ Validator::class, 'validatePrecision' ]
             );
 
@@ -622,7 +623,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
     {
         $allTypes = $this->getTypesMap();
 
-        if ( 'Hyper' === getenv( 'TERM_PROGRAM' ) ) {
+        if ( getenv( 'TERM_PROGRAM' ) === 'Hyper' ) {
             $wizard = 'wizard 🧙';
         }
         else {
@@ -718,7 +719,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
     ) {
         // ask the targetEntity
         $targetEntityClass = null;
-        while ( null === $targetEntityClass ) {
+        while ( $targetEntityClass === null ) {
             $question = $this->createEntityClassQuestion( 'What class should this entity be related to?' );
 
             $answeredEntityClass = $io->askQuestion( $question );
@@ -740,7 +741,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
         }
 
         // help the user select the type
-        if ( 'relation' === $type ) {
+        if ( $type === 'relation' ) {
             $type = $this->askRelationType( $io, $generatedEntityClass, $targetEntityClass );
         }
 
@@ -1072,14 +1073,14 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
 
     public function configureDependencies( DependencyBuilder $dependencies, InputInterface $input = null )
     {
-        if ( null !== $input && $input->getOption( 'api-resource' ) ) {
+        if ( $input !== null && $input->getOption( 'api-resource' ) ) {
             $dependencies->addClassDependency(
                 ApiResource::class,
                 'api'
             );
         }
 
-        if ( null !== $input && $input->getOption( 'broadcast' ) ) {
+        if ( $input !== null && $input->getOption( 'broadcast' ) ) {
             $dependencies->addClassDependency(
                 Broadcast::class,
                 'ux-turbo-mercure'
