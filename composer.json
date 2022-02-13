@@ -10,11 +10,7 @@
     "psr-4": {
       "PHP_SF\\System\\": "src/",
       "PHP_SF\\Framework\\": "app/",
-      "PHP_SF\\Templates\\": "templates/",
-      "ApiPlatform\\Core\\": "CustomRepositories/CustomApiPlatformCore/",
-      "Symfony\\Bundle\\MakerBundle\\": "CustomRepositories/CustomMakerBundle/",
-      "Doctrine\\Bundle\\": "CustomRepositories/CustomDoctrineBundle/",
-      "Symfony\\Component\\": "CustomRepositories/CustomSymfonyComponent/"
+      "PHP_SF\\Templates\\": "templates/"
     }
   },
   "license": "ISC",
