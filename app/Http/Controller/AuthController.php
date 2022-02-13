@@ -44,14 +44,24 @@ class AuthController extends AbstractController
 
 
     #[Route( url: 'auth/login', httpMethod: 'GET' )]
-    public function login_page(): Response
+    public function login_page(): Response|RedirectResponse
     {
+        if ( auth::isAuthenticated() )
+            return $this->redirectTo(
+                routeLink( 'home_page' )
+            );
+
         return $this->render( login_page::class );
     }
 
     #[Route( url: 'auth/login', httpMethod: 'POST' )]
     public function login_handler(): RedirectResponse
     {
+        if ( auth::isAuthenticated() )
+            return $this->redirectTo(
+                routeLink( 'home_page' )
+            );
+
         $email    = trim( htmlspecialchars( $this->request->request->get( 'email' ) ) );
         $password = trim( htmlspecialchars( $this->request->request->get( 'password' ) ) );
 
@@ -80,14 +90,24 @@ class AuthController extends AbstractController
 
 
     #[Route( url: 'auth/register', httpMethod: 'GET' )]
-    public function register_page(): Response
+    public function register_page(): Response|RedirectResponse
     {
+        if ( auth::isAuthenticated() )
+            return $this->redirectTo(
+                routeLink( 'home_page' )
+            );
+
         return $this->render( register_page::class );
     }
 
     #[Route( url: 'auth/register', httpMethod: 'POST' )]
     public function register_handler(): RedirectResponse
     {
+        if ( auth::isAuthenticated() )
+            return $this->redirectTo(
+                routeLink( 'home_page' )
+            );
+
         $login    = trim( htmlspecialchars( $this->request->request->get( 'login' ) ) );
         $password = trim( htmlspecialchars( $this->request->request->get( 'password' ) ) );
         $email    = trim( htmlspecialchars( $this->request->request->get( 'email' ) ) );
