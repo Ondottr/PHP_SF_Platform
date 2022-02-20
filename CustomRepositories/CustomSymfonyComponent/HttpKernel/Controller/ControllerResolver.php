@@ -8,7 +8,7 @@ use ReflectionMethod;
 use ReflectionException;
 use Psr\Log\LoggerInterface;
 use InvalidArgumentException;
-use App\Http\Middleware\example_middleware;
+use PHP_SF\Framework\Http\Middleware\api;
 use Symfony\Component\HttpFoundation\Request;
 use function count;
 use function strlen;
@@ -31,11 +31,11 @@ class ControllerResolver implements ControllerResolverInterface
     /**
      * {@inheritdoc}
      */
-    public function getController( Request $request )
+    public function getController( Request $request ): callable|false
     {
         $uri = $request->getRequestUri();
         if ( $uri !== '/api' && $uri !== '/api/' && str_starts_with( $uri, '/api' ) )
-            new example_middleware( $request );
+            new api( $request );
 
         if ( !$controller = $request->attributes->get( '_controller' ) ) {
             $this->logger?->warning( 'Unable to look for the controller as the "_controller" parameter is missing.' );
@@ -55,7 +55,7 @@ class ControllerResolver implements ControllerResolverInterface
                         if ( ( new ReflectionMethod( $controller[0], $controller[1] ) )->isStatic() ) {
                             return $controller;
                         }
-                    } catch ( ReflectionException $reflectionException ) {
+                    } catch ( ReflectionException ) {
                         throw $e;
                     }
 
