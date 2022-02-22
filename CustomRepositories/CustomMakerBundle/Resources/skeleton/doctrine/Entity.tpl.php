@@ -18,21 +18,22 @@ use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 
 <?php if ( !$use_attributes || !$doctrine_use_attributes ): ?>
-  /**
+    /**
     <?php if ( $api_resource && !$use_attributes ): ?> * @ApiResource()
     <?php endif ?>
-  * @ORM\Entity(repositoryClass=<?= $repository_class_name ?>::class)
-    <?php if ($should_escape_table_name): ?> * @ORM\Table(name="`<?= $table_name ?>`")
+    * @ORM\HasLifecycleCallbacks
+    * @ORM\Entity(repositoryClass=<?= $repository_class_name ?>::class)
+    <?php if ( $should_escape_table_name ): ?> * @ORM\Table(name="`<?= $table_name ?>`")
     <?php endif ?>
-  */
+    */
 <?php endif ?>
-<?php if ($doctrine_use_attributes): ?>
-  #[ORM\Entity(repositoryClass: <?= $repository_class_name ?>::class)]
-    <?php if ($should_escape_table_name): ?>#[ORM\Table(name: '`<?= $table_name ?>`')]
+<?php if ( $doctrine_use_attributes ): ?>
+    #[ORM\Entity(repositoryClass: <?= $repository_class_name ?>::class)]
+    <?php if ( $should_escape_table_name ): ?>#[ORM\Table(name: '`<?= $table_name ?>`')]
     <?php endif ?>
 <?php endif ?>
-<?php if ($api_resource && $use_attributes): ?>
-  #[ApiResource]
+<?php if ( $api_resource && $use_attributes ): ?>
+    #[ApiResource]
 <?php endif ?>
 class <?= $class_name ?> extends AbstractEntity
 {

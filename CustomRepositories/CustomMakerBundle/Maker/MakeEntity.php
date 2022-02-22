@@ -10,7 +10,6 @@ use InvalidArgumentException;
 use Symfony\Bundle\MakerBundle\Str;
 use Symfony\Bundle\MakerBundle\Generator;
 use Symfony\Bundle\MakerBundle\Validator;
-use Symfony\UX\Turbo\Attribute\Broadcast;
 use Symfony\Bundle\MakerBundle\FileManager;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Bundle\MakerBundle\ConsoleStyle;
@@ -134,15 +133,19 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
 
     public function interact( InputInterface $input, ConsoleStyle $io, Command $command )
     {
-        if ( $input->getArgument( 'name' ) ) {
+        if ( $input->getArgument( 'name' ) )
             return;
-        }
+
 
         if ( $input->getOption( 'regenerate' ) ) {
-            $io->block( [
-                            'This command will generate any missing methods (e.g. getters & setters) for a class or all classes in a namespace.',
-                            'To overwrite any existing methods, re-run this command with the --overwrite flag',
-                        ], null, 'fg=yellow' );
+            $io->block(
+                [
+                    'This command will generate any missing methods (e.g. getters & setters) for a class or all classes in a namespace.',
+                    'To overwrite any existing methods, re-run this command with the --overwrite flag',
+                ],
+                null,
+                'fg=yellow'
+            );
             $classOrNamespace = $io->ask(
                 'Enter a class or namespace to regenerate',
                 $this->getEntityNamespace(),
@@ -161,8 +164,8 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
         $input->setArgument( 'name', $entityClassName );
 
         if (
-            !$input->getOption( 'api-resource' ) &&
             class_exists( ApiResource::class ) &&
+            !$input->getOption( 'api-resource' ) &&
             !class_exists( $this->generator->createClassNameDetails( $entityClassName, 'Entity\\' )->getFullName() )
         ) {
             $description   = $command->getDefinition()->getOption( 'api-resource' )->getDescription();
@@ -265,16 +268,18 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
 
         if ( $classExists ) {
             $entityPath = $this->getPathOfClass( $entityClassDetails->getFullName() );
-            $io->text( [
-                           'Your entity already exists! So let\'s add some new fields!',
-                       ] );
+            $io->text(
+                [
+                    'Your entity already exists! So let\'s add some new fields!',
+                ] );
         }
         else {
-            $io->text( [
-                           '',
-                           'Entity generated! Now let\'s add some fields!',
-                           'You can always add more fields later manually or by re-running this command.',
-                       ] );
+            $io->text(
+                [
+                    '',
+                    'Entity generated! Now let\'s add some fields!',
+                    'You can always add more fields later manually or by re-running this command.',
+                ] );
         }
 
         $currentFields = $this->getPropertyNames( $entityClassDetails->getFullName() );
@@ -295,9 +300,8 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             );
             $isFirstField = false;
 
-            if ( $newField === null ) {
+            if ( $newField === null )
                 break;
-            }
 
             $fileManagerOperations                = [];
             $fileManagerOperations[ $entityPath ] = $manipulator;
@@ -397,10 +401,11 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
         }
 
         $this->writeSuccessMessage( $io );
-        $io->text( [
-                       'Next: When you\'re ready, create a migration with <info>php bin/console make:migration</info>',
-                       '',
-                   ] );
+        $io->text(
+            [
+                'Next: When you\'re ready, create a migration with <info>php bin/console make:migration</info>',
+                '',
+            ] );
     }
 
     private function regenerateEntities( string $classOrNamespace, bool $overwrite, Generator $generator )
@@ -527,7 +532,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
         // convert to snake case for simplicity
         $snakeCasedField = Str::asSnakeCase( $fieldName );
 
-        if ( $suffix = substr( $snakeCasedField, -3 ) === '_at' ) {
+        if ( $suffix = ( str_ends_with( $snakeCasedField, '_at' ) ) ) {
             $defaultType = 'datetime_immutable';
         }
         elseif ( $suffix === '_id' ) {
@@ -595,7 +600,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             // 0 is the default value given in \Doctrine\DBAL\Schema\Column::$_scale
             $data['scale'] = $io->ask(
                 'Scale (number of decimals to store: 100.00 would be 2)',
-                0,
+                '0',
                 [ Validator::class, 'validateScale' ]
             );
         }
