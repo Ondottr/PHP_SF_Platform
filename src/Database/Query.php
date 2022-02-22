@@ -296,11 +296,10 @@ final class Query extends AbstractQuery
             if ( ( $cachedResult = rc()->get( $queryRedisKey ) ) !== null ) {
                 $cachedResult = json_decode( $cachedResult, false, 512, JSON_THROW_ON_ERROR );
 
-                foreach ( AbstractEntity::getEntitiesList() as $entityName ) {
-                    if ( str_contains( $this->getDQL(), $entityName ) ) {
+                foreach ( AbstractEntity::getEntitiesList() as $entityName )
+                    if ( str_contains( $this->getDQL(), "$entityName " ) )
                         break;
-                    }
-                }
+
 
                 if ( isset( $entityName ) ) {
                     /** @noinspection PhpStatementHasEmptyBodyInspection */
