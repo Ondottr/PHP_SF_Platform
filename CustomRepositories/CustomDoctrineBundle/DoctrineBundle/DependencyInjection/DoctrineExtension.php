@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php
 
 namespace Doctrine\Bundle\DoctrineBundle\DependencyInjection;
 
@@ -14,6 +14,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Doctrine\DBAL\Tools\Console\ConnectionProvider;
+use Doctrine\ORM\Tools\Export\ClassMetadataExporter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -26,6 +27,7 @@ use Symfony\Component\DependencyInjection\ChildDefinition;
 use Doctrine\DBAL\Connections\PrimaryReadReplicaConnection;
 use Symfony\Bridge\Doctrine\PropertyInfo\DoctrineExtractor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Doctrine\ORM\Tools\Console\Command\ConvertMappingCommand;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\Bundle\DoctrineBundle\Dbal\RegexSchemaAssetFilter;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
@@ -33,6 +35,7 @@ use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface;
 use Symfony\Bridge\Doctrine\Messenger\DoctrineTransactionMiddleware;
 use Doctrine\Bundle\DoctrineBundle\Command\Proxy\ImportDoctrineCommand;
+use Doctrine\ORM\Tools\Console\Command\EnsureProductionSettingsCommand;
 use Symfony\Bridge\Doctrine\DependencyInjection\AbstractDoctrineExtension;
 use Doctrine\Bundle\DoctrineBundle\CacheWarmer\DoctrineMetadataCacheWarmer;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
@@ -56,7 +59,6 @@ use function class_exists;
 use function method_exists;
 use function interface_exists;
 use function array_intersect_key;
-
 
 /**
  * DoctrineExtension is an extension for the Doctrine DBAL and ORM library.
@@ -111,12 +113,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
      */
     protected function dbalLoad( array $config, ContainerBuilder $container )
     {
-        $loader = new XmlFileLoader(
-            $container,
-            new FileLocator(
-                __DIR__ . '/../../../vendor/doctrine/doctrine-bundle/Resources/config'
-            )
-        );
+        $loader = new XmlFileLoader( $container, new FileLocator( __DIR__ . '/../Resources/config' ) );
         $loader->load( 'dbal.xml' );
         $chainLogger = $container->getDefinition( 'doctrine.dbal.logger.chain' );
         $logger      = new Reference( 'doctrine.dbal.logger' );
@@ -460,12 +457,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
             return;
         }
 
-        $loader = new XmlFileLoader(
-            $container,
-            new FileLocator(
-                __DIR__ . '/../../../vendor/doctrine/doctrine-bundle/Resources/config'
-            )
-        );
+        $loader = new XmlFileLoader( $container, new FileLocator( __DIR__ . '/../Resources/config' ) );
         $loader->load( 'messenger.xml' );
 
         if ( !class_exists( DoctrineClearEntityManagerWorkerSubscriber::class ) ) {
@@ -509,7 +501,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
             throw new LogicException( 'To configure the ORM layer, you must first install the doctrine/orm package.' );
         }
 
-        $loader = new XmlFileLoader( $container, new FileLocator( __DIR__ . '/../../../../config' ) );
+        $loader = new XmlFileLoader( $container, new FileLocator( __DIR__ . '/../Resources/config' ) );
         $loader->load( 'orm.xml' );
 
         if ( class_exists( AbstractType::class ) ) {
@@ -537,6 +529,19 @@ class DoctrineExtension extends AbstractDoctrineExtension
 
         if ( !class_exists( UuidGenerator::class ) ) {
             $container->removeDefinition( 'doctrine.uuid_generator' );
+        }
+
+        // not available in Doctrine ORM 3.0 and higher
+        if ( !class_exists( ConvertMappingCommand::class ) ) {
+            $container->removeDefinition( 'doctrine.mapping_convert_command' );
+        }
+
+        if ( !class_exists( EnsureProductionSettingsCommand::class ) ) {
+            $container->removeDefinition( 'doctrine.ensure_production_settings_command' );
+        }
+
+        if ( !class_exists( ClassMetadataExporter::class ) ) {
+            $container->removeDefinition( 'doctrine.mapping_import_command' );
         }
 
         $entityManagers = [];
@@ -1236,5 +1241,4 @@ class DoctrineExtension extends AbstractDoctrineExtension
     {
         return '%' . $this->getObjectManagerElementName( 'metadata.' . $driverType . '.class' ) . '%';
     }
-
 }
