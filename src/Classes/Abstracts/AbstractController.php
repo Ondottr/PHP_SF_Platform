@@ -17,6 +17,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use App\Kernel;
 use PHP_SF\System\Core\Response;
+use Symfony\Component\Form\FormFactory;
 use PHP_SF\System\Traits\ControllerTrait;
 use Symfony\Component\Form\FormInterface;
 use function assert;
@@ -62,8 +63,8 @@ abstract class AbstractController
     /**
      * Creates and returns a Form instance from the type of the form.
      */
-    final protected function createForm( string $type, $data = null, array $options = [] ): FormInterface
+    final protected function createForm( string $type, mixed $data = null, array $options = [] ): FormInterface
     {
-        return Kernel::getInstance()->getContainer()->get( 'form.factory' )?->create( $type, $data, $options );
+        return Kernel::getInstance()->getContainer()->get( FormFactory::class )?->create( $type, $data, $options );
     }
 }
