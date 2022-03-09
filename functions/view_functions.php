@@ -1,4 +1,4 @@
-<?php /** @noinspection GlobalVariableUsageInspection */
+<?php
 declare( strict_types=1 );
 
 function asset(string $path): string
@@ -107,7 +107,7 @@ function formInput(
     array      $classes = [],
     array      $styles = [],
     string|int $id = ''
-) {
+): void {
     $inputStr = '<input ';
     $inputStr .= sprintf(' id="%s" ', ( !empty($id) ? $id : $name ));
     $inputStr .= sprintf(' type="%s" ', $type);
@@ -142,7 +142,7 @@ function formCheckbox(
     array      $classes = [],
     array      $styles = [],
     string|int $id = ''
-) {
+): void {
     $inputStr = '<input type="checkbox" ';
     $inputStr .= sprintf(' id="%s" ', ( !empty($id) ? $id : $name ));
     $inputStr .= sprintf(' name="%s" ', $name);
@@ -177,7 +177,7 @@ function formTextarea(
     array      $classes = [],
     array      $styles = [],
     string|int $id = ''
-) {
+): void {
     $inputStr = '<textarea ';
     $inputStr .= $isRequired ? ' required ' : '';
     $inputStr .= sprintf(' id="%s" ', ( !empty($id) ? $id : $name ));
