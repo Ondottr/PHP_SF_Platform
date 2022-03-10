@@ -50,6 +50,7 @@ return [
     //
     'range_validation_error' => 'Field `%s` should be between `%s` and `%s`.',
     'register' => 'Register',
+    'route_parameters_expected' => 'Route parameter `%s` expected for the "%s" route',
     //
     //
     'sec' => 'sec (not_translated)',
