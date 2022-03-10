@@ -1,4 +1,17 @@
-<?php
+<?php declare( strict_types=1 );
+
+/*
+ * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
+ * granted, provided that the above copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE
+ * LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+ * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 namespace Symfony\Bundle\MakerBundle;
 
@@ -7,27 +20,144 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bundle\MakerBundle\Exception\RuntimeCommandException;
 use Doctrine\Common\Persistence\ManagerRegistry as LegacyManagerRegistry;
-use function gettype;
 use function in_array;
-use function get_class;
-use function is_object;
 use const FILTER_VALIDATE_INT;
 use const FILTER_VALIDATE_EMAIL;
 use const FILTER_NULL_ON_FAILURE;
 use const FILTER_VALIDATE_BOOLEAN;
 
-/**
- * @author Javier Eguiluz <javier.eguiluz@gmail.com>
- * @author Ryan Weaver <weaverryan@gmail.com>
- *
- * @internal
- */
 final class Validator
 {
+    public static function validateLength( $length )
+    {
+        if ( !$length )
+            return $length;
+
+
+        $result = filter_var( $length, FILTER_VALIDATE_INT, [
+            'options' => [ 'min_range' => 1 ],
+        ] );
+
+        if ( $result === false )
+            throw new RuntimeCommandException( sprintf( 'Invalid length "%s".', $length ) );
+
+
+        return $result;
+    }
+
+    public static function validatePrecision( $precision )
+    {
+        if ( !$precision )
+            return $precision;
+
+
+        $result = filter_var( $precision, FILTER_VALIDATE_INT, [
+            'options' => [ 'min_range' => 1, 'max_range' => 65 ],
+        ] );
+
+        if ( $result === false )
+            throw new RuntimeCommandException( sprintf( 'Invalid precision "%s".', $precision ) );
+
+
+        return $result;
+    }
+
+    public static function validateScale( $scale )
+    {
+        if ( !$scale )
+            return $scale;
+
+
+        $result = filter_var( $scale, FILTER_VALIDATE_INT, [
+            'options' => [ 'min_range' => 0, 'max_range' => 30 ],
+        ] );
+
+        if ( $result === false )
+            throw new RuntimeCommandException( sprintf( 'Invalid scale "%s".', $scale ) );
+
+
+        return $result;
+    }
+
+    public static function validateBoolean( $value )
+    {
+        if ( $value === 'yes' )
+            return true;
+
+
+        if ( $value === 'no' )
+            return false;
+
+
+        if ( ( $valueAsBool = filter_var( $value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE ) ) === null )
+            throw new RuntimeCommandException( sprintf( 'Invalid bool value "%s".', $value ) );
+
+
+        return $valueAsBool;
+    }
+
+    public static function validateDoctrineFieldName( string $name, $registry ): string
+    {
+        if ( !$registry instanceof ManagerRegistry && !$registry instanceof LegacyManagerRegistry ) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Argument 2 to %s::validateDoctrineFieldName must be an instance of %s, %s passed.',
+                    __CLASS__,
+                    ManagerRegistry::class,
+                    get_debug_type( $registry )
+                )
+            );
+        }
+
+        // check reserved words
+        if ( $registry->getConnection()->getDatabasePlatform()->getReservedKeywordsList()->isKeyword( $name ) )
+            throw new InvalidArgumentException( sprintf( 'Name "%s" is a reserved word.', $name ) );
+
+
+        self::validatePropertyName( $name );
+
+        return $name;
+    }
+
+    public static function validatePropertyName( string $name )
+    {
+        // check for valid PHP variable name
+        if ( !Str::isValidPhpVariableName( $name ) )
+            throw new InvalidArgumentException( sprintf( '"%s" is not a valid PHP property name.', $name ) );
+
+
+        return $name;
+    }
+
+    public static function validateEmailAddress( ?string $email ): string
+    {
+        if ( !filter_var( $email, FILTER_VALIDATE_EMAIL ) )
+            throw new RuntimeCommandException( sprintf( '"%s" is not a valid email address.', $email ) );
+
+
+        return $email;
+    }
+
+    public static function existsOrNull( string $className = null, array $entities = [] ): ?string
+    {
+        if ( $className !== null ) {
+            self::validateClassName( $className );
+
+            if ( str_starts_with( $className, '\\' ) )
+                self::classExists( $className );
+
+            else
+                self::entityExists( $className, $entities );
+
+        }
+
+        return $className;
+    }
+
     public static function validateClassName( string $className, string $errorMessage = '' ): string
     {
         // remove potential opening slash so we don't match on it
-        $pieces = explode( '\\', ltrim( $className, '\\' ) );
+        $pieces         = explode( '\\', ltrim( $className, '\\' ) );
         $shortClassName = Str::getShortClassName( $className );
 
         $reservedKeywords = [
@@ -65,155 +195,17 @@ final class Validator
                 throw new RuntimeCommandException( $errorMessage );
             }
 
-            if ( in_array( strtolower( $shortClassName ), $reservedKeywords, true ) ) {
+            if ( in_array( strtolower( $shortClassName ), $reservedKeywords, true ) )
                 throw new RuntimeCommandException(
                     sprintf(
                         '"%s" is a reserved keyword and thus cannot be used as class name in PHP.',
                         $shortClassName
                     )
                 );
-            }
+
         }
 
         // return original class name
-        return $className;
-    }
-
-    public static function notBlank( string $value = null ): string
-    {
-        if ( null === $value || '' === $value ) {
-            throw new RuntimeCommandException( 'This value cannot be blank.' );
-        }
-
-        return $value;
-    }
-
-    public static function validateLength( $length )
-    {
-        if ( !$length ) {
-            return $length;
-        }
-
-        $result = filter_var( $length, FILTER_VALIDATE_INT, [
-            'options' => [ 'min_range' => 1 ],
-        ] );
-
-        if ( false === $result ) {
-            throw new RuntimeCommandException( sprintf( 'Invalid length "%s".', $length ) );
-        }
-
-        return $result;
-    }
-
-    public static function validatePrecision( $precision )
-    {
-        if ( !$precision ) {
-            return $precision;
-        }
-
-        $result = filter_var( $precision, FILTER_VALIDATE_INT, [
-            'options' => [ 'min_range' => 1, 'max_range' => 65 ],
-        ] );
-
-        if ( false === $result ) {
-            throw new RuntimeCommandException( sprintf( 'Invalid precision "%s".', $precision ) );
-        }
-
-        return $result;
-    }
-
-    public static function validateScale( $scale )
-    {
-        if ( !$scale ) {
-            return $scale;
-        }
-
-        $result = filter_var( $scale, FILTER_VALIDATE_INT, [
-            'options' => [ 'min_range' => 0, 'max_range' => 30 ],
-        ] );
-
-        if ( false === $result ) {
-            throw new RuntimeCommandException( sprintf( 'Invalid scale "%s".', $scale ) );
-        }
-
-        return $result;
-    }
-
-    public static function validateBoolean( $value )
-    {
-        if ( 'yes' == $value ) {
-            return true;
-        }
-
-        if ( 'no' == $value ) {
-            return false;
-        }
-
-        if ( null === $valueAsBool = filter_var( $value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE ) ) {
-            throw new RuntimeCommandException( sprintf( 'Invalid bool value "%s".', $value ) );
-        }
-
-        return $valueAsBool;
-    }
-
-    public static function validatePropertyName( string $name )
-    {
-        // check for valid PHP variable name
-        if ( null !== $name && !Str::isValidPhpVariableName( $name ) ) {
-            throw new InvalidArgumentException( sprintf( '"%s" is not a valid PHP property name.', $name ) );
-        }
-
-        return $name;
-    }
-
-    /**
-     * @param ManagerRegistry|LegacyManagerRegistry $registry
-     */
-    public static function validateDoctrineFieldName( string $name, $registry )
-    {
-        if ( !$registry instanceof ManagerRegistry && !$registry instanceof LegacyManagerRegistry ) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Argument 2 to %s::validateDoctrineFieldName must be an instance of %s, %s passed.',
-                    __CLASS__,
-                    ManagerRegistry::class,
-                    is_object( $registry ) ? get_class( $registry ) : gettype( $registry )
-                )
-            );
-        }
-
-        // check reserved words
-        if ( $registry->getConnection()->getDatabasePlatform()->getReservedKeywordsList()->isKeyword( $name ) ) {
-            throw new InvalidArgumentException( sprintf( 'Name "%s" is a reserved word.', $name ) );
-        }
-
-        self::validatePropertyName( $name );
-
-        return $name;
-    }
-
-    public static function validateEmailAddress( ?string $email ): string
-    {
-        if ( !filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
-            throw new RuntimeCommandException( sprintf( '"%s" is not a valid email address.', $email ) );
-        }
-
-        return $email;
-    }
-
-    public static function existsOrNull( string $className = null, array $entities = [] )
-    {
-        if ( null !== $className ) {
-            self::validateClassName( $className );
-
-            if ( 0 === strpos( $className, '\\' ) ) {
-                self::classExists( $className );
-            }
-            else {
-                self::entityExists( $className, $entities );
-            }
-        }
-
         return $className;
     }
 
@@ -234,17 +226,26 @@ final class Validator
         return $className;
     }
 
+    public static function notBlank( string $value = null ): string
+    {
+        if ( $value === null || $value === '' )
+            throw new RuntimeCommandException( 'This value cannot be blank.' );
+
+
+        return $value;
+    }
+
     public static function entityExists( string $className = null, array $entities = [] ): string
     {
         self::notBlank( $className );
 
-        if ( empty( $entities ) ) {
+        if ( empty( $entities ) )
             throw new RuntimeCommandException(
                 'There are no registered entities; please create an entity before using this command.'
             );
-        }
 
-        if ( 0 === strpos( $className, '\\' ) ) {
+
+        if ( str_starts_with( $className, '\\' ) )
             self::classExists(
                 $className,
                 sprintf(
@@ -252,13 +253,13 @@ final class Validator
                     $className
                 )
             );
-        }
 
-        if ( !in_array( $className, $entities ) ) {
+
+        if ( !in_array( $className, $entities ) )
             throw new RuntimeCommandException(
                 sprintf( 'Entity "%s" doesn\'t exist; please enter an existing one or create a new one.', $className )
             );
-        }
+
 
         return $className;
     }
@@ -267,9 +268,9 @@ final class Validator
     {
         self::notBlank( $className );
 
-        if ( class_exists( $className ) ) {
+        if ( class_exists( $className ) )
             throw new RuntimeCommandException( sprintf( 'Class "%s" already exists.', $className ) );
-        }
+
 
         return $className;
     }
@@ -278,11 +279,11 @@ final class Validator
     {
         self::classExists( $userClassName );
 
-        if ( !isset( class_implements( $userClassName )[ UserInterface::class ] ) ) {
+        if ( !isset( class_implements( $userClassName )[ UserInterface::class ] ) )
             throw new RuntimeCommandException(
                 sprintf( 'The class "%s" must implement "%s".', $userClassName, UserInterface::class )
             );
-        }
+
 
         return $userClassName;
     }
