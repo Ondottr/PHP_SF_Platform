@@ -58,7 +58,6 @@ abstract class AbstractView
     /**
      * @noinspection OffsetOperationsInspection
      */
-
     final protected function import(string $className, array $data = []): void
     {
         if (TEMPLATES_CACHE_ENABLED &&
@@ -68,11 +67,8 @@ abstract class AbstractView
             $className = $arr['className'];
         }
 
-        if (empty($data)) {
-            $data = $this->getData();
-        }
 
-        $class = new $className($data);
+        $class = new $className([...$this->getData(), ...$data]);
 
         if ($class instanceof self) {
             if ($class instanceof head || $class instanceof footer) {
