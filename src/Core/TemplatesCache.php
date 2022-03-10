@@ -113,8 +113,8 @@ final class TemplatesCache
 
         if ( ( file_exists( $newFileDirectory ) === false ) &&
              !mkdir( $newFileDirectory, recursive: true ) &&
-             !is_dir( $newFileDirectory
-             ) )
+             !is_dir( $newFileDirectory )
+        )
             throw new RuntimeException( _t( 'directory_was_not_created', $newFileDirectory ) );
 
 
@@ -132,7 +132,10 @@ final class TemplatesCache
                      str_contains( $fileContent, sprintf( '\%s;', $importedView ) ) === false
                 ) {
                     $fileContent = str_replace(
-                        sprintf( '$this->import(%s', $importedView ),
+                        [
+                            sprintf( '$this->import(%s', $importedView ),
+                            sprintf( '$this->import( %s', $importedView )
+                        ],
                         sprintf( '$this->import(\%s\%s', $currentNamespace, $importedView ),
                         $fileContent
                     );
