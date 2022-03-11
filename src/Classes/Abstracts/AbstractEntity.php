@@ -109,9 +109,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
                         Types::STRING, Types::TEXT                     => $defaultValue,
 
-                        Types::ARRAY, Types::SIMPLE_ARRAY, Types::JSON => j_decode( $defaultValue, true ),
+                        Types::ARRAY, Types::SIMPLE_ARRAY              => j_decode( $defaultValue, true ),
 
-                        Types::OBJECT                                  => j_decode( $defaultValue ),
+                        Types::OBJECT, Types::JSON                     => j_decode( $defaultValue ),
 
                         Types::INTEGER, Types::SMALLINT, Types::BIGINT => (int)$defaultValue,
 
@@ -358,7 +358,8 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                     if ( ( $err = $validator->getError() ) !== false )
                         $this->validationErrors[ $propertyName ] = $err;
 
-                } elseif ( !$annotationProperty || $annotationProperty->nullable !== true ) {
+                }
+                elseif ( !$annotationProperty || $annotationProperty->nullable !== true ) {
                     $this->validationErrors[ $propertyName ] =
                         _t(
                             sprintf( '%s_field_cannot_be_empty', $this->getTranslatablePropertyName( $propertyName ) )
