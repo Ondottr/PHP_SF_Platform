@@ -219,4 +219,22 @@ abstract class AbstractEntityRepository extends EntityRepository
         return $arr;
     }
 
+
+    public function add( AbstractEntity $entity, bool $flush = true ): void
+    {
+        em()->persist( $entity );
+
+        if ( $flush )
+            em()->flush();
+
+    }
+
+    public function remove( AbstractEntity $entity, bool $flush = true ): void
+    {
+        em()->remove( $entity );
+
+        if ( $flush )
+            em()->flush();
+
+    }
 }
