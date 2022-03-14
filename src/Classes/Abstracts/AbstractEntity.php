@@ -207,7 +207,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final protected static function getClearRepositoryCacheKey(): string
     {
-        return sprintf( '%s:cache:repository:*:%s*', SERVER_NAME, self::getClassName() );
+        return sprintf( '%s:cache:repository:*%s*', SERVER_NAME, self::getClassName() );
     }
 
     final public static function getClassName( string $className = null ): string
@@ -216,7 +216,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
         $arr = explode( '\\', $className );
 
-        return strtolower( end( $arr ) );
+        return end( $arr );
     }
 
     public static function clearQueryBuilderCache(): void

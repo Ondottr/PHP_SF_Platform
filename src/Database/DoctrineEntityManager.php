@@ -152,9 +152,8 @@ class DoctrineEntityManager extends EntityManager
      */
     public function flush( $entity = null ): void
     {
-        if ( $entity instanceof AbstractEntity === false ) {
+        if ( $entity instanceof AbstractEntity === false )
             throw new BadMethodCallException( '`Flush` method must be called with entity object!' );
-        }
 
         parent::flush( $entity );
     }
