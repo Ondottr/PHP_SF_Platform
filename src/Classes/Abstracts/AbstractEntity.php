@@ -46,7 +46,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     private static bool  $__force_serialise__;
     private static array $entitiesList = [];
     private array        $changedProperties;
+    private string       $serverName = SERVER_NAME;
     private array        $validationErrors;
+
 
     public function __construct( bool $isCacheEnabled = true )
     {
@@ -124,7 +126,8 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
                     };
                 }
-            } elseif ( $annotationProperty instanceof ORM\ManyToOne || $annotationProperty instanceof ORM\OneToOne ) {
+            }
+            elseif ( $annotationProperty instanceof ORM\ManyToOne || $annotationProperty instanceof ORM\OneToOne ) {
                 $targetEntity = $annotationProperty->targetEntity;
 
                 $annotationProperty = $annotations
@@ -169,7 +172,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
      *
      * @noinspection PhpVariableVariableInspection
      */
-    final public static function createFromParams( object|null $arr ): static|null
+    final public static function createFromParams( object|null $arr, string $serverName = null ): static|null
     {
         if ( $arr === null )
             return null;
@@ -187,13 +190,17 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                 else
                     $entity->$property = $arr->$property;
 
-            } elseif ( is_object( $arr->$property ) && isset( $arr->$property->date ) )
+            }
+            elseif ( is_object( $arr->$property ) && isset( $arr->$property->date ) )
                 $entity->$property = new DateTime( $arr->$property->date );
 
             else
                 $entity->$property = $arr->$property;
 
         }
+
+        if ( $serverName !== null )
+            $entity->setServerName( $serverName );
 
         return $entity;
     }
@@ -415,6 +422,16 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     private static function isForceSerialiseEnabled(): bool
     {
         return isset( self::$__force_serialise__ ) && self::$__force_serialise__;
+    }
+
+    public function getServerName(): string
+    {
+        return $this->serverName;
+    }
+
+    public function setServerName( string $serverName ): void
+    {
+        $this->serverName = $serverName;
     }
 
 }

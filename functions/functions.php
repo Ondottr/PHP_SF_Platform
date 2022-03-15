@@ -61,7 +61,7 @@ function s(): Session
     return Sessions::getInstance();
 }
 
-function routeLink( string $routeName, array $with = [], array $query = [] ): string
+function routeLink( string $routeName, array $with = [], array $query = [], string $siteUrl = null ): string
 {
     try {
         if ( Router::isRouteExists( $routeName ) === false )
@@ -70,7 +70,10 @@ function routeLink( string $routeName, array $with = [], array $query = [] ): st
         throw new RouteNotFoundException;
 
     } catch ( RouteNotFoundException ) {
-        $link = Router::getRouteLink( $routeName );
+        if($siteUrl !== null)
+            $link = $siteUrl . Router::getRouteLink( $routeName );
+        else
+            $link = Router::getRouteLink( $routeName );
 
         if ( !empty( $with ) ) {
             $link = str_replace( [ '{$', '}' ], '', $link );
