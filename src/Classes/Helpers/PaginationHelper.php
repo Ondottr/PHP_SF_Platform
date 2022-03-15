@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -13,6 +14,9 @@
  */
 
 namespace PHP_SF\System\Classes\Helpers;
+
+use function count;
+use function is_array;
 
 final class PaginationHelper
 {
@@ -50,7 +54,7 @@ final class PaginationHelper
     {
         $this->setMessagesPerPage($messagesPerPage);
 
-        $totalMessages = (is_array($this->arr)) ? count($this->arr) : $this->arr->count();
+        $totalMessages = ( is_array( $this->arr)) ? count( $this->arr) : $this->arr->count();
 
 
         $this->totalPages = (int)ceil($totalMessages / $this->getMessagesPerPage());
