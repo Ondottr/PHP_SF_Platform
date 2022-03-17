@@ -387,10 +387,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
             ->getAttributes( TranslatablePropertyName::class )
         ) ) {
             throw new InvalidEntityConfigurationException(
-                _t(
-                    'missing_translatable_property_attribute',
-                    $propertyName,
-                    static::class
+                sprintf(
+                    'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the "%s" property in the "%s" class',
+                    $propertyName, static::class
                 )
             );
         }

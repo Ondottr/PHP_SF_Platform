@@ -37,9 +37,6 @@ return [
     'login_button' => 'Login',
     //
     //
-    'missing_translatable_property_attribute' => 'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the "%s" property in the "%s" class',
-    //
-    //
     'ok' => 'Ok',
     'one_of_the_numbers_validation_error' => 'Field `%s` must be one of these numbers: (%s)',
     //
