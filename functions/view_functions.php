@@ -186,7 +186,7 @@ function formTextarea(
     $inputStr .= !empty($classes) ? sprintf('class="%s"', implode(' ', $classes)) : '';
     $inputStr .= !empty($styles) ? sprintf(' style="%s" ', implode('; ', $styles)) : '';
     $inputStr .= !empty($length) ? sprintf('minlength="%d" maxlength="%d"', $length[ 0 ], $length[ 1 ]) : '';
-    $inputStr .= sprintf('>%s</textarea>', nl2br($defaultValue ?? formValue($name)));
+    $inputStr .= sprintf('>%s</textarea>', $defaultValue ?? formValue($name));
 
     echo trim(
         str_replace(
