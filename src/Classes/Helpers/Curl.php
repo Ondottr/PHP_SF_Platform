@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types=1 );
+
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -22,9 +23,7 @@ final class Curl
     private static Curl $instance;
     private static bool $debugEnabled = false;
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public function debug(): self
     {
@@ -35,7 +34,7 @@ final class Curl
 
     public static function getInstance(): Curl
     {
-        if (!isset(self::$instance))
+        if ( !isset( self::$instance ) )
             self::setSessionsInstance();
 
         return self::$instance;
@@ -46,50 +45,50 @@ final class Curl
         self::$instance = new Curl;
     }
 
-    public function get(string $url, array $additionalHeaders = []): array|false|null
+    public function get( string $url, array $additionalHeaders = [] ): array|false|null
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        curl_setopt( $ch, CURLOPT_URL, $url );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, [
             'Accept:application/json', 'From:' . SERVER_NAME, ...$additionalHeaders,
-        ]);
+        ] );
 
-        if (self::$debugEnabled)
+        if ( self::$debugEnabled )
             /** @noinspection ForgottenDebugOutputInspection */
-            dd(curl_exec($ch));
+            dd( curl_exec( $ch ) );
 
-        $response = curl_exec($ch);
+        $response = curl_exec( $ch );
 
-        if (empty($response))
+        if ( empty( $response ) )
             return false;
 
-        $curlResponse = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
-        curl_close($ch);
+        $curlResponse = json_decode( $response, true, 512, JSON_THROW_ON_ERROR );
+        curl_close( $ch );
 
         return $curlResponse;
     }
 
-    public function post(string $url, array $payload, array $additionalHeaders = []): array|false
+    public function post( string $url, array $payload, array $additionalHeaders = [] ): array|false
     {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_THROW_ON_ERROR));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        $ch = curl_init( $url );
+        curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $payload, JSON_THROW_ON_ERROR ) );
+        curl_setopt( $ch, CURLOPT_HTTPHEADER, [
             'Accept:application/json', 'Content-Type:application/json', 'From:' . SERVER_NAME, ...$additionalHeaders,
-        ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        ] );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 
-        if (self::$debugEnabled)
+        if ( self::$debugEnabled )
             /** @noinspection ForgottenDebugOutputInspection */
-            dd(curl_exec($ch));
+            dd( curl_exec( $ch ) );
 
-        $response = curl_exec($ch);
+        $response = curl_exec( $ch );
 
-        if ($response === false)
+        if ( $response === false )
             return false;
 
-        $curlResponse = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
-        curl_close($ch);
+        $curlResponse = json_decode( $response, true, 512, JSON_THROW_ON_ERROR );
+        curl_close( $ch );
 
         return $curlResponse;
     }

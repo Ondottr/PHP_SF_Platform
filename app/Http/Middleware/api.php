@@ -17,6 +17,8 @@ namespace PHP_SF\Framework\Http\Middleware;
 
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use function in_array;
+use function array_key_exists;
 
 final class api extends Middleware
 {

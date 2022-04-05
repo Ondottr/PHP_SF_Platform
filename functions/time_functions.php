@@ -1,6 +1,6 @@
 <?php declare( strict_types=1 );
 
-function timeInc(int $seconds): string
+function timeInc( int $seconds): string
 {
     return date('Y-m-d H:i:s', time() + $seconds);
 }
@@ -25,13 +25,13 @@ function showTimeFromSeconds(int $seconds): void
     echo getTimeFromSeconds($seconds);
 }
 
-function getTimeDiff(DateTimeInterface|string $time): string
+function getTimeDiff(DateTimeInterface|string $time, DateTimeZone $timezone = null): string
 {
     $res = '';
 
-    $d = is_string($time) ? new DateTime($time) : $time;
+    $d = is_string($time) ? new DateTime($time, $timezone) : $time;
 
-    $interval = $d->diff(new DateTime('now'));
+    $interval = $d->diff(new DateTime('now', $timezone));
 
     if ($interval->y !== 0) {
 
@@ -89,7 +89,7 @@ function getTimeDiff(DateTimeInterface|string $time): string
     return $res;
 }
 
-function showTimeDiff(DateTimeInterface|string $time): void
+function showTimeDiff(DateTimeInterface|string $time, DateTimeZone $timezone = null): void
 {
     echo getTimeDiff($time);
 }

@@ -78,9 +78,9 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
         if ( !empty( $with ) ) {
             $link = str_replace( [ '{$', '}' ], '', $link );
 
-            foreach ( $with as $propertyName => $propertyValue ) {
+            foreach ( $with as $propertyName => $propertyValue )
                 $link = str_replace( $propertyName, (string)$propertyValue, $link );
-            }
+
         }
 
         if ( Router::isRouteExists( $routeName ) ) {

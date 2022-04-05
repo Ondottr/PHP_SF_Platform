@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types=1 );
 
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
@@ -39,28 +39,27 @@ final class PaginationHelper
         private iterable $arr,
         int              $messagesPerPage = self::MESSAGES_PER_PAGE,
         int              $page = null
-    )
-    {
-        $this->setTotalPages($messagesPerPage);
+    ) {
+        $this->setTotalPages( $messagesPerPage );
 
-        $this->setPage($page);
+        $this->setPage( $page );
 
-        if ($this->getPage() > $this->getTotalPages())
-            $this->setPage($this->getTotalPages());
+        if ( $this->getPage() > $this->getTotalPages() )
+            $this->setPage( $this->getTotalPages() );
 
     }
 
-    private function setTotalPages(int $messagesPerPage): void
+    private function setTotalPages( int $messagesPerPage ): void
     {
-        $this->setMessagesPerPage($messagesPerPage);
+        $this->setMessagesPerPage( $messagesPerPage );
 
-        $totalMessages = ( is_array( $this->arr)) ? count( $this->arr) : $this->arr->count();
+        $totalMessages = ( is_array( $this->arr ) ) ? count( $this->arr ) : $this->arr->count();
 
 
-        $this->totalPages = (int)ceil($totalMessages / $this->getMessagesPerPage());
+        $this->totalPages = (int)ceil( $totalMessages / $this->getMessagesPerPage() );
     }
 
-    private function setMessagesPerPage(int $messagesPerPage): void
+    private function setMessagesPerPage( int $messagesPerPage ): void
     {
         $this->messagesPerPage = $messagesPerPage;
     }
@@ -70,11 +69,11 @@ final class PaginationHelper
         return $this->messagesPerPage;
     }
 
-    private function setPage(int $page): void
+    private function setPage( int $page ): void
     {
         $this->page = $page;
 
-        if ($this->page > $this->getTotalPages())
+        if ( $this->page > $this->getTotalPages() )
             $this->page = $this->getTotalPages();
 
     }
@@ -93,16 +92,16 @@ final class PaginationHelper
     public function paginate(): array
     {
         $i = 1;
-        foreach ($this->arr as $key => $item) {
-            if ($i <= $this->getStart()) {
+        foreach ( $this->arr as $key => $item ) {
+            if ( $i <= $this->getStart() ) {
                 $i++;
                 continue;
             }
-            if ($i > $this->getEnd())
+            if ( $i > $this->getEnd() )
                 break;
 
 
-            $returnArr[$key] = $item;
+            $returnArr[ $key ] = $item;
 
             $i++;
         }
@@ -112,7 +111,7 @@ final class PaginationHelper
 
     private function getStart(): int
     {
-        if (!isset($this->start))
+        if ( !isset( $this->start ) )
             $this->setStart();
 
         return $this->start;
@@ -125,7 +124,7 @@ final class PaginationHelper
 
     private function getEnd(): int
     {
-        if (!isset($this->end))
+        if ( !isset( $this->end ) )
             $this->setEnd();
 
         return $this->end;
@@ -133,7 +132,7 @@ final class PaginationHelper
 
     private function setEnd(): void
     {
-        if (!isset($this->start))
+        if ( !isset( $this->start ) )
             $this->setStart();
 
         $this->end = $this->getStart() + $this->getMessagesPerPage();
@@ -141,33 +140,33 @@ final class PaginationHelper
 
     public function getPages(): array
     {
-        if ($this->getPage() > 3)
+        if ( $this->getPage() > 3 )
             $pages['first'] = 1;
 
 
-        if ($this->getTotalPages() > 1) {
+        if ( $this->getTotalPages() > 1 ) {
 
-            if ($this->getPage() - 2 > 0)
+            if ( $this->getPage() - 2 > 0 )
                 $pages['page2left'] = $this->getPage() - 2;
 
 
-            if ($this->getPage() - 1 > 0)
+            if ( $this->getPage() - 1 > 0 )
                 $pages['page1left'] = $this->getPage() - 1;
 
 
             $pages['current'] = $this->getPage();
 
 
-            if ($this->getPage() + 1 <= $this->getTotalPages())
+            if ( $this->getPage() + 1 <= $this->getTotalPages() )
                 $pages['page1right'] = $this->getPage() + 1;
 
 
-            if ($this->getPage() + 2 <= $this->getTotalPages())
+            if ( $this->getPage() + 2 <= $this->getTotalPages() )
                 $pages['page2right'] = $this->getPage() + 2;
 
         }
 
-        if ($this->getPage() !== ($tp = $this->getTotalPages()) && $this->getPage() + 2 < $tp)
+        if ( $this->getPage() !== ( $tp = $this->getTotalPages() ) && $this->getPage() + 2 < $tp )
             $pages['last'] = $this->getTotalPages();
 
 
