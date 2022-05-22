@@ -58,6 +58,7 @@ class DoctrineEntityManager extends EntityManager
         $config = Setup::createAnnotationMetadataConfiguration(
                                        self::getEntityDirectories(),
                                        DEV_MODE,
+                                       __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
             useSimpleAnnotationReader: false
         );
 
