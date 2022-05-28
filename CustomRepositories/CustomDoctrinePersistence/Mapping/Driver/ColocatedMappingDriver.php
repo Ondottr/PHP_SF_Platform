@@ -18,7 +18,7 @@ use function str_replace;
 use function get_declared_classes;
 
 /**
- * The ColocatedMappingDriver reads the mapping metadata located near the code.
+ * The CollocatedMappingDriver reads the mapping metadata located near the code.
  */
 trait ColocatedMappingDriver
 {
@@ -114,7 +114,7 @@ trait ColocatedMappingDriver
      */
     public function getAllClassNames(): array
     {
-        if ( $this->classNames !== null )
+        if ( isset( $this->classNames ) && $this->classNames !== null )
             return $this->classNames;
 
         if ( $this->paths === [] )
@@ -132,7 +132,7 @@ trait ColocatedMappingDriver
                     new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ),
                     RecursiveIteratorIterator::LEAVES_ONLY
                 ),
-                '/^.+' . preg_quote( $this->fileExtension ) . '$/i',
+                '/^.+' . preg_quote( $this->fileExtension ?? '' ) . '$/i',
                 RegexIterator::GET_MATCH
             );
 
@@ -142,15 +142,17 @@ trait ColocatedMappingDriver
                 if ( preg_match( '(^phar:)i', $sourceFile ) === 0 )
                     $sourceFile = realpath( $sourceFile );
 
-                foreach ( $this->excludePaths as $excludePath ) {
-                    $realExcludePath = realpath( $excludePath );
-                    assert( $realExcludePath !== false );
-                    $exclude = str_replace( '\\', '/', $realExcludePath );
-                    $current = str_replace( '\\', '/', $sourceFile );
+                if ( isset( $this->excludePaths ) ) {
+                    foreach ( $this->excludePaths as $excludePath ) {
+                        $realExcludePath = realpath( $excludePath );
+                        assert( $realExcludePath !== false );
+                        $exclude = str_replace( '\\', '/', $realExcludePath );
+                        $current = str_replace( '\\', '/', $sourceFile );
 
-                    if ( str_contains( $current, $exclude ) )
-                        continue 2;
+                        if ( str_contains( $current, $exclude ) )
+                            continue 2;
 
+                    }
                 }
 
                 require_once $sourceFile;
