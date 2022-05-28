@@ -106,12 +106,15 @@ function formInput(
     string|int $step = null,
     array      $classes = [],
     array      $styles = [],
-    string|int $id = ''
+    string|int $id = '',
+    string     $checkboxValue = '',
+    bool       $isChecked = false
 ): void {
     $inputStr = '<input ';
     $inputStr .= sprintf(' id="%s" ', ( !empty($id) ? $id : $name ));
-    $inputStr .= sprintf(' type="%s" ', $type);
-    $inputStr .= ( $type === 'number' && $step !== null ) ? sprintf(' step="%s" ', $step) : '';
+    $inputStr .= sprintf( ' type="%s" ', $type );
+    $inputStr .= !empty( $checkboxValue ) ? sprintf( ' value="%s" ', $checkboxValue ) : '';
+    $inputStr .= ( $type === 'number' && $step !== null ) ? sprintf( ' step="%s" ', $step ) : '';
     $inputStr .= sprintf(' name="%s" ', $name);
     $inputStr .= sprintf(' value="%s" ', ( !empty(formValue($name)) ? formValue($name) : $defaultValue ));
     $inputStr .= $isRequired ? ' required ' : '';
@@ -119,7 +122,9 @@ function formInput(
     $inputStr .= !empty($styles) ? sprintf(' style="%s" ', implode('; ', $styles)) : '';
     $inputStr .= !empty($classes) ? sprintf('class="%s"', implode(' ', $classes)) : '';
     $inputStr .= !empty($length) ? sprintf('minlength="%d" maxlength="%d"', $length[ 0 ], $length[ 1 ]) : '';
-    $inputStr .= ( $type === 'number' && !empty($minMax) ) ? sprintf('min="%d" max="%d"', $minMax[ 0 ], $minMax[ 1 ]) : '';
+    $inputStr .= ( $type === 'number' && !empty( $minMax ) ) ? sprintf( 'min="%d" max="%d"', $minMax[0], $minMax[1] )
+        : '';
+    $inputStr .= $isChecked ? ' checked ' : '';
     $inputStr .= '>';
 
     echo trim(
