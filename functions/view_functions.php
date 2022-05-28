@@ -42,7 +42,7 @@ function getErrors(string $errorType = null): array|string|false
 
 function formValue(string $name): string
 {
-    return $GLOBALS[ 'form_data' ][ $name ] ?? '';
+    return (string)( $GLOBALS['form_data'][ $name ] ?? '' );
 }
 
 function showMessages(string $messageType = null, bool $onlyFirst = true): void
