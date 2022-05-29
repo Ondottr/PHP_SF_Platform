@@ -7,7 +7,7 @@ abstract class BaseRelation
     private string  $propertyName;
     private string  $targetClassName;
     private ?string $targetPropertyName;
-    private ?string $customReturnType;
+    private ?string $customReturnType   = null;
     private bool    $isSelfReferencing  = false;
     private bool    $mapInverseRelation = true;
     private bool    $avoidSetter        = false;
