@@ -23,8 +23,8 @@ final class InvalidRouteMethodParameterTypeException extends InvalidTypeExceptio
     public function __construct( string $type, string $propertyName, object $data )
     {
         parent::__construct(
-            _t(
-                'invalid_route_method_parameter_type_exception',
+            sprintf(
+                'Invalid method parameter type in %s::%s for property “%s”, available types: "string|int|float" and `%s` provided!',
                 $data->class,
                 $data->method,
                 $propertyName,

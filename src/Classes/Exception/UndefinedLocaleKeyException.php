@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types=1 );
 
 /**
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
@@ -16,12 +16,11 @@
 namespace PHP_SF\System\Classes\Exception;
 
 use Exception;
-use function _t;
 
 final class UndefinedLocaleKeyException extends Exception
 {
-    public function __construct($localeKey)
+    public function __construct( $localeKey )
     {
-        parent::__construct(_t('undefined_locale_key_exception', $localeKey));
+        parent::__construct( sprintf( 'Undefined locale key “%s”', $localeKey ) );
     }
 }

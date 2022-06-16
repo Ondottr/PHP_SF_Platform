@@ -22,11 +22,15 @@ use PHP_SF\System\Database\DoctrineEntityManager;
 abstract class AbstractEntityRepository extends EntityRepository
 {
 
+    /**
+     * @deprecated Use {@see getClassName()} instead.
+     */
+    abstract protected static function getEntityClass(): string;
+
     final public function find( $id, $lockMode = null, $lockVersion = null ): AbstractEntity|null
     {
-        $entityClass = static::getEntityClass();
+        $entityClass = $this->getClassName();
         /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ( $entityClass instanceof AbstractEntity ) {
             //
         }
@@ -61,16 +65,13 @@ abstract class AbstractEntityRepository extends EntityRepository
         return $entityClass::createFromParams( j_decode( $cache ) );
     }
 
-    abstract protected static function getEntityClass(): string;
-
     /**
      * @return array<AbstractEntity>
      */
     final public function findAll(): array
     {
-        $entityClass = static::getEntityClass();
+        $entityClass = $this->getClassName();
         /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ( $entityClass instanceof AbstractEntity ) {
             //
         }
@@ -117,9 +118,8 @@ abstract class AbstractEntityRepository extends EntityRepository
 
     final public function findOneBy( array $criteria, ?array $orderBy = null ): AbstractEntity|null
     {
-        $entityClass = static::getEntityClass();
+        $entityClass = $this->getClassName();
         /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ( $entityClass instanceof AbstractEntity ) {
             //
         }
@@ -170,9 +170,8 @@ abstract class AbstractEntityRepository extends EntityRepository
      */
     final public function findBy( array $criteria = [], ?array $orderBy = null, $limit = null, $offset = null ): array
     {
-        $entityClass = static::getEntityClass();
+        $entityClass = $this->getClassName();
         /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ( $entityClass instanceof AbstractEntity ) {
             //
         }

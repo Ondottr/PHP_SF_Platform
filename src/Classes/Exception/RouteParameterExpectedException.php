@@ -19,11 +19,13 @@ use Exception;
 
 final class RouteParameterExpectedException extends Exception
 {
-    public function __construct( string $routeName, string $parameter)
+    public function __construct( string $routeName, string $parameter )
     {
         parent::__construct(
-            _t('route_parameters_expected',
-               $parameter, $routeName
+            sprintf(
+                'Route parameter `%s` expected for the "%s" route',
+                $parameter,
+                $routeName
             )
         );
     }

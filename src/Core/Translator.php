@@ -23,7 +23,7 @@ final class Translator
     private function loadTranslation(): void
     {
         if ( empty( self::$translationDirectories ) )
-            throw new InvalidConfigurationException( _t( 'translation_directories_not_provided' ) );
+            throw new InvalidConfigurationException( 'No translation file directories specified!' );
 
 
         foreach ( LANGUAGES_LIST as $locale ) {

@@ -29,10 +29,6 @@ return [
     'forgot_password' => 'Forgot password?',
     //
     //
-    'invalid_route_method_parameter_type_exception' => 'Invalid method parameter type in %s::%s for property "%s", available types: "string|int|float" and `%s` provided!',
-    'invalid_template_directory' => 'Invalid template directory "%s"',
-    //
-    //
     'login' => 'Login',
     'login_button' => 'Login',
     //
@@ -47,7 +43,6 @@ return [
     //
     'range_validation_error' => 'Field `%s` should be between `%s` and `%s`.',
     'register' => 'Register',
-    'route_parameters_expected' => 'Route parameter `%s` expected for the "%s" route',
     //
     //
     'sec' => 'sec (not_translated)',
@@ -55,6 +50,5 @@ return [
     //
     'to_long_length_validation_error' => 'Field %s is too long. It should have %s character or less.',
     'to_short_length_validation_error' => 'Field %s is too short. It should have %s character or more.',
-    'translation_directories_not_provided' => 'No translation file directories specified!',
     //
 ];

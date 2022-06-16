@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-/** @noinspection PhpConstantNamingConventionInspection */
 
 /**
  *  Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>

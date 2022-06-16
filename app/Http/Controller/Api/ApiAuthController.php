@@ -90,10 +90,10 @@ class ApiAuthController extends AbstractController
             $errors[] = _t( 'accept_checkbox_error' );
 
         if ( $this->userRepository->findOneBy( [ 'email' => $email ] ) !== null )
-            $errors[] = _t( 'user_with_this_email_already_exist' );
+            $errors[] = _t( 'user_email_property_with_this_value_already_exists' );
 
         if ( $this->userRepository->findOneBy( [ 'login' => $login ] ) !== null )
-            $errors[] = _t( 'user_with_this_login_already_exist' );
+            $errors[] = _t( 'user_login_property_with_this_value_already_exists' );
 
         if ( isset( $errors ) )
             return new JsonResponse(

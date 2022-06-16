@@ -29,7 +29,7 @@ final class TemplatesCache
             if ( file_exists( ( $path = __DIR__ . '/../../../' . $dir ) ) === false ||
                  is_dir( $path ) === false
             )
-                throw new InvalidConfigurationException( _t( 'invalid_template_directory', $dir ) );
+                throw new InvalidConfigurationException( sprintf( 'Invalid template directory “%s”', $dir ) );
 
 
         self::$templatesDefinition = array_combine( $this->getTemplatesDirectories(), $this->getTemplatesNamespaces() );
@@ -115,7 +115,7 @@ final class TemplatesCache
              !mkdir( $newFileDirectory, recursive: true ) &&
              !is_dir( $newFileDirectory )
         )
-            throw new RuntimeException( _t( 'directory_was_not_created', $newFileDirectory ) );
+            throw new RuntimeException( _t( 'Directory “%s” was not created!', $newFileDirectory ) );
 
 
         $fileContent = $this->removeComments( $currentClassDirectory );

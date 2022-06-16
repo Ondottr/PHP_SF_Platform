@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types=1 );
 
 /**
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
@@ -16,12 +16,11 @@
 namespace PHP_SF\System\Classes\Exception;
 
 use Exception;
-use function _t;
 
 final class UndefinedLocaleNameException extends Exception
 {
-    public function __construct($localeName)
+    public function __construct( $localeName )
     {
-        parent::__construct(_t('undefined_locale_name_exception', $localeName));
+        parent::__construct( sprintf( 'Undefined locale name “%s”', $localeName ) );
     }
 }
