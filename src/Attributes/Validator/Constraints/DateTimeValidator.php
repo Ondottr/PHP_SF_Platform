@@ -25,7 +25,7 @@ final class DateTimeValidator extends AbstractConstraintValidator
 
     public function validate(): bool
     {
-        if ( $this->getValue() instanceof \PHP_SF\System\Core\DateTime === false ) {
+        if ( $this->getValue() instanceof \DateTime === false ) {
             $this->setError(
                 'datetime_validation_error',
                 _t( $this->getTranslatablePropertyName() )
