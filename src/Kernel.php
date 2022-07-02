@@ -14,6 +14,7 @@ use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use function define;
 use function defined;
+use function in_array;
 
 
 final class Kernel
@@ -168,7 +169,7 @@ final class Kernel
         $userAcceptLanguages = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
 
         foreach ( $userAcceptLanguages as $langCode )
-            if($rc->hasConstant($langCode)) {
+            if($rc->hasConstant($langCode) && in_array($langCode, LANGUAGES_LIST, true)) {
                 define( 'DEFAULT_LOCALE', Locale::getLocaleKey( $rc->getConstant( $langCode ) ) );
                 break;
             }
