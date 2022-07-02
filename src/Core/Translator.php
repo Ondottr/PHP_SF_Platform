@@ -175,10 +175,13 @@ final class Translator
         }
     }
 
-    public function updateTranslatedString( string $locale, string $key, string $translation ): void
+    public function updateTranslatedString( string $locale, string $key, string $translation ): string
     {
+        $previousValue = $this->$locale[ $key ];
         $this->$locale[ $key ] = $translation;
 
         $this->saveLocalesToFiles();
+
+        return $previousValue;
     }
 }
