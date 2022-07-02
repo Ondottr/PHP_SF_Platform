@@ -19,6 +19,7 @@ use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Attributes\Validator\Constraints as Validate;
+use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use function is_string;
 
 trait ModelPropertyUpdatedAtTrait
@@ -28,6 +29,7 @@ trait ModelPropertyUpdatedAtTrait
      * @ORM\Column(type="datetime", name="updated_at", options={"default": "CURRENT_TIMESTAMP"}, nullable=true)
      */
     #[Validate\DateTime]
+    #[TranslatablePropertyName( 'updated_at_property' )]
     protected null|string|DateTimeInterface $updatedAt = null;
 
 
