@@ -601,7 +601,7 @@ class TimeZone
     public const JE            = [ 'name' => 'Europe/Jersey', 'offset' => '+00:00' ];
     public const UA            = [
         'kiev'       => [ 'name' => 'Europe/Kiev', 'offset' => '+02:00' ],
-        'simferopol' => [ 'name' => 'Europe/Simferopol', 'offset' => '+03:00' ],
+        'simferopol' => [ 'name' => 'Europe/Simferopol', 'offset' => '+02:00' ],
         'uzhgorod'   => [ 'name' => 'Europe/Uzhgorod', 'offset' => '+02:00' ],
         'zaporozhye' => [ 'name' => 'Europe/Zaporozhye', 'offset' => '+02:00' ],
     ];

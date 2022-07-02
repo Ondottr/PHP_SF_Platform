@@ -15,9 +15,9 @@
 
 namespace PHP_SF\System\Traits\ModelProperty;
 
-use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Attributes\Validator\Constraints as Validate;
 use function is_string;
 

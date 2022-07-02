@@ -15,13 +15,13 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use DateTime;
 use ReflectionClass;
 use JsonSerializable;
 use ReflectionProperty;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
+use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
 use Doctrine\Common\Annotations\AnnotationReader;
 use PHP_SF\System\Database\DoctrineEntityManager;
@@ -122,7 +122,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                         Types::BOOLEAN                                 => (bool)$defaultValue,
 
                         Types::DATE_MUTABLE, Types::TIME_MUTABLE,
-                        Types::DATETIME_MUTABLE                        => new DateTime()
+                        Types::DATETIME_MUTABLE                        => new DateTime
 
                     };
                 }

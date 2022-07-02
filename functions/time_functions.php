@@ -1,5 +1,7 @@
 <?php declare( strict_types=1 );
 
+use PHP_SF\System\Core\DateTime;
+
 function timeInc( int $seconds): string
 {
     return date('Y-m-d H:i:s', time() + $seconds);
@@ -12,7 +14,7 @@ function timeDec(int $seconds): string
 
 function getTimeDiffInSeconds(DateTimeInterface|string $time): int
 {
-    return ( is_string($time) ? new DateTime($time) : $time )->getTimestamp() - ( new DateTime )->getTimestamp();
+    return ( is_string($time) ? new DateTime( $time) : $time )->getTimestamp() - ( new DateTime )->getTimestamp();
 }
 
 function getTimeFromSeconds(int $seconds): string
@@ -29,9 +31,9 @@ function getTimeDiff(DateTimeInterface|string $time, DateTimeZone $timezone = nu
 {
     $res = '';
 
-    $d = is_string($time) ? new DateTime($time, $timezone) : $time;
+    $d = is_string($time) ? new DateTime( $time, $timezone) : $time;
 
-    $interval = $d->diff(new DateTime('now', $timezone));
+    $interval = $d->diff(new DateTime( 'now', $timezone));
 
     if ($interval->y !== 0) {
 
@@ -91,5 +93,5 @@ function getTimeDiff(DateTimeInterface|string $time, DateTimeZone $timezone = nu
 
 function showTimeDiff(DateTimeInterface|string $time, DateTimeZone $timezone = null): void
 {
-    echo getTimeDiff($time);
+    echo getTimeDiff($time, $timezone);
 }
