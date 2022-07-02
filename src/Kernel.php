@@ -2,14 +2,18 @@
 
 namespace PHP_SF\System;
 
-use PHP_SF\System\Core\TemplatesCache;
+use ReflectionClass;
 use PHP_SF\System\Core\Translator;
-use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use PHP_SF\System\Core\TemplatesCache;
+use PHP_SF\System\Classes\Helpers\Locale;
 use Symfony\Component\ErrorHandler\Debug;
+use PHP_SF\System\Database\DoctrineEntityManager;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use function define;
+use function defined;
 
 
 final class Kernel
@@ -27,6 +31,8 @@ final class Kernel
             apcu_clear_cache();
             Debug::enable();
         }
+
+        $this->setDefaultLocale();
 
         $this->addControllers(__DIR__ . '/../app/Http/Controller');
 
@@ -119,9 +125,9 @@ final class Kernel
     {
         if (!class_exists($headerTemplateClassName)) {
             throw new InvalidConfigurationException(sprintf(
-                'Header template class "%s" does not exist',
-                $headerTemplateClassName
-            ));
+                                                        'Header template class "%s" does not exist',
+                                                        $headerTemplateClassName
+                                                    ));
         }
 
         self::$headerTemplateClassName = $headerTemplateClassName;
@@ -133,9 +139,9 @@ final class Kernel
     {
         if (!class_exists($footerTemplateClassName)) {
             throw new InvalidConfigurationException(sprintf(
-                'Footer template class "%s" does not exist',
-                $footerTemplateClassName
-            ));
+                                                        'Footer template class "%s" does not exist',
+                                                        $footerTemplateClassName
+                                                    ));
         }
 
         self::$footerTemplateClassName = $footerTemplateClassName;
@@ -147,6 +153,29 @@ final class Kernel
     public function init(): void
     {
         Router::init();
+    }
+
+    private function setDefaultLocale(): void
+    {
+        if(s()->has('locale')) {
+            define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
+
+            return;
+        }
+
+        $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'nb-NO,nb,en-US,en';
+        $rc = new ReflectionClass( Locale::class);
+        $userAcceptLanguages = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+
+        foreach ( $userAcceptLanguages as $langCode )
+            if($rc->hasConstant($langCode)) {
+                define( 'DEFAULT_LOCALE', Locale::getLocaleKey( $rc->getConstant( $langCode ) ) );
+                break;
+            }
+
+        if( defined( 'DEFAULT_LOCALE') === false)
+            define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
+
     }
 
 }
