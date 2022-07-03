@@ -15,6 +15,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use function define;
 use function defined;
 use function in_array;
+use function array_key_exists;
 
 
 final class Kernel
@@ -158,23 +159,23 @@ final class Kernel
 
     private function setDefaultLocale(): void
     {
-        if(s()->has('locale')) {
+        if ( !array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER) || s()->has( 'locale' ) ) {
             define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
 
             return;
         }
 
-        $_SERVER['HTTP_ACCEPT_LANGUAGE'] = 'nb-NO,nb,en-US,en';
-        $rc = new ReflectionClass( Locale::class);
-        $userAcceptLanguages = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+        $rc                              = new ReflectionClass( Locale::class );
+        $userAcceptLanguages             = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
 
         foreach ( $userAcceptLanguages as $langCode )
-            if($rc->hasConstant($langCode) && in_array($langCode, LANGUAGES_LIST, true)) {
+            if ( $rc->hasConstant( $langCode ) && in_array( $langCode, LANGUAGES_LIST, true ) ) {
                 define( 'DEFAULT_LOCALE', Locale::getLocaleKey( $rc->getConstant( $langCode ) ) );
+                s()->set( 'locale', DEFAULT_LOCALE );
                 break;
             }
 
-        if( defined( 'DEFAULT_LOCALE') === false)
+        if ( defined( 'DEFAULT_LOCALE' ) === false )
             define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
 
     }
