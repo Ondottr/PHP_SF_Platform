@@ -34,7 +34,7 @@ class DoctrineEntityManager extends EntityManager
 
     public static bool $cacheEnabled = true;
     /**
-     * @var array{string}
+     * @var string[]
      */
     private static array                 $dbRequestsList    = [];
     private static DoctrineEntityManager $entityManager;
@@ -82,7 +82,7 @@ class DoctrineEntityManager extends EntityManager
     }
 
     /**
-     * @return array{string}
+     * @return string[]
      */
     public static function getDbRequestsList(): array
     {

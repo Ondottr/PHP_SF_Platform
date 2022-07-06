@@ -1,6 +1,4 @@
-<?php
-
-declare( strict_types=1 );
+<?php declare( strict_types=1 );
 
 
 namespace PHP_SF\System\Database;
@@ -21,18 +19,16 @@ final class Redis
 
     public static function getRc(): Client
     {
-        if (!isset(self::$rc)) {
+        if (!isset(self::$rc))
             new self;
-        }
 
         return self::$rc;
     }
 
     public static function getRp(): Pipeline
     {
-        if (!isset(self::$rc)) {
+        if (!isset(self::$rc))
             new self;
-        }
 
         return self::$rp;
     }
