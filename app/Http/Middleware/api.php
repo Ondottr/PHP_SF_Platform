@@ -25,11 +25,9 @@ final class api extends Middleware
 
     public function result(): bool|JsonResponse
     {
-        if ( ( array_key_exists( 'REMOTE_ADDR', $_SERVER ) && in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS ) ) ||
-             ( array_key_exists( 'SERVER_ADDR', $_SERVER ) && in_array( $_SERVER['SERVER_ADDR'], AVAILABLE_HOSTS ) )
-        ) {
+        if ( array_key_exists( 'REMOTE_ADDR', $_SERVER ) && in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS ) )
             return true;
-        }
+
 
         return new JsonResponse( [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN );
     }
