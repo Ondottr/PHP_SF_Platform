@@ -14,7 +14,16 @@ final class Redis
 
     private function __construct()
     {
-        self::$rp = ( self::$rc = new Client() )->pipeline();
+        self::$rp = ( self::$rc = new Client )->pipeline();
+
+        self::$rc
+            ->select(
+                match ($_ENV['APP_ENV']) {
+                    'dev' => 2,
+                    'test' => 1,
+                    'prod' => 0
+                }
+            );
     }
 
     public static function getRc(): Client
