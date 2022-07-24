@@ -40,8 +40,8 @@ class DefaultController extends AbstractController
 
     /** @noinspection ForgottenDebugOutputInspection */
     #[NoReturn]
-    #[Route( url: 'routes_list', httpMethod: 'GET' )]
-    final public function routes_list(): void
+    #[Route( url: 'api/routes_list', httpMethod: 'GET' )]
+    final public function api_routes_list(): void
     {
         dd(
             array_merge(

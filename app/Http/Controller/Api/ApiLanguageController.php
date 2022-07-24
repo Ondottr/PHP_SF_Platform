@@ -26,7 +26,7 @@ final class ApiLanguageController extends AbstractController
 {
 
     #[Route( url: 'api/lang/change_language', httpMethod: 'POST' )]
-    public function change_language(): JsonResponse
+    public function api_change_language(): JsonResponse
     {
         $lang = $this->request->request->get( 'lang', false );
 

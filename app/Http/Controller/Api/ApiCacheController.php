@@ -26,7 +26,7 @@ class ApiCacheController extends AbstractController
 {
 
     #[Route( url: 'api/cache_clear/translations', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
-    public function clear_translations_cache(): JsonResponse
+    public function api_clear_translations_cache(): JsonResponse
     {
         $keys = rc()->keys( SERVER_NAME . ':cache:translated_strings:*' );
 
@@ -37,7 +37,7 @@ class ApiCacheController extends AbstractController
     }
 
     #[Route( url: 'api/cache_clear/routes', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
-    public function clear_router_cache(): JsonResponse
+    public function api_clear_router_cache(): JsonResponse
     {
         rp()->del( [
                        SERVER_NAME . ':cache:routes_list',
@@ -48,7 +48,7 @@ class ApiCacheController extends AbstractController
     }
 
     #[Route( url: 'api/cache_clear/all', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
-    public function clear_all_cache(): JsonResponse
+    public function api_clear_all_cache(): JsonResponse
     {
         $keys = rc()->keys( SERVER_NAME . ':cache:*' );
 
@@ -59,7 +59,7 @@ class ApiCacheController extends AbstractController
     }
 
     #[Route( url: 'api/cache_clear/templates', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
-    public function clear_templates_cache(): JsonResponse
+    public function api_clear_templates_cache(): JsonResponse
     {
         $dir = sprintf( '/tmp/%s/PHP_SF/CachedTemplates', SERVER_NAME );
 
@@ -70,7 +70,7 @@ class ApiCacheController extends AbstractController
     }
 
     #[Route( url: 'api/admin_panel/cache_clear/apcu', httpMethod: 'GET', middleware: [ admin::class, api::class ] )]
-    public function clear_apcu_cache(): JsonResponse
+    public function api_clear_apcu_cache(): JsonResponse
     {
         apcu_clear_cache();
 
