@@ -20,11 +20,13 @@ declare( strict_types=1 );
 namespace PHP_SF\System\Database;
 
 use Exception;
+use Doctrine\ORM\Query;
+use Doctrine\ORM\ORMSetup;
 use BadMethodCallException;
-use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\OptimisticLockException;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
 
@@ -55,16 +57,22 @@ class DoctrineEntityManager extends EntityManager
      */
     private static function setEntityManager(): void
     {
-        $config = Setup::createAnnotationMetadataConfiguration(
-                                       self::getEntityDirectories(),
-                                       DEV_MODE,
-                                       __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
-            useSimpleAnnotationReader: false
+        $config = ORMSetup::createAnnotationMetadataConfiguration(
+            self::getEntityDirectories(),
+            DEV_MODE,
+            __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
+            new RedisAdapter( rc() )
         );
 
-        if ( !$config->getMetadataDriverImpl() ) {
+        $config->setResultCache( new RedisAdapter( rc(), 'result_cache' ) );
+        $config->setQueryCache( new RedisAdapter( rc(), 'query_cache' ) );
+        $config->setMetadataCache( new RedisAdapter( rc(), 'metadata_cache' ) );
+
+        $config->setProxyNamespace( 'Proxies' );
+
+        if ( !$config->getMetadataDriverImpl() )
             throw MissingMappingDriverImplementation::create();
-        }
+
 
         $connection = self::createConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
 
@@ -102,6 +110,7 @@ class DoctrineEntityManager extends EntityManager
     public function createQuery( $dql = '' ): Query
     {
         $query = new Query( $this );
+        $query->enableResultCache();
 
         if ( !empty( $dql ) ) {
             $query->setDQL( $dql );
@@ -110,7 +119,7 @@ class DoctrineEntityManager extends EntityManager
         return $query;
     }
 
-    public function executeSeveral( \Doctrine\ORM\Query|Query ...$queries ): bool
+    public function executeSeveral( Query ...$queries ): bool
     {
         try {
             em()->beginTransaction();

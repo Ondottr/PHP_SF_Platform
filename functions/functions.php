@@ -20,7 +20,6 @@ use PHP_SF\System\Router;
 use Predis\Pipeline\Pipeline;
 use Doctrine\ORM\QueryBuilder;
 use PHP_SF\System\Core\Sessions;
-use PHP_SF\System\Database\Query;
 use PHP_SF\System\Database\Redis;
 use PHP_SF\System\Core\Translator;
 use PHP_SF\System\Core\TemplatesCache;
@@ -39,10 +38,8 @@ function em( bool $cacheEnabled = true ): DoctrineEntityManager
     return DoctrineEntityManager::getEntityManager( $cacheEnabled );
 }
 
-function qb( int $cacheType = Query::CACHE_TYPE_PERSISTENT ): QueryBuilder
+function qb(): QueryBuilder
 {
-    Query::setCurrentCacheType( $cacheType );
-
     return em()->createQueryBuilder();
 }
 

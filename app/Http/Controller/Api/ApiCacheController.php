@@ -28,7 +28,7 @@ class ApiCacheController extends AbstractController
     #[Route( url: 'api/cache_clear/translations', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
     public function api_clear_translations_cache(): JsonResponse
     {
-        $keys = rc()->keys( SERVER_NAME . ':cache:translated_strings:*' );
+        $keys = rc()->keys( 'translated_strings:*' );
 
         foreach ( $keys as $key )
             rp()->del( $key );
@@ -39,10 +39,7 @@ class ApiCacheController extends AbstractController
     #[Route( url: 'api/cache_clear/routes', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
     public function api_clear_router_cache(): JsonResponse
     {
-        rp()->del( [
-                       SERVER_NAME . ':cache:routes_list',
-                       SERVER_NAME . ':cache:routes_by_url_list',
-                   ] );
+        rp()->del( ['routes_list', 'routes_by_url_list' ] );
 
         return new JsonResponse( [ 'status' => 'ok' ], JsonResponse::HTTP_OK );
     }

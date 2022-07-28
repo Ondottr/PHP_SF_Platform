@@ -14,12 +14,13 @@ final class Redis
 
     private function __construct()
     {
-        self::$rp = ( self::$rc = new Client )->pipeline();
+        self::$rc = new Client( [], [ 'prefix' => sprintf( '%s:%s:', SERVER_NAME, $_ENV['APP_ENV'] ), ] );
+        self::$rp = self::$rc->pipeline();
 
         self::$rc
             ->select(
-                match ($_ENV['APP_ENV']) {
-                    'dev' => 2,
+                match ( $_ENV['APP_ENV'] ) {
+                    'dev'  => 2,
                     'test' => 1,
                     'prod' => 0
                 }
@@ -28,7 +29,7 @@ final class Redis
 
     public static function getRc(): Client
     {
-        if (!isset(self::$rc))
+        if ( !isset( self::$rc ) )
             new self;
 
         return self::$rc;
@@ -36,7 +37,7 @@ final class Redis
 
     public static function getRp(): Pipeline
     {
-        if (!isset(self::$rc))
+        if ( !isset( self::$rc ) )
             new self;
 
         return self::$rp;

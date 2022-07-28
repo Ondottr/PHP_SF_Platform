@@ -28,7 +28,7 @@ final class Translator
 
         foreach ( LANGUAGES_LIST as $locale ) {
             foreach ( self::getTranslationDirectories() as $translationDirectory ) {
-                $redisKey = sprintf( '%s:cache:translated_strings:%s', SERVER_NAME, $locale );
+                $redisKey = sprintf( 'translated_strings:%s', $locale );
 
                 if ( ( $translations = rc()->get( $redisKey ) ) === null ) {
                     if ( file_exists( ( $path = sprintf( '%s/%s.php', $translationDirectory, $locale ) ) ) === false )

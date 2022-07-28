@@ -72,14 +72,14 @@ class Router
     protected static function parseRoutes(): void
     {
         if ( empty( static::$routesList ) ) {
-            if ( ( $routesList = rc()->get( SERVER_NAME . ':cache:routes_list' ) ) === null ) {
+            if ( ( $routesList = rc()->get( 'routes_list' ) ) === null ) {
                 foreach ( static::getControllersDirectories() as $controllersDirectory ) {
                     static::controllersFromDir( $controllersDirectory );
                 }
 
                 if ( DEV_MODE === false ) {
                     rp()->set(
-                        SERVER_NAME . ':cache:routes_list',
+                        'routes_list',
                         j_encode( static::$routesList )
                     );
                 }
@@ -89,14 +89,14 @@ class Router
             }
 
             if ( empty( static::$routesByUrl ) ) {
-                if ( ( $routesByUrl = rc()->get( SERVER_NAME . ':cache:routes_by_url_list' ) ) === null ) {
+                if ( ( $routesByUrl = rc()->get( 'routes_by_url_list' ) ) === null ) {
                     foreach ( static::$routesList as $route ) {
                         static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
                     }
 
                     if ( DEV_MODE === false ) {
                         rp()->set(
-                            SERVER_NAME . ':cache:routes_by_url_list',
+                            'routes_by_url_list',
                             j_encode( static::$routesByUrl )
                         );
                     }

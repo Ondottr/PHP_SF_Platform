@@ -5,6 +5,7 @@ namespace Doctrine\Persistence\Mapping\Driver;
 use RegexIterator;
 use ReflectionClass;
 use FilesystemIterator;
+use RecursiveRegexIterator;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Doctrine\Persistence\Mapping\MappingException;
@@ -18,10 +19,38 @@ use function str_replace;
 use function get_declared_classes;
 
 /**
- * The CollocatedMappingDriver reads the mapping metadata located near the code.
+ * The ColocatedMappingDriver reads the mapping metadata located near the code.
  */
 trait ColocatedMappingDriver
 {
+    /**
+     * The paths where to look for mapping files.
+     *
+     * @var array<int, string>
+     */
+    protected $paths = [];
+
+    /**
+     * The paths excluded from path where to look for mapping files.
+     *
+     * @var array<int, string>
+     */
+    protected $excludePaths = [];
+
+    /**
+     * The file extension of mapping documents.
+     *
+     * @var string
+     */
+    protected $fileExtension = '.php';
+
+    /**
+     * Cache for getAllClassNames().
+     *
+     * @var array<int, string>|null
+     * @psalm-var list<class-string>|null
+     */
+    protected $classNames;
 
     /**
      * Appends lookup paths to metadata driver.
@@ -30,9 +59,9 @@ trait ColocatedMappingDriver
      *
      * @return void
      */
-    public function addPaths( array $paths ): void
+    public function addPaths( array $paths )
     {
-        $this->paths = $paths;
+        $this->paths = array_unique( array_merge( $this->paths, $paths ) );
     }
 
     /**
@@ -52,9 +81,9 @@ trait ColocatedMappingDriver
      *
      * @return void
      */
-    public function addExcludePaths( array $paths ): void
+    public function addExcludePaths( array $paths )
     {
-        $this->excludePaths = $paths;
+        $this->excludePaths = array_unique( array_merge( $this->excludePaths, $paths ) );
     }
 
     /**
@@ -72,7 +101,7 @@ trait ColocatedMappingDriver
      *
      * @return string
      */
-    public function getFileExtension(): string
+    public function getFileExtension()
     {
         return $this->fileExtension;
     }
@@ -80,28 +109,15 @@ trait ColocatedMappingDriver
     /**
      * Sets the file extension used to look for mapping files under.
      *
-     * @param $fileExtension
+     * @param string $fileExtension
      *
      * @return void
+
      */
     public function setFileExtension( $fileExtension ): void
     {
         $this->fileExtension = $fileExtension;
     }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Returns whether the class with the specified name is transient. Only non-transient
-     * classes, that is entities and mapped superclasses, should have their metadata loaded.
-     *
-     * @param string             $className
-     *
-     * @psalm-param class-string $className
-     *
-     * @return bool
-     */
-    abstract public function isTransient( $className );
 
     /**
      * Gets the names of all mapped classes known to this driver.
@@ -114,7 +130,7 @@ trait ColocatedMappingDriver
      */
     public function getAllClassNames(): array
     {
-        if ( isset( $this->classNames ) && $this->classNames !== null )
+        if ( $this->classNames !== null )
             return $this->classNames;
 
         if ( $this->paths === [] )
@@ -127,13 +143,14 @@ trait ColocatedMappingDriver
             if ( !is_dir( $path ) )
                 throw MappingException::fileMappingDriversRequireConfiguredDirectoryPath( $path );
 
+
             $iterator = new RegexIterator(
                 new RecursiveIteratorIterator(
                     new RecursiveDirectoryIterator( $path, FilesystemIterator::SKIP_DOTS ),
                     RecursiveIteratorIterator::LEAVES_ONLY
                 ),
-                '/^.+' . preg_quote( $this->fileExtension ?? '' ) . '$/i',
-                RegexIterator::GET_MATCH
+                '/^.+' . preg_quote( $this->fileExtension ) . '$/i',
+                RecursiveRegexIterator::GET_MATCH
             );
 
             foreach ( $iterator as $file ) {
@@ -142,16 +159,14 @@ trait ColocatedMappingDriver
                 if ( preg_match( '(^phar:)i', $sourceFile ) === 0 )
                     $sourceFile = realpath( $sourceFile );
 
-                if ( isset( $this->excludePaths ) ) {
-                    foreach ( $this->excludePaths as $excludePath ) {
-                        $realExcludePath = realpath( $excludePath );
-                        assert( $realExcludePath !== false );
-                        $exclude = str_replace( '\\', '/', $realExcludePath );
-                        $current = str_replace( '\\', '/', $sourceFile );
+                foreach ( $this->excludePaths as $excludePath ) {
+                    $realExcludePath = realpath( $excludePath );
+                    assert( $realExcludePath !== false );
+                    $exclude = str_replace( '\\', '/', $realExcludePath );
+                    $current = str_replace( '\\', '/', $sourceFile );
 
-                        if ( str_contains( $current, $exclude ) )
-                            continue 2;
-
+                    if ( strpos( $current, $exclude ) !== false ) {
+                        continue 2;
                     }
                 }
 
@@ -179,4 +194,18 @@ trait ColocatedMappingDriver
 
         return $classes;
     }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Returns whether the class with the specified name is transient. Only non-transient
+     * classes, that is entities and mapped superclasses, should have their metadata loaded.
+     *
+     * @param string             $className
+     *
+     * @psalm-param class-string $className
+     *
+     * @return bool
+     */
+    abstract public function isTransient( $className );
 }
