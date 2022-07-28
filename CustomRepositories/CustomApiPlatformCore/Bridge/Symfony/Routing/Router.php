@@ -2,6 +2,7 @@
 
 namespace ApiPlatform\Core\Bridge\Symfony\Routing;
 
+use PHP_SF\Framework\Http\Middleware\api;
 use App\Http\Middleware\example_middleware;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RequestContext;
@@ -58,7 +59,7 @@ final class Router implements RouterInterface, UrlGeneratorInterface
         }
 
         if ( ( $uri = $request->getRequestUri() ) !== '/api' && $uri !== '/api/' && str_starts_with( $uri, '/api' ) )
-            new example_middleware( $request );
+            new api( $request );
 
         $context->setPathInfo( $pathInfo );
         $context->setScheme( $baseContext->getScheme() );

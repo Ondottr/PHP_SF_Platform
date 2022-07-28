@@ -6,41 +6,41 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Database;
 
-use Doctrine\Deprecations\Deprecation;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use ReflectionClass;
 use Doctrine\ORM\Query\AST;
-use Doctrine\ORM\Query\AST\ExistsExpression;
-use Doctrine\ORM\Query\AST\Functions;
-use Doctrine\ORM\Query\AST\Functions\FunctionNode;
-use Doctrine\ORM\Query\AST\JoinAssociationPathExpression;
-use Doctrine\ORM\Query\AST\Node;
-use Doctrine\ORM\Query\AST\PathExpression;
 use Doctrine\ORM\Query\Lexer;
-use Doctrine\ORM\Query\ParserResult;
-use Doctrine\ORM\Query\QueryException;
+use Doctrine\ORM\Query\AST\Node;
 use Doctrine\ORM\Query\SqlWalker;
 use Doctrine\ORM\Query\TreeWalker;
+use Doctrine\ORM\Query\ParserResult;
+use Doctrine\ORM\Query\AST\Functions;
+use Doctrine\Deprecations\Deprecation;
+use Doctrine\ORM\Query\QueryException;
 use Doctrine\ORM\Query\TreeWalkerChain;
-use ReflectionClass;
-use function array_intersect;
-use function array_search;
-use function assert;
-use function class_exists;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Query\AST\PathExpression;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Query\AST\ExistsExpression;
+use Doctrine\ORM\Query\AST\Functions\FunctionNode;
+use Doctrine\ORM\Query\AST\JoinAssociationPathExpression;
 use function count;
-use function explode;
-use function implode;
-use function in_array;
-use function interface_exists;
-use function is_string;
-use function sprintf;
+use function assert;
 use function strlen;
 use function strpos;
-use function strrpos;
-use function strtolower;
 use function substr;
+use function explode;
+use function implode;
+use function sprintf;
+use function strrpos;
+use function in_array;
+use function is_string;
+use function strtolower;
+use function array_search;
+use function class_exists;
+use function array_intersect;
+use function interface_exists;
 
-final class Parser
+final class Parser extends \Doctrine\ORM\Query\Parser
 {
 
     /**
@@ -176,9 +176,9 @@ final class Parser
     /**
      * Creates a new query parser object.
      *
-     * @param Query $query The Query to parse.
+     * @param \PHP_SF\System\Database\Query|\Doctrine\ORM\Query $query The Query to parse.
      */
-    public function __construct(Query $query)
+    public function __construct(Query|\Doctrine\ORM\Query $query)
     {
         $this->query = $query;
         $this->em = $query->getEntityManager();
@@ -194,7 +194,7 @@ final class Parser
      *
      * @return void
      */
-    public function setCustomOutputTreeWalker(string $className): void
+    public function setCustomOutputTreeWalker($className): void
     {
         $this->customOutputWalker = $className;
     }
@@ -207,7 +207,7 @@ final class Parser
      *
      * @return void
      */
-    public function addCustomTreeWalker(string $className): void
+    public function addCustomTreeWalker($className): void
     {
         $this->customTreeWalkers[] = $className;
     }
@@ -250,7 +250,7 @@ final class Parser
      *
      * @return void
      */
-    public function free(bool $deep, int $position = 0): void
+    public function free($deep = false, $position = 0)
     {
         // WARNING! Use this method with care. It resets the scanner!
         $this->lexer->resetPosition($position);
@@ -454,7 +454,7 @@ final class Parser
      *
      * @throws QueryException If the tokens don't match.
      */
-    public function match(int $token): void
+    public function match($token)
     {
         $lookaheadType = $this->lexer->lookahead[ 'type' ] ?? null;
 
@@ -495,7 +495,7 @@ final class Parser
      *
      * @throws QueryException
      */
-    public function syntaxError(string $expected = '', array $token = null): void
+    public function syntaxError($expected = '', $token = null)
     {
         if ($token === null) {
             $token = $this->lexer->lookahead;
@@ -1350,7 +1350,7 @@ final class Parser
      *
      * @return PathExpression
      */
-    public function PathExpression(int $expectedTypes): PathExpression
+    public function PathExpression($expectedTypes)
     {
         $identVariable = $this->IdentificationVariable();
         $field = null;
@@ -1717,7 +1717,7 @@ final class Parser
      *
      * @throws QueryException
      */
-    public function semanticalError(string $message = '', array $token = null): void
+    public function semanticalError($message = '', $token = null)
     {
         if ($token === null) {
             $token = $this->lexer->lookahead ?? [ 'position' => 0 ];

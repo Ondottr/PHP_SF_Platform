@@ -308,10 +308,8 @@ final class Locale
     public const ne          = 'Nepali';
     public const nd_ZW       = 'North Ndebele (Zimbabwe)';
     public const nd          = 'North Ndebele';
-    public const nb_NO       = 'Norwegian Bokmål (Norway)';
-    public const nb          = 'Norwegian Bokmål';
-    public const nn_NO       = 'Norwegian Nynorsk (Norway)';
-    public const nn          = 'Norwegian Nynorsk';
+    public const nb          = 'Norsk Bokmål';
+    public const nn          = 'Norsk Nynorsk';
     public const nyn_UG      = 'Nyankole (Uganda)';
     public const nyn         = 'Nyankole';
     public const or_IN       = 'Oriya (India)';
@@ -324,8 +322,7 @@ final class Locale
     public const fa_AF       = 'Persian (Afghanistan)';
     public const fa_IR       = 'Persian (Iran)';
     public const fa          = 'Persian';
-    public const pl_PL       = 'Polish (Poland)';
-    public const pl          = 'Polish';
+    public const pl          = 'Polski';
     public const pt_BR       = 'Portuguese (Brazil)';
     public const pt_GW       = 'Portuguese (Guinea-Bissau)';
     public const pt_MZ       = 'Portuguese (Mozambique)';
@@ -343,10 +340,7 @@ final class Locale
     public const rm          = 'Romansh';
     public const rof_TZ      = 'Rombo (Tanzania)';
     public const rof         = 'Rombo';
-    public const ru_MD       = 'Russian (Moldova)';
-    public const ru_RU       = 'Russian (Russia)';
-    public const ru_UA       = 'Russian (Ukraine)';
-    public const ru          = 'Russian';
+    public const ru          = 'Русский';
     public const rwk_TZ      = 'Rwa (Tanzania)';
     public const rwk         = 'Rwa';
     public const saq_KE      = 'Samburu (Kenya)';
@@ -439,8 +433,7 @@ final class Locale
     public const to          = 'Tonga';
     public const tr_TR       = 'Turkish (Turkey)';
     public const tr          = 'Turkish';
-    public const uk_UA       = 'Ukrainian (Ukraine)';
-    public const uk          = 'Ukrainian';
+    public const uk          = 'Українська';
     public const ur_IN       = 'Urdu (India)';
     public const ur_PK       = 'Urdu (Pakistan)';
     public const ur          = 'Urdu';
