@@ -57,7 +57,7 @@ class DoctrineEntityManager extends EntityManager
      */
     private static function setEntityManager(): void
     {
-        $config = ORMSetup::createAnnotationMetadataConfiguration(
+        $config = ORMSetup::createAttributeMetadataConfiguration(
             self::getEntityDirectories(),
             DEV_MODE,
             __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
@@ -107,7 +107,7 @@ class DoctrineEntityManager extends EntityManager
         self::$cacheEnabled = false;
     }
 
-    public function createQuery( $dql = '' ): Query
+    final public function createQuery( $dql = '' ): Query
     {
         $query = new Query( $this );
         $query->enableResultCache();
@@ -119,7 +119,7 @@ class DoctrineEntityManager extends EntityManager
         return $query;
     }
 
-    public function executeSeveral( Query ...$queries ): bool
+    final public function executeSeveral( Query ...$queries ): bool
     {
         try {
             em()->beginTransaction();
@@ -138,7 +138,7 @@ class DoctrineEntityManager extends EntityManager
         return true;
     }
 
-    public function flushUsingTransaction( AbstractEntity ...$entities ): void
+    final public function flushUsingTransaction( AbstractEntity ...$entities ): void
     {
         try {
             em()->beginTransaction();
@@ -160,7 +160,7 @@ class DoctrineEntityManager extends EntityManager
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    public function flush( $entity = null ): void
+    final public function flush( $entity = null ): void
     {
         if ( $entity instanceof AbstractEntity === false )
             throw new BadMethodCallException( '`Flush` method must be called with entity object!' );
