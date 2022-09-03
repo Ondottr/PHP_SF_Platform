@@ -17,8 +17,8 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\ORM\EntityRepository;
 
-
-abstract class AbstractEntityRepository extends EntityRepository
+abstract class AbstractEntityRepository
+    extends EntityRepository
 {
 
     /**
@@ -26,21 +26,20 @@ abstract class AbstractEntityRepository extends EntityRepository
      */
     abstract protected static function getEntityClass(): string;
 
-    public function add( AbstractEntity $entity, bool $flush = true ): void
+    final public function add( AbstractEntity $entity, bool $flush = true ): void
     {
         em()->persist( $entity );
 
         if ( $flush )
             em()->flush();
-
     }
 
-    public function remove( AbstractEntity $entity, bool $flush = true ): void
+    final public function remove( AbstractEntity $entity, bool $flush = true ): void
     {
         em()->remove( $entity );
 
         if ( $flush )
             em()->flush();
-
     }
+
 }

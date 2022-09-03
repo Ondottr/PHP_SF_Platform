@@ -19,16 +19,16 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Database;
 
-use Exception;
-use Doctrine\ORM\Query;
-use Doctrine\ORM\ORMSetup;
 use BadMethodCallException;
-use Doctrine\ORM\ORMException;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\OptimisticLockException;
-use Symfony\Component\Cache\Adapter\RedisAdapter;
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
+use Doctrine\ORM\ORMSetup;
+use Doctrine\ORM\Query;
+use Exception;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 
 class DoctrineEntityManager extends EntityManager
@@ -76,7 +76,7 @@ class DoctrineEntityManager extends EntityManager
 
         $connection = self::createConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
 
-        self::$entityManager = new DoctrineEntityManager( $connection, $config, $connection->getEventManager() );
+        self::$entityManager = new DoctrineEntityManager( $connection, $config );
     }
 
     public static function getEntityDirectories(): array

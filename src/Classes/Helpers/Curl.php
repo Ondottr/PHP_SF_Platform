@@ -15,8 +15,9 @@
 
 namespace PHP_SF\System\Classes\Helpers;
 
-use function dd;
-
+/**
+ * @deprecated
+ */
 final class Curl
 {
 
@@ -25,6 +26,9 @@ final class Curl
 
     private function __construct() {}
 
+    /**
+     * @deprecated
+     */
     public function debug(): self
     {
         self::$debugEnabled = true;
@@ -32,6 +36,9 @@ final class Curl
         return self::getInstance();
     }
 
+    /**
+     * @deprecated
+     */
     public static function getInstance(): Curl
     {
         if ( !isset( self::$instance ) )
@@ -45,6 +52,9 @@ final class Curl
         self::$instance = new Curl;
     }
 
+    /**
+     * @deprecated
+     */
     public function get( string $url, array $additionalHeaders = [] ): array|false|null
     {
         $ch = curl_init();
@@ -69,6 +79,9 @@ final class Curl
         return $curlResponse;
     }
 
+    /**
+     * @deprecated
+     */
     public function post( string $url, array $payload, array $additionalHeaders = [] ): array|false
     {
         $ch = curl_init( $url );
