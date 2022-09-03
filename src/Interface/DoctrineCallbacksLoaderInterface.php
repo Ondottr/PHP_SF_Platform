@@ -17,8 +17,8 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Interface;
 
-use Doctrine\ORM\Events;
 use Doctrine\Common\EventArgs;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -29,9 +29,6 @@ use JetBrains\PhpStorm\ArrayShape;
 interface DoctrineCallbacksLoaderInterface
 {
 
-    /**
-     * @return array<string>
-     */
     #[ArrayShape( [
         Events::postRemove  => 'string',
         Events::postUpdate  => 'string',

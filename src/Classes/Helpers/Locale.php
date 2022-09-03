@@ -15,10 +15,11 @@
 
 namespace PHP_SF\System\Classes\Helpers;
 
-use ReflectionClass;
-use ReflectionProperty;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
+use ReflectionClass;
+use ReflectionProperty;
+
 use function array_flip;
 use function array_key_exists;
 
@@ -473,6 +474,9 @@ final class Locale
         return array_key_exists( $localeName, self::getLocaleKeysList() );
     }
 
+    /**
+     * @return string[]
+     */
     public static function getLocaleKeysList(): array
     {
         if ( !isset( self::$localeKeysList ) )
@@ -483,18 +487,21 @@ final class Locale
 
     private static function setLocaleKeysList(): void
     {
-        self::$localeKeysList = array_flip( self::getLocalesList() );
+        self::$localeKeysList = array_flip( self::getLocaleNamesList() );
     }
 
-    private static function getLocalesList(): array
+    /**
+     * @return string[]
+     */
+    public static function getLocaleNamesList(): array
     {
         if ( !isset( self::$localesList ) )
-            self::setLocalesList();
+            self::setLocaleNamesList();
 
         return self::$localesList;
     }
 
-    private static function setLocalesList(): void
+    private static function setLocaleNamesList(): void
     {
         self::$localesList = ( new ReflectionClass( self::class ) )
             ->getConstants( ReflectionProperty::IS_PUBLIC );
@@ -505,12 +512,12 @@ final class Locale
         if ( !self::checkLocaleKey( $localeKey ) )
             throw new UndefinedLocaleNameException( $localeKey );
 
-        return self::getLocalesList()[ $localeKey ];
+        return self::getLocaleNamesList()[ $localeKey ];
     }
 
     public static function checkLocaleKey( string $localeKey ): bool
     {
-        return array_key_exists( $localeKey, self::getLocalesList() );
+        return array_key_exists( $localeKey, self::getLocaleNamesList() );
     }
 
     private function __clone(): void {}

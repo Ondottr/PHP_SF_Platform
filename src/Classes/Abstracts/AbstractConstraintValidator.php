@@ -15,12 +15,13 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\Mapping\Column;
+use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use ReflectionClass;
 use ReflectionProperty;
-use Doctrine\ORM\Mapping\Column;
-use Doctrine\Common\Annotations\AnnotationReader;
-use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
+
 use function array_key_exists;
 
 abstract class AbstractConstraintValidator
@@ -64,7 +65,7 @@ abstract class AbstractConstraintValidator
         return $translatablePropertyName->getArguments()[0];
     }
 
-    public function getValidatedClass(): AbstractEntity
+    final public function getValidatedClass(): AbstractEntity
     {
         return $this->validatedClass;
     }
@@ -79,7 +80,7 @@ abstract class AbstractConstraintValidator
             Column::class
         );
 
-        if ( $annotationProperty && $annotationProperty->options )
+        if ( $annotationProperty?->options )
             if ( array_key_exists( 'default', $annotationProperty->options ) )
                 if ( $annotationProperty->options['default'] == $this->getValue() )
                     return true;

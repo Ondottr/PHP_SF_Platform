@@ -6,7 +6,6 @@ use PHP_SF\System\Classes\Abstracts\AbstractView;
 
 final class base extends AbstractView
 {
-
     public function show(): void
     {
         ?>
