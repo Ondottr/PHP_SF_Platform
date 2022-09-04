@@ -13,22 +13,21 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-use App\Kernel;
-use Predis\Client;
 use App\Entity\User;
-use PHP_SF\System\Router;
-use Predis\Pipeline\Pipeline;
+use App\Kernel;
 use Doctrine\ORM\QueryBuilder;
-use PHP_SF\System\Core\Sessions;
-use PHP_SF\System\Database\Redis;
-use PHP_SF\System\Core\Translator;
-use PHP_SF\System\Core\TemplatesCache;
-use PHP_SF\System\Classes\Helpers\Curl;
 use PHP_SF\Framework\Http\Middleware\auth;
+use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
+use PHP_SF\System\Classes\Helpers\Curl;
+use PHP_SF\System\Core\Sessions;
+use PHP_SF\System\Core\Translator;
 use PHP_SF\System\Database\DoctrineEntityManager;
+use PHP_SF\System\Database\Redis;
+use PHP_SF\System\Router;
+use Predis\Client;
+use Predis\Pipeline\Pipeline;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
-use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
 
 require_once __DIR__ . '/time_functions.php';
 require_once __DIR__ . '/view_functions.php';
@@ -114,11 +113,6 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
 function _t( string $stringName, ...$values ): string
 {
     return nl2br( Translator::getInstance()->translate( $stringName, ...$values ) );
-}
-
-function tc(): TemplatesCache
-{
-    return TemplatesCache::getInstance();
 }
 
 function method( string $className, string $name ): ReflectionMethod

@@ -16,10 +16,13 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TemplatesCache;
+use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\Header\head;
-use function is_array;
+
 use function array_key_exists;
+use function is_array;
 
 abstract class AbstractView
 {
@@ -58,27 +61,32 @@ abstract class AbstractView
     /**
      * @noinspection OffsetOperationsInspection
      */
-    final protected function import(string $className, array $data = []): void
+    final protected function import( string $className, array $data = [] ): void
     {
-        if (TEMPLATES_CACHE_ENABLED &&
-            is_array($arr = tc()->getCachedTemplateClass($className))
+        if ( TEMPLATES_CACHE_ENABLED &&
+            is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className ) )
         ) {
-            require_once($arr['fileName']);
+            require_once( $arr['fileName'] );
             $className = $arr['className'];
         }
 
 
-        $class = new $className([...$this->getData(), ...$data]);
+        $class = new $className( [ ...$this->getData(), ...$data ] );
 
-        if ($class instanceof self) {
-            if ($class instanceof head || $class instanceof footer) {
+        if ( $class instanceof self ) {
+            if (
+                $class instanceof head || $class instanceof footer ||
+                Kernel::isAutoTemplateClassesEnables() === false
+            ) {
                 $class->show();
-            } else {
-                $array = explode('\\', $className);
-                echo sprintf('<div class="%s">', end($array));
-                $class->show();
-                echo '</div>';
+
+                return;
             }
+
+            $array = explode( '\\', $className );
+            echo sprintf( '<div class="%s">', end( $array ) );
+            $class->show();
+            echo '</div>';
         }
     }
 

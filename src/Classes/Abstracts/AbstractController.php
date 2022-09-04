@@ -17,9 +17,11 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use App\Kernel;
 use PHP_SF\System\Core\Response;
-use Symfony\Component\Form\FormFactory;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Traits\ControllerTrait;
+use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormInterface;
+
 use function assert;
 use function is_array;
 
@@ -37,7 +39,7 @@ abstract class AbstractController
     final protected function render( string $view, array $data = [] ): Response
     {
         if ( TEMPLATES_CACHE_ENABLED &&
-             is_array( $arr = tc()->getCachedTemplateClass( $view ) )
+             is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $view ) )
         ) {
             require_once( $arr['fileName'] );
             $view = $arr['className'];

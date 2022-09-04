@@ -31,7 +31,7 @@ abstract class AbstractEntityRepository
         em()->persist( $entity );
 
         if ( $flush )
-            em()->flush();
+            em()->flush( $entity );
     }
 
     final public function remove( AbstractEntity $entity, bool $flush = true ): void
@@ -39,7 +39,7 @@ abstract class AbstractEntityRepository
         em()->remove( $entity );
 
         if ( $flush )
-            em()->flush();
+            em()->flush( $entity );
     }
 
 }

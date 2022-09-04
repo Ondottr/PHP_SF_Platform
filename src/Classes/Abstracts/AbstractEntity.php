@@ -15,29 +15,29 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use ReflectionClass;
-use JsonSerializable;
-use ReflectionProperty;
+use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
-use PHP_SF\System\Core\DateTime;
-use PHP_SF\System\Core\DoctrineCallbacksLoader;
-use Doctrine\Common\Annotations\AnnotationReader;
-use PHP_SF\System\Database\DoctrineEntityManager;
-use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
+use JsonSerializable;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
-use function count;
+use PHP_SF\System\Core\DateTime;
+use PHP_SF\System\Core\DoctrineCallbacksLoader;
+use PHP_SF\System\Database\DoctrineEntityManager;
+use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
+use ReflectionClass;
+use ReflectionProperty;
+
+use function array_key_exists;
 use function assert;
+use function count;
 use function is_array;
 use function is_object;
-use function array_key_exists;
 
 
-/**
- * @ORM\MappedSuperclass
- */
+#[ORM\MappedSuperclass]
+#[ORM\HasLifecycleCallbacks]
 abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSerializable
 {
     use ModelPropertyIdTrait;
@@ -327,6 +327,8 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
         foreach ( $properties as $ReflectionProperty ) {
             $propertyName = $ReflectionProperty->getName();
+            if( $propertyName === 'id' )
+                continue;
 
             if ( isset( $this->changedProperties ) && !array_key_exists( $propertyName, $this->changedProperties ) )
                 continue;

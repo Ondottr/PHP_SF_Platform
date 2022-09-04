@@ -2,20 +2,21 @@
 
 namespace PHP_SF\System;
 
-use ReflectionClass;
+use PHP_SF\System\Classes\Helpers\Locale;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\Translator;
+use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
-use PHP_SF\System\Core\TemplatesCache;
-use PHP_SF\System\Classes\Helpers\Locale;
-use Symfony\Component\ErrorHandler\Debug;
-use PHP_SF\System\Database\DoctrineEntityManager;
-use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\ErrorHandler\Debug;
+use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+
+use function array_key_exists;
 use function define;
 use function defined;
 use function in_array;
-use function array_key_exists;
 
 
 final class Kernel
@@ -24,6 +25,9 @@ final class Kernel
     private static string $applicationUserClassName = '';
     private static string $headerTemplateClassName  = header::class;
     private static string $footerTemplateClassName  = footer::class;
+
+    private static bool $isAutoTemplateClassesEnables = true;
+
 
     public function __construct()
     {
@@ -49,6 +53,19 @@ final class Kernel
             rp()->execute();
         });
     }
+
+    public static function isAutoTemplateClassesEnables(): bool
+    {
+        return self::$isAutoTemplateClassesEnables;
+    }
+
+    public function autoTemplateClasses( bool $enabled ): self
+    {
+        self::$isAutoTemplateClassesEnables = $enabled;
+
+        return $this;
+    }
+
 
     public function addControllers(string $path): self
     {

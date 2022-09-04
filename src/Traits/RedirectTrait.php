@@ -10,7 +10,7 @@ trait RedirectTrait
     /**
      * @noinspection PhpTooManyParametersInspection
      */
-    protected function redirectTo(
+    final protected function redirectTo(
         string $linkOrRoute,
         array $withParams = [],
         array $get = [],
@@ -56,6 +56,46 @@ trait RedirectTrait
         );
     }
 
+
+    /**
+     * @noinspection PhpTooManyParametersInspection
+     */
+    private function toRoute(
+        string $routeName,
+        array  $get = [],
+        array  $post = [],
+        array  $errors = [],
+        array  $messages = [],
+        array  $formData = [],
+        array  $with = []
+    ): RedirectResponse {
+        return $this->toUrl(
+            url     : routeLink($routeName, $with),
+            get     : $get,
+            post    : $post,
+            errors  : $errors,
+            messages: $messages,
+            formData: array_merge(
+                          $formData,
+                          isset($this->request) ? $this->request->request->all() : []
+                      )
+        );
+    }
+
+
+    final protected function redirectBack(
+        array  $get = [],
+        array  $post = [],
+        array  $errors = [],
+        array  $messages = [],
+        array  $formData = []
+    ): RedirectResponse {
+        return $this->toUrl(
+            str_replace( $this->request->headers->get('origin'), '', $this->request->headers->get('referer') ),
+            $get, $post, $errors, $messages, $formData );
+    }
+
+
     /**
      * @noinspection PhpTooManyParametersInspection
      */
@@ -82,31 +122,5 @@ trait RedirectTrait
         rc()->setex($formDataKey, 5, json_encode($formData, JSON_THROW_ON_ERROR));
 
         return $redirectId;
-    }
-
-
-    /**
-     * @noinspection PhpTooManyParametersInspection
-     */
-    private function toRoute(
-        string $routeName,
-        array  $get = [],
-        array  $post = [],
-        array  $errors = [],
-        array  $messages = [],
-        array  $formData = [],
-        array  $with = []
-    ): RedirectResponse {
-        return $this->toUrl(
-            url     : routeLink($routeName, $with),
-            get     : $get,
-            post    : $post,
-            errors  : $errors,
-            messages: $messages,
-            formData: array_merge(
-                $formData,
-                isset($this->request) ? $this->request->request->all() : []
-            )
-        );
     }
 }

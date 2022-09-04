@@ -10,11 +10,7 @@ final class base extends AbstractView
     {
         ?>
 
-      <div class="content">
-
         <h1 style="text-align: center;">Hello World!</h1>
-
-      </div>
 
     <?php }
 }

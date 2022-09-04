@@ -15,17 +15,19 @@
 
 namespace PHP_SF\Framework\Http\Controller;
 
-use PHP_SF\System\Kernel;
-use PHP_SF\System\Core\Response;
+use App\Entity\UserGroup;
 use Doctrine\ORM\EntityRepository;
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\Templates\Auth\login_page;
-use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\Templates\Auth\register_page;
 use Doctrine\Persistence\ObjectRepository;
 use PHP_SF\Framework\Http\Middleware\auth;
-use Symfony\Component\HttpFoundation\Request;
+use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Core\RedirectResponse;
+use PHP_SF\System\Core\Response;
+use PHP_SF\System\Kernel;
+use PHP_SF\Templates\Auth\login_page;
+use PHP_SF\Templates\Auth\register_page;
+use Symfony\Component\HttpFoundation\Request;
+
 use function strlen;
 
 
@@ -80,7 +82,7 @@ class AuthController extends AbstractController
 
 
         if ( isset( $errors ) )
-            return $this->redirectTo( 'login_page', errors: $errors );
+            return $this->redirectBack( errors: $errors );
 
 
         auth::logInUser( $user );
@@ -104,14 +106,12 @@ class AuthController extends AbstractController
     public function register_handler(): RedirectResponse
     {
         if ( auth::isAuthenticated() )
-            return $this->redirectTo(
-                routeLink( 'home_page' )
-            );
+            return $this->redirectTo( routeLink( 'home_page' ) );
 
         $login    = trim( htmlspecialchars( $this->request->request->get( 'login' ) ) );
         $password = trim( htmlspecialchars( $this->request->request->get( 'password' ) ) );
         $email    = trim( htmlspecialchars( $this->request->request->get( 'email' ) ) );
-        $accept   = trim( htmlspecialchars( $this->request->request->get( 'accept' ) ) );
+        $accept   = trim( htmlspecialchars( $this->request->request->get( 'accept', '' ) ) );
 
         if ( empty( $password ) || empty( $email ) )
             $errors[] = _t( 'email_and_password_cannot_be_empty' );
@@ -130,20 +130,26 @@ class AuthController extends AbstractController
 
 
         if ( isset( $errors ) )
-            return $this->redirectTo( 'register_page', errors: $errors );
+            return $this->redirectBack( errors: $errors );
 
 
         $user = new ( Kernel::getApplicationUserClassName() )( false );
         $user->setLogin( $login );
         $user->setEmail( $email );
         $user->setPassword( $password );
+        $user->setUserGroup(
+            em()
+                ->getRepository(UserGroup::class)
+                ->find( UserGroup::USER )
+        );
 
         if ( $user->validate() !== true )
-            return $this->redirectTo( 'register_page', errors: $user->getValidationErrors() );
+            return $this->redirectBack( errors: $user->getValidationErrors() );
 
 
-        em()->persist( $user );
-        em()->flush( $user );
+        em()
+            ->getRepository( Kernel::getApplicationUserClassName() )
+            ->add( $user );
 
         auth::logInUser( $user );
 
