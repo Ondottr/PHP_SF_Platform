@@ -30,7 +30,9 @@ final class Kernel
         require_once __DIR__ . '/../functions/functions.php';
 
         if (DEV_MODE === true) {
-            apcu_clear_cache();
+            if ( function_exists( 'apcu_clear_cache' ) )
+                apcu_clear_cache();
+
             Debug::enable();
         }
 
