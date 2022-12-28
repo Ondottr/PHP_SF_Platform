@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types=1 );
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -18,8 +18,8 @@ use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Core\Response;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\Header\head;
-use function is_array;
 use function array_key_exists;
+use function is_array;
 
 abstract class AbstractView
 {
@@ -31,51 +31,64 @@ abstract class AbstractView
         Response::$activeTemplates[] = static::class;
     }
 
-    final public function __unset(string $name): void
+    /**
+     * @noinspection PhpIncorrectMagicMethodSignatureInspection
+     */
+    final public function __unset( string $name ): void
     {
-        unset($this->data[$name]);
+        unset( $this->data[ $name ] );
     }
 
-    #[Pure] final public function __isset(string $name): bool
+    /**
+     * @noinspection PhpIncorrectMagicMethodSignatureInspection
+     */
+    #[Pure] final public function __isset( string $name ): bool
     {
-        return array_key_exists($name, $this->data);
+        return array_key_exists( $name, $this->data );
     }
 
-    final public function __get(string $name): mixed
+    /**
+     * @noinspection PhpIncorrectMagicMethodSignatureInspection
+     * @noinspection PhpInconsistentReturnPointsInspection
+     */
+    final public function __get( string $name ): mixed
     {
-        if (array_key_exists($name, $this->data)) {
-            return $this->data[$name];
+        if ( array_key_exists( $name, $this->data ) ) {
+            return $this->data[ $name ];
         }
 
-        trigger_error("Undefined Property `$name` in view: " . static::class, E_USER_ERROR);
+        trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );
     }
 
-    final public function __set(string $name, mixed $value): void
+    /**
+     * @noinspection PhpIncorrectMagicMethodSignatureInspection
+     */
+    final public function __set( string $name, mixed $value ): void
     {
-        $this->data[$name] = $value;
+        $this->data[ $name ] = $value;
     }
 
     /**
      * @noinspection OffsetOperationsInspection
      */
-    final protected function import(string $className, array $data = []): void
+    final protected function import( string $className, array $data = [] ): void
     {
-        if (TEMPLATES_CACHE_ENABLED &&
-            is_array($arr = tc()->getCachedTemplateClass($className))
+        if ( TEMPLATES_CACHE_ENABLED &&
+            is_array( $arr = tc()->getCachedTemplateClass( $className ) )
         ) {
-            require_once($arr['fileName']);
+            require_once( $arr['fileName'] );
             $className = $arr['className'];
         }
 
 
-        $class = new $className([...$this->getData(), ...$data]);
+        $class = new $className( [ ...$this->getData(), ...$data ] );
 
-        if ($class instanceof self) {
-            if ($class instanceof head || $class instanceof footer) {
+        if ( $class instanceof self ) {
+            if ( $class instanceof head || $class instanceof footer ) {
                 $class->show();
             } else {
-                $array = explode('\\', $className);
-                echo sprintf('<div class="%s">', end($array));
+                $array = explode( '\\', $className );
+                echo sprintf( '<div class="%s">', end( $array ) );
                 $class->show();
                 echo '</div>';
             }

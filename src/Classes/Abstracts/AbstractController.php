@@ -17,10 +17,10 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use App\Kernel;
 use PHP_SF\System\Core\Response;
-use Symfony\Component\Form\FormFactory;
 use PHP_SF\System\Traits\ControllerTrait;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormInterface;
-use function assert;
 use function is_array;
 
 abstract class AbstractController
@@ -37,7 +37,7 @@ abstract class AbstractController
     final protected function render( string $view, array $data = [] ): Response
     {
         if ( TEMPLATES_CACHE_ENABLED &&
-             is_array( $arr = tc()->getCachedTemplateClass( $view ) )
+            is_array( $arr = tc()->getCachedTemplateClass( $view ) )
         ) {
             require_once( $arr['fileName'] );
             $view = $arr['className'];
@@ -45,9 +45,10 @@ abstract class AbstractController
 
         $view = new $view( $data );
 
-        assert( $view instanceof AbstractView );
+        if ( $view instanceof AbstractView === false )
+            throw new InvalidConfigurationException;
 
-        return new Response( view: $view );
+        return new Response( view: $view, dataFromController: $data );
     }
 
     final protected function submitForm( string $type, array $options = [] ): AbstractEntity
