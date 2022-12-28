@@ -21,5 +21,5 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraint;
 #[Attribute( Attribute::TARGET_PROPERTY )]
 class Min extends AbstractConstraint
 {
-    public function __construct( public int $value ) {}
+    public function __construct( public int|float $value ) {}
 }
