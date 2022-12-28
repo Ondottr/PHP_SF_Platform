@@ -1,11 +1,10 @@
-<?php
-declare( strict_types=1 );
+<?php declare( strict_types=1 );
 
 namespace PHP_SF\System\Core;
 
-use JetBrains\PhpStorm\Immutable;
-use JetBrains\PhpStorm\ArrayShape;
 use http\Exception\RuntimeException;
+use JetBrains\PhpStorm\ArrayShape;
+use JetBrains\PhpStorm\Immutable;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use function chr;
 use function in_array;
@@ -27,7 +26,7 @@ final class TemplatesCache
     {
         foreach ( $this->getTemplatesDirectories() as $dir )
             if ( file_exists( ( $path = __DIR__ . '/../../../' . $dir ) ) === false ||
-                 is_dir( $path ) === false
+                is_dir( $path ) === false
             )
                 throw new InvalidConfigurationException( sprintf( 'Invalid template directory “%s”', $dir ) );
 
@@ -112,8 +111,8 @@ final class TemplatesCache
 
 
         if ( ( file_exists( $newFileDirectory ) === false ) &&
-             !mkdir( $newFileDirectory, recursive: true ) &&
-             !is_dir( $newFileDirectory )
+            !mkdir( $newFileDirectory, recursive: true ) &&
+            !is_dir( $newFileDirectory )
         )
             throw new RuntimeException( _t( 'Directory “%s” was not created!', $newFileDirectory ) );
 
@@ -129,7 +128,7 @@ final class TemplatesCache
                 $importedView = trim( explode( '::class', $str )[0] );
 
                 if ( str_contains( $importedView, '\\' ) === false &&
-                     str_contains( $fileContent, sprintf( '\%s;', $importedView ) ) === false
+                    str_contains( $fileContent, sprintf( '\%s;', $importedView ) ) === false
                 ) {
                     $fileContent = str_replace(
                         [
@@ -145,6 +144,8 @@ final class TemplatesCache
 
         //remove redundant characters
         $replace     = [
+            '/<!--(.|\s)*?-->/'                                               => '',
+            //remove HTML comments
             '/\s+/'                                                           => ' ',
             //remove tabs before and after HTML tags
             '/\>[^\S ]+/s'                                                    => '>',
