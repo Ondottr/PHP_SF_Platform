@@ -17,37 +17,29 @@ namespace PHP_SF\System\Traits\ModelProperty;
 
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
-use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Attributes\Validator\Constraints as Validate;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
+use PHP_SF\System\Core\DateTime;
 use function is_string;
 
 trait ModelPropertyUpdatedAtTrait
 {
 
-    /**
-     * @ORM\Column(type="datetime", name="updated_at", options={"default": "CURRENT_TIMESTAMP"}, nullable=true)
-     */
     #[Validate\DateTime]
     #[TranslatablePropertyName( 'updated_at_property' )]
-    protected null|string|DateTimeInterface $updatedAt = null;
+    #[ORM\Column( name: 'updated_at', type: 'datetime', nullable: true, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
+    protected string|DateTimeInterface|null $updatedAt = null;
 
 
-    /**
-     * @return DateTimeInterface
-     */
     final public function getUpdatedAt(): DateTimeInterface
     {
-        if( is_string( $this->updatedAt))
-            return ($this->updatedAt = new DateTime( $this->updatedAt ));
+        if ( is_string( $this->updatedAt ) )
+            return ( $this->updatedAt = new DateTime( $this->updatedAt ) );
 
         return $this->updatedAt;
     }
 
-    /**
-     * @param DateTimeInterface $updatedAt
-     */
-    final public function setUpdatedAt(DateTimeInterface $updatedAt): void
+    final public function setUpdatedAt( DateTimeInterface $updatedAt ): void
     {
         $this->updatedAt = $updatedAt;
     }

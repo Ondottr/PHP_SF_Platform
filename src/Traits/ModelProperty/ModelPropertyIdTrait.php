@@ -7,12 +7,10 @@ use Doctrine\ORM\Mapping as ORM;
 trait ModelPropertyIdTrait
 {
 
-    /**
-     * @ORM\Id
-     * @ORM\Cache
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue()
-     */
+    #[ORM\Id]
+    #[ORM\Cache]
+    #[ORM\Column( type: 'integer' )]
+    #[ORM\GeneratedValue]
     protected int $id;
 
 

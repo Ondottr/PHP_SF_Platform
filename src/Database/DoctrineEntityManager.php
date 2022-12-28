@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpMissingParentCallCommonInspection */
+<?php /** @noinspection ProhibitedClassExtendInspection @noinspection PhpMissingParentCallCommonInspection */
 declare( strict_types=1 );
 
 /*
@@ -20,6 +20,7 @@ declare( strict_types=1 );
 namespace PHP_SF\System\Database;
 
 use BadMethodCallException;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
 use Doctrine\ORM\OptimisticLockException;
@@ -31,16 +32,16 @@ use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 
-class DoctrineEntityManager extends EntityManager
+final class DoctrineEntityManager extends EntityManager
 {
 
     public static bool $cacheEnabled = true;
     /**
      * @var string[]
      */
-    private static array                 $dbRequestsList    = [];
+    private static array $dbRequestsList = [];
     private static DoctrineEntityManager $entityManager;
-    private static array                 $entityDirectories = [];
+    private static array $entityDirectories = [];
 
     public static function getEntityManager( bool $cacheEnabled = true ): DoctrineEntityManager
     {
@@ -57,7 +58,7 @@ class DoctrineEntityManager extends EntityManager
      */
     private static function setEntityManager(): void
     {
-        $config = ORMSetup::createAnnotationMetadataConfiguration(
+        $config = ORMSetup::createAttributeMetadataConfiguration(
             self::getEntityDirectories(),
             DEV_MODE,
             __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
@@ -70,13 +71,13 @@ class DoctrineEntityManager extends EntityManager
 
         $config->setProxyNamespace( 'Proxies' );
 
-        if ( !$config->getMetadataDriverImpl() )
+        if ( $config->getMetadataDriverImpl() === false )
             throw MissingMappingDriverImplementation::create();
 
 
-        $connection = self::createConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
+        $connection = DriverManager::getConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
 
-        self::$entityManager = new DoctrineEntityManager( $connection, $config );
+        self::$entityManager = new self( $connection, $config );
     }
 
     public static function getEntityDirectories(): array
