@@ -25,7 +25,7 @@ class DateTime extends \DateTime
 
     public function __construct(
         string        $datetime = 'now',
-        ?DateTimeZone $timezone = new DateTimeZone( DEFAULT_TIMEZONE['name'] )
+        DateTimeZone|null $timezone = new DateTimeZone( DEFAULT_TIMEZONE['name'] )
     ) {
         parent::__construct( $datetime, $timezone );
     }
