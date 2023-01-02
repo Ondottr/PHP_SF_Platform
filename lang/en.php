@@ -1,6 +1,4 @@
 <?php /** @noinspection ALL @formatter::off */
-
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -45,7 +43,7 @@ return [
     'register' => 'Register',
     //
     //
-    'sec' => 'sec (not_translated)',
+    'sec' => 'sec',
     //
     //
     'to_long_length_validation_error' => 'Field %s is too long. It should have %s character or less.',

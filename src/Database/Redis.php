@@ -1,6 +1,5 @@
 <?php declare( strict_types=1 );
 
-
 namespace PHP_SF\System\Database;
 
 use Predis\Client;
@@ -42,4 +41,5 @@ final class Redis
 
         return self::$rp;
     }
+
 }

@@ -4,30 +4,31 @@ declare( strict_types=1 );
 namespace PHP_SF\System;
 
 use ErrorException;
+use JetBrains\PhpStorm\NoReturn;
+use JetBrains\PhpStorm\Pure;
+use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
+use PHP_SF\System\Core\MiddlewareEventDispatcher;
+use PHP_SF\System\Core\RedirectResponse;
+use PHP_SF\System\Core\Response;
+use PHP_SF\System\Interface\MiddlewareInterface;
+use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
 use ReflectionMethod;
-use RuntimeException;
 use ReflectionUnionType;
-use JetBrains\PhpStorm\Pure;
-use JetBrains\PhpStorm\NoReturn;
-use PHP_SF\System\Core\Response;
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\System\Traits\RedirectTrait;
-use PHP_SF\System\Core\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
-use PHP_SF\System\Interface\MiddlewareInterface;
-use PHP_SF\System\Core\MiddlewareEventDispatcher;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use PHP_SF\System\Classes\Abstracts\AbstractController;
+use RuntimeException;
 use Symfony\Component\ErrorHandler\Error\UndefinedMethodError;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
-use function count;
-use function is_array;
-use function function_exists;
-use function array_key_exists;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
+
 use function apache_request_headers;
+use function array_key_exists;
+use function count;
+use function function_exists;
+use function is_array;
 
 
 class Router
@@ -72,14 +73,14 @@ class Router
     protected static function parseRoutes(): void
     {
         if ( empty( static::$routesList ) ) {
-            if ( ( $routesList = rc()->get( 'routes_list' ) ) === null ) {
+            if ( ( $routesList = rc()->get( 'cache:routes_list' ) ) === null ) {
                 foreach ( static::getControllersDirectories() as $controllersDirectory ) {
                     static::controllersFromDir( $controllersDirectory );
                 }
 
                 if ( DEV_MODE === false ) {
                     rp()->set(
-                        'routes_list',
+                        'cache:routes_list',
                         j_encode( static::$routesList )
                     );
                 }
@@ -89,14 +90,14 @@ class Router
             }
 
             if ( empty( static::$routesByUrl ) ) {
-                if ( ( $routesByUrl = rc()->get( 'routes_by_url_list' ) ) === null ) {
+                if ( ( $routesByUrl = rc()->get( 'cache:routes_by_url_list' ) ) === null ) {
                     foreach ( static::$routesList as $route ) {
                         static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
                     }
 
                     if ( DEV_MODE === false ) {
                         rp()->set(
-                            'routes_by_url_list',
+                            'cache:routes_by_url_list',
                             j_encode( static::$routesByUrl )
                         );
                     }
