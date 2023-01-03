@@ -22,7 +22,6 @@ final class PaginationHelper
 
     private const MESSAGES_PER_PAGE = 10;
 
-
     private int $end;
     private int $page;
     private int $start;
@@ -30,8 +29,13 @@ final class PaginationHelper
     private int $messagesPerPage;
 
 
-    public function __construct( private readonly iterable $arr, int|null $messagesPerPage = null, int|null $page = null ) {
+    public function __construct(
+        private readonly iterable $arr,
+        int|null $messagesPerPage = null,
+        int                 $page = 1
+    ) {
         $messagesPerPage ??= self::MESSAGES_PER_PAGE;
+
         $this->setTotalPages( $messagesPerPage );
 
         $this->setPage( $page );

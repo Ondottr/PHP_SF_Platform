@@ -9,13 +9,14 @@ final class Lang
 
     public static function getCurrentLocale(): string
     {
-        return s()->get('locale', DEFAULT_LOCALE);
+        return s()->get( 'locale', DEFAULT_LOCALE );
     }
 
-    public static function setCurrentLocale(string $locale): void
+    public static function setCurrentLocale( string $locale ): void
     {
-        if (in_array($locale, LANGUAGES_LIST, true)) {
-            s()->set('locale', $locale);
+        if ( in_array( $locale, LANGUAGES_LIST, true ) ) {
+            s()->set( 'locale', $locale );
         }
     }
+
 }

@@ -1,6 +1,5 @@
 <?php /** @noinspection ProhibitedClassExtendInspection @noinspection PhpMissingParentCallCommonInspection */
 declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -19,7 +18,6 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Database;
 
-use BadMethodCallException;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
@@ -50,8 +48,7 @@ final class DoctrineEntityManager extends EntityManager
     private static function setEntityManager(): void
     {
         $config = ORMSetup::createAttributeMetadataConfiguration(
-            self::getEntityDirectories(),
-            DEV_MODE,
+            self::getEntityDirectories(), DEV_MODE,
             __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
             new RedisAdapter( rc() )
         );
@@ -117,8 +114,12 @@ final class DoctrineEntityManager extends EntityManager
         try {
             em()->beginTransaction();
 
-            foreach ( $entities as $entity )
-                em()->flush( $entity );
+            if( !empty( $entities ) ) {
+                foreach ( $entities as $entity )
+                    em()->flush( $entity );
+
+            } else
+                em()->flush();
 
             em()->commit();
         } catch ( Exception $e ) {
@@ -133,9 +134,6 @@ final class DoctrineEntityManager extends EntityManager
      */
     final public function flush( $entity = null ): void
     {
-        if ( $entity instanceof AbstractEntity === false )
-            throw new BadMethodCallException( '`Flush` method must be called with entity object!' );
-
         parent::flush( $entity );
     }
 

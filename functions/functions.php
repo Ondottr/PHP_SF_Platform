@@ -73,10 +73,10 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
             $link = Router::getRouteLink( $routeName );
 
         if ( !empty( $with ) ) {
-            $link = str_replace( [ '{$', '}' ], '', $link );
+            $link = str_replace( [ '{', '}' ], '', $link );
 
             foreach ( $with as $propertyName => $propertyValue )
-                $link = str_replace( $propertyName, (string)$propertyValue, $link );
+                $link = str_replace( sprintf( '$%s', $propertyName ), (string)$propertyValue, $link );
 
         }
 

@@ -1,6 +1,8 @@
 <?php
 declare( strict_types=1 );
 
+use JetBrains\PhpStorm\ArrayShape;
+
 function asset(string $path): string
 {
     return "/$path";
@@ -97,6 +99,7 @@ function showErrors(string $errorType = null, bool $onlyFirst = true): void
 
 function formInput(
     string     $name,
+    #[ArrayShape( [ 'int', 'int' ] )]
     array      $length = [ 1, 255 ],
     string     $type = 'text',
     bool       $isRequired = true,
@@ -108,7 +111,8 @@ function formInput(
     array      $styles = [],
     string|int $id = '',
     string     $checkboxValue = '',
-    bool       $isChecked = false
+    bool       $isChecked = false,
+    array      $customAttributes = []
 ): void {
     $inputStr = '<input ';
     $inputStr .= sprintf(' id="%s" ', ( !empty($id) ? $id : $name ));
@@ -125,6 +129,10 @@ function formInput(
     $inputStr .= ( $type === 'number' && !empty( $minMax ) ) ? sprintf( 'min="%d" max="%d"', $minMax[0], $minMax[1] )
         : '';
     $inputStr .= $isChecked ? ' checked ' : '';
+
+    foreach ( $customAttributes as $attr => $attrValue )
+        $inputStr .= " $attr=\"$attrValue\"" ;
+
     $inputStr .= '>';
 
     echo trim(
@@ -132,7 +140,7 @@ function formInput(
             PHP_EOL,
             '',
             preg_replace(
-                '/\s+/s',
+                '/\s+/',
                 ' ',
                 $inputStr
             )
@@ -146,7 +154,8 @@ function formCheckbox(
     bool       $checked = false,
     array      $classes = [],
     array      $styles = [],
-    string|int $id = ''
+    string|int $id = '',
+    array      $customAttributes = []
 ): void {
     $inputStr = '<input type="checkbox" ';
     $inputStr .= sprintf(' id="%s" ', ( !empty($id) ? $id : $name ));
@@ -155,6 +164,10 @@ function formCheckbox(
     $inputStr .= !empty($classes) ? sprintf('class="%s"', implode(' ', $classes)) : '';
     $inputStr .= $isRequired ? ' required ' : '';
     $inputStr .= ( formValue($name) === 'on' || $checked ) ? 'checked' : '';
+
+    foreach ( $customAttributes as $attr => $attrValue )
+        $inputStr .= " $attr=\"$attrValue\"" ;
+
     $inputStr .= '>';
 
     echo trim(
@@ -172,8 +185,9 @@ function formCheckbox(
 
 function formTextarea(
     string     $name,
+    #[ArrayShape( [ 'int', 'int' ] )]
     array      $length = [ 1, 4096 ],
-    string     $rows = null,
+    int        $rows = null,
     string     $cols = null,
     string     $wrap = 'soft',
     bool       $isRequired = true,
@@ -181,7 +195,8 @@ function formTextarea(
     string     $placeholder = null,
     array      $classes = [],
     array      $styles = [],
-    string|int $id = ''
+    string|int $id = '',
+    array      $customAttributes = []
 ): void {
     $inputStr = '<textarea ';
     $inputStr .= $isRequired ? ' required ' : '';
@@ -191,6 +206,10 @@ function formTextarea(
     $inputStr .= !empty($classes) ? sprintf('class="%s"', implode(' ', $classes)) : '';
     $inputStr .= !empty($styles) ? sprintf(' style="%s" ', implode('; ', $styles)) : '';
     $inputStr .= !empty($length) ? sprintf('minlength="%d" maxlength="%d"', $length[ 0 ], $length[ 1 ]) : '';
+
+    foreach ( $customAttributes as $attr => $attrValue )
+        $inputStr .= " $attr=\"$attrValue\"" ;
+
     $inputStr .= sprintf('>%s</textarea>', $defaultValue ?? formValue($name));
 
     echo trim(

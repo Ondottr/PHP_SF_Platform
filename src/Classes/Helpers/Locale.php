@@ -341,7 +341,7 @@ final class Locale
     public const rm          = 'Romansh';
     public const rof_TZ      = 'Rombo (Tanzania)';
     public const rof         = 'Rombo';
-    public const ru          = 'Русский';
+    public const ru          = 'русский';
     public const rwk_TZ      = 'Rwa (Tanzania)';
     public const rwk         = 'Rwa';
     public const saq_KE      = 'Samburu (Kenya)';

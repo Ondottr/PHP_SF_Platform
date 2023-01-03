@@ -18,7 +18,6 @@ use function define;
 use function defined;
 use function in_array;
 
-
 final class Kernel
 {
 

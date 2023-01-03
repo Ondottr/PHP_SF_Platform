@@ -146,7 +146,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                     $arr          = explode( 'DEFAULT ', $annotationProperty->columnDefinition );
                     $defaultValue = (int)end( $arr );
 
-                    $this->$property = em( $isCacheEnabled )
+                    $this->$property = em()
                         ->getRepository( $targetEntity )
                         ->find( $defaultValue );
                 }

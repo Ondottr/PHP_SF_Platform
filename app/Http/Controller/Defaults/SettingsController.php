@@ -23,6 +23,8 @@ use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\Templates\SettingsPage\change_language_page;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 
+use function in_array;
+
 final class SettingsController extends AbstractController
 {
 
@@ -34,7 +36,7 @@ final class SettingsController extends AbstractController
 
 
     #[Route( url: 'settings/change_language', httpMethod: 'POST', middleware: auth::class )]
-    public function change_language_handler(): RedirectResponse
+    public function change_language_post_handler(): RedirectResponse
     {
         $lang = $this->request->request->get( 'lang', false );
 
@@ -43,7 +45,17 @@ final class SettingsController extends AbstractController
 
         Lang::setCurrentLocale( $lang );
 
-        return $this->redirectTo( 'change_language_page', messages: [ _t( 'language_changed' ) ] );
+        return $this->redirectBack();
     }
+
+
+    #[Route( url: 'settings/change_language/{$lang}', httpMethod: 'GET' )]
+    public function change_language_get_handler( string $lang ): RedirectResponse
+    {
+        Lang::setCurrentLocale( $lang );
+
+        return $this->redirectBack();
+    }
+
 
 }
