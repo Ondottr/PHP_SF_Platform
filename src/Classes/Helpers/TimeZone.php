@@ -1,5 +1,5 @@
-<?php declare( strict_types=1 ); /** @noinspection PhpConstantNamingConventionInspection */
-
+<?php /** @noinspection SpellCheckingInspection @noinspection PhpConstantNamingConventionInspection */
+declare( strict_types=1 );
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -17,7 +17,6 @@ namespace PHP_SF\System\Classes\Helpers;
 
 class TimeZone
 {
-
     public const CI            = [ 'name' => 'Africa/Abidjan', 'offset' => '+00:00' ];
     public const GH            = [ 'name' => 'Africa/Accra', 'offset' => '+00:00' ];
     public const GM            = [ 'name' => 'Africa/Banjul', 'offset' => '+00:00' ];

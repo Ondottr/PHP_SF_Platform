@@ -1,6 +1,5 @@
 <?php /** @noinspection ProhibitedClassExtendInspection @noinspection PhpMissingParentCallCommonInspection */
 declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -23,39 +22,30 @@ use BadMethodCallException;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
-use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Query;
 use Exception;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 
-
 final class DoctrineEntityManager extends EntityManager
 {
 
-    public static bool $cacheEnabled = true;
+    private static self $entityManager;
     /**
-     * @var string[]
+     * @var array<string>
      */
-    private static array $dbRequestsList = [];
-    private static DoctrineEntityManager $entityManager;
     private static array $entityDirectories = [];
 
-    public static function getEntityManager( bool $cacheEnabled = true ): DoctrineEntityManager
-    {
-        self::$cacheEnabled = $cacheEnabled;
 
-        if ( !isset( self::$entityManager ) )
+    public static function getEntityManager(): self
+    {
+        if ( isset( self::$entityManager ) === false )
             self::setEntityManager();
 
         return self::$entityManager;
     }
 
-    /**
-     * @throws ORMException
-     */
     private static function setEntityManager(): void
     {
         $config = ORMSetup::createAttributeMetadataConfiguration(
@@ -88,24 +78,6 @@ final class DoctrineEntityManager extends EntityManager
     public static function addEntityDirectory( string $entityDirectories ): void
     {
         self::$entityDirectories[] = $entityDirectories;
-    }
-
-    /**
-     * @return string[]
-     */
-    public static function getDbRequestsList(): array
-    {
-        return self::$dbRequestsList;
-    }
-
-    public static function addDBRequest( string $dbRequestsList ): void
-    {
-        self::$dbRequestsList[] = $dbRequestsList;
-    }
-
-    public static function disableCache(): void
-    {
-        self::$cacheEnabled = false;
     }
 
     public function createQuery( $dql = '' ): Query
@@ -157,9 +129,6 @@ final class DoctrineEntityManager extends EntityManager
 
     /**
      * @param AbstractEntity|null $entity
-     *
-     * @throws ORMException
-     * @throws OptimisticLockException
      */
     public function flush( $entity = null ): void
     {

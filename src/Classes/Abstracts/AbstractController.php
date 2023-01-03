@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -17,10 +16,12 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use App\Kernel;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Traits\ControllerTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormInterface;
+
 use function is_array;
 
 abstract class AbstractController
@@ -37,7 +38,7 @@ abstract class AbstractController
     final protected function render( string $view, array $data = [] ): Response
     {
         if ( TEMPLATES_CACHE_ENABLED &&
-            is_array( $arr = tc()->getCachedTemplateClass( $view ) )
+            is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $view ) )
         ) {
             require_once( $arr['fileName'] );
             $view = $arr['className'];

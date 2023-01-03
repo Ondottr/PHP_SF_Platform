@@ -6,9 +6,11 @@ use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
+
 use function function_exists;
 use function in_array;
 use function is_array;
+
 use const PHP_SAPI;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
@@ -34,7 +36,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             if ( TEMPLATES_CACHE_ENABLED &&
-                is_array( $arr = tc()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() ) )
+                is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() ) )
             ) {
                 require_once( $arr['fileName'] );
                 $viewClassName = $arr['className'];
@@ -63,7 +65,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
 
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             if ( TEMPLATES_CACHE_ENABLED &&
-                is_array( $arr = tc()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() ) )
+                is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() ) )
             ) {
                 /** @noinspection OffsetOperationsInspection */
                 require_once( $arr['fileName'] );

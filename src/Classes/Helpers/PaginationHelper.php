@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -25,21 +24,14 @@ final class PaginationHelper
 
 
     private int $end;
-
     private int $page;
-
     private int $start;
-
     private int $totalPages;
-
     private int $messagesPerPage;
 
 
-    public function __construct(
-        private iterable $arr,
-        int              $messagesPerPage = self::MESSAGES_PER_PAGE,
-        int              $page = null
-    ) {
+    public function __construct( private readonly iterable $arr, int|null $messagesPerPage = null, int|null $page = null ) {
+        $messagesPerPage ??= self::MESSAGES_PER_PAGE;
         $this->setTotalPages( $messagesPerPage );
 
         $this->setPage( $page );
@@ -48,6 +40,7 @@ final class PaginationHelper
             $this->setPage( $this->getTotalPages() );
 
     }
+
 
     private function setTotalPages( int $messagesPerPage ): void
     {

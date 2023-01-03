@@ -1,9 +1,13 @@
-<?php
-declare( strict_types=1 );
+<?php declare( strict_types=1 );
 
 namespace PHP_SF\System\Core;
 
+use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
+use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
+use PHP_SF\System\Classes\Helpers\Locale;
+use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+
 use function array_key_exists;
 
 final class Translator
@@ -20,6 +24,7 @@ final class Translator
         $this->loadTranslation();
     }
 
+
     private function loadTranslation(): void
     {
         if ( empty( self::$translationDirectories ) )
@@ -35,14 +40,16 @@ final class Translator
                         // @formatter::off
                         file_put_contents(
                             $path,
-                            '<?php /** @noinspection ALL @formatter::off */ return [
+                            <<<'EOF'
+<?php /** @noinspection ALL @formatter::off */ return [
 /**
 * This file was automatically generated
 * You can add new translated strings in format below or use {@see _t()} function.
 * "string_for_translation" string => "Translation for string with arguments: %s, %s"
 * All provided strings in {@see _t()} function will be automatically added to this and another locale translation files
 */
-];'
+];
+EOF
                         ); // @formatter::on
 
                     elseif ( isset( $this->$locale ) && !empty( $this->$locale ) )
@@ -56,8 +63,7 @@ final class Translator
                     if ( DEV_MODE === false )
                         rp()->set( $redisKey, json_encode( $this->$locale ) );
 
-                }
-                else
+                } else
                     $this->$locale = json_decode( $translations, true, 512, JSON_THROW_ON_ERROR );
 
             }
@@ -109,6 +115,92 @@ final class Translator
         return sprintf( ( $this->$locale )[ $string ] ?? $string, ...$values );
     }
 
+    /**
+     * Returns translation from provided object or array and for current or provided locale
+     *
+     * Select localeKey from {@see \PHP_SF\System\Classes\Helpers\Locale}
+     * using methods {@see Locale::getLocaleKey()} and {@see Locale::getLocaleName()}
+     *
+     * Array or object must be in format:
+     *
+     * [ "en" => "English translation", "bg" => "Bulgarian translation" ]
+     *
+     * { "en": "English translation", "bg": "Bulgarian translation" }
+     *
+     * @throws UndefinedLocaleKeyException|UndefinedLocaleNameException
+     * @throws InvalidConfigurationException if provided locale is not supported ( {@see LANGUAGES_LIST} )
+     * @throws RuntimeException if provided object or array is not in correct format or empty
+     */
+    public function translateFromArray( array|object $object, string|null $localeName = null, string|null $localeKey = null ): string
+    {
+        if ( is_object( $object ) )
+            $object = (array)$object;
+
+        if ( $localeName === null && $localeKey === null )
+            // Using current Locale
+            $translateTo = Lang::getCurrentLocale();
+
+        elseif ( $localeName !== null )
+            // Using Locale by provided locale name
+            $translateTo = Locale::getLocaleKey( $localeName );
+
+        elseif ( $localeKey !== null && Locale::checkLocaleKey( $localeKey ) )
+            // Using Locale by provided locale key
+            $translateTo = $localeKey;
+
+        else
+            throw new RuntimeException( 'Invalid locale name or key!' );
+
+
+        // Check if locale is available for translation
+        if ( in_array( $translateTo, LANGUAGES_LIST, true ) === false )
+            throw new InvalidConfigurationException( sprintf( 'Locale "%s" is not supported!', Locale::getLocaleName( $translateTo ) ) );
+
+        if ( count( $object ) === 0 )
+            throw new RuntimeException( 'Empty translation object!' );
+
+
+        // Return translation for current or provided locale if exists
+        if ( array_key_exists( $translateTo, $object ) )
+            return $object[ $translateTo ];
+
+        // Return translation for default locale if exists
+        if ( array_key_exists( DEFAULT_LOCALE, $object ) ) {
+
+            // Return translation for default locale if exists (DEV & TEST ENV ONLY)
+            if ( env( 'app_env' ) !== env( 'PROD_ENV' ) ) {
+//                TODO:: Create log
+//                trigger_error(
+//                    sprintf(
+//                        'Array «%s» missing translation for locale "%s"! Using default locale "%s" translation...',
+//                        j_encode( $object ), Locale::getLocaleName( $translateTo ), Locale::getLocaleName( DEFAULT_LOCALE )
+//                    ), E_USER_WARNING
+//                );
+
+                return $object[ array_key_first( $object ) ] . ' (not translated to ' . Locale::getLocaleName( $translateTo ) . ')';
+            }
+
+            return $object[ DEFAULT_LOCALE ];
+        }
+
+        // Return first translation from array (DEV & TEST ENV ONLY)
+        if ( env( 'app_env' ) !== env( 'PROD_ENV' ) ) {
+//            TODO:: Create log
+//            trigger_error(
+//                sprintf(
+//                    'Array «%s» missing translation for locale "%s"! Using first array key translation...',
+//                    j_encode( $object ), Locale::getLocaleName( $translateTo )
+//                ), E_USER_WARNING
+//            );
+
+            return $object[ array_key_first( $object ) ] . ' (not translated to ' . Locale::getLocaleName( $translateTo ) . ')';
+        }
+
+        // Return first translation from array
+        return $object[ array_key_first( $object ) ];
+    }
+
+
     public static function isSaveEnabled(): bool
     {
         return self::$saveEnabled;
@@ -130,7 +222,6 @@ final class Translator
 
         if ( $recursion )
             $this->addTranslateStringToLocaleFile( $string, false );
-
     }
 
     /**
@@ -175,13 +266,17 @@ final class Translator
         }
     }
 
+    /**
+     * @noinspection PhpIllegalStringOffsetInspection
+     */
     public function updateTranslatedString( string $locale, string $key, string $translation ): string
     {
-        $previousValue = $this->$locale[ $key ];
+        $previousValue         = $this->$locale[ $key ];
         $this->$locale[ $key ] = $translation;
 
         $this->saveLocalesToFiles();
 
         return $previousValue;
     }
+
 }

@@ -16,8 +16,10 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\Header\head;
+
 use function array_key_exists;
 use function is_array;
 
@@ -31,26 +33,16 @@ abstract class AbstractView
         Response::$activeTemplates[] = static::class;
     }
 
-    /**
-     * @noinspection PhpIncorrectMagicMethodSignatureInspection
-     */
     final public function __unset( string $name ): void
     {
         unset( $this->data[ $name ] );
     }
 
-    /**
-     * @noinspection PhpIncorrectMagicMethodSignatureInspection
-     */
     #[Pure] final public function __isset( string $name ): bool
     {
         return array_key_exists( $name, $this->data );
     }
 
-    /**
-     * @noinspection PhpIncorrectMagicMethodSignatureInspection
-     * @noinspection PhpInconsistentReturnPointsInspection
-     */
     final public function __get( string $name ): mixed
     {
         if ( array_key_exists( $name, $this->data ) ) {
@@ -60,9 +52,6 @@ abstract class AbstractView
         trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );
     }
 
-    /**
-     * @noinspection PhpIncorrectMagicMethodSignatureInspection
-     */
     final public function __set( string $name, mixed $value ): void
     {
         $this->data[ $name ] = $value;
@@ -74,7 +63,7 @@ abstract class AbstractView
     final protected function import( string $className, array $data = [] ): void
     {
         if ( TEMPLATES_CACHE_ENABLED &&
-            is_array( $arr = tc()->getCachedTemplateClass( $className ) )
+            is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className ) )
         ) {
             require_once( $arr['fileName'] );
             $className = $arr['className'];
