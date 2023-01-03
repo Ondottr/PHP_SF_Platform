@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -26,25 +25,24 @@ use function is_string;
 trait ModelPropertyCreatedAtTrait
 {
 
-    /**
-     * @ORM\Column(type="datetime", name="created_at", options={"default": "CURRENT_TIMESTAMP"}, nullable=false)
-     */
     #[Validate\DateTime]
     #[TranslatablePropertyName( 'created_at_property' )]
-    #[ORM\Column( name: 'created_at', type: 'datetime', nullable: false, options: [ 'default' => 'CURRENT_TIMESTAMP'] )]
-    protected string|DateTimeInterface $createdAt;
+    #[ORM\Column( name: 'created_at', type: 'datetime', nullable: false, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
+    protected string|DateTimeInterface|null $createdAt;
 
 
     final public function getCreatedAt(): DateTimeInterface
     {
-        if( is_string( $this->createdAt))
-            return ($this->createdAt = new DateTime( $this->createdAt ));
+        if ( is_string( $this->createdAt ) )
+            return ( $this->createdAt = new DateTime( $this->createdAt ) );
 
         return $this->createdAt;
     }
 
-    final public function setCreatedAt(DateTimeInterface $createdAt): void
+    final public function setCreatedAt( DateTimeInterface $createdAt ): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
     }
 }

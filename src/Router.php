@@ -4,64 +4,72 @@ declare( strict_types=1 );
 namespace PHP_SF\System;
 
 use ErrorException;
+use JetBrains\PhpStorm\NoReturn;
+use JetBrains\PhpStorm\Pure;
+use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
+use PHP_SF\System\Core\MiddlewareEventDispatcher;
+use PHP_SF\System\Core\RedirectResponse;
+use PHP_SF\System\Core\Response;
+use PHP_SF\System\Interface\MiddlewareInterface;
+use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
 use ReflectionMethod;
-use RuntimeException;
 use ReflectionUnionType;
-use JetBrains\PhpStorm\Pure;
-use JetBrains\PhpStorm\NoReturn;
-use PHP_SF\System\Core\Response;
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\System\Traits\RedirectTrait;
-use PHP_SF\System\Core\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
-use PHP_SF\System\Interface\MiddlewareInterface;
-use PHP_SF\System\Core\MiddlewareEventDispatcher;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use PHP_SF\System\Classes\Abstracts\AbstractController;
+use RuntimeException;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Error\UndefinedMethodError;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
-use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
-use function count;
-use function is_array;
-use function function_exists;
-use function array_key_exists;
-use function apache_request_headers;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
+use function apache_request_headers;
+use function array_key_exists;
+use function count;
+use function function_exists;
+use function is_array;
 
 class Router
 {
-
     use RedirectTrait;
 
 
-    protected const ALLOWED_HTTP_METHODS = [
+    private static AbstractController $controller;
+    private static JsonResponse|Response|RedirectResponse $routeMethodResponse;
+
+    private const ALLOWED_HTTP_METHODS = [
         'GET' => '', 'POST' => '', 'PUT' => '', 'PATCH' => '', 'DELETE' => '',
     ];
 
-    public static array                                     $links       = [];
-    public static object                                    $currentRoute;
-    protected static array                                  $routeParams = [];
-    protected static Request                                $requestData;
-    protected static JsonResponse|Response|RedirectResponse $routeMethodResponse;
+    public static array    $links       = [];
+    public static object   $currentRoute;
+    private static array   $routeParams = [];
+    private static Request $requestData;
     /**
-     * @var array|object[]
+     * @var array<object>
      */
     private static array $routesList = [];
     /**
-     * @var array|object[]
+     * @var array<object>
      */
-    private static array              $routesByUrl            = [];
-    private static string             $currentHttpMethod;
-    private static array              $controllersDirectories = [];
-    private static AbstractController $controller;
+    private static array  $routesByUrl            = [];
+    private static string $currentHttpMethod;
+    private static array  $controllersDirectories = [];
 
+    private static Kernel $kernel;
 
     private function __construct() {}
 
-    public static function init(): void
+    public static function init( Kernel|null $kernel = null ): void
     {
+        if ( $kernel !== null )
+            self::$kernel = $kernel;
+
+        elseif ( isset( self::$kernel ) === false )
+            throw new InvalidConfigurationException( 'Kernel must be set before calling Router::init() without passing it as a parameter!' );
+
         static::parseRoutes();
 
         if ( static::setCurrentRoute() === true )
@@ -72,14 +80,14 @@ class Router
     protected static function parseRoutes(): void
     {
         if ( empty( static::$routesList ) ) {
-            if ( ( $routesList = rc()->get( 'routes_list' ) ) === null ) {
+            if ( ( $routesList = rc()->get( 'cache:routes_list' ) ) === null ) {
                 foreach ( static::getControllersDirectories() as $controllersDirectory ) {
                     static::controllersFromDir( $controllersDirectory );
                 }
 
                 if ( DEV_MODE === false ) {
                     rp()->set(
-                        'routes_list',
+                        'cache:routes_list',
                         j_encode( static::$routesList )
                     );
                 }
@@ -89,14 +97,14 @@ class Router
             }
 
             if ( empty( static::$routesByUrl ) ) {
-                if ( ( $routesByUrl = rc()->get( 'routes_by_url_list' ) ) === null ) {
+                if ( ( $routesByUrl = rc()->get( 'cache:routes_by_url_list' ) ) === null ) {
                     foreach ( static::$routesList as $route ) {
                         static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
                     }
 
                     if ( DEV_MODE === false ) {
                         rp()->set(
-                            'routes_by_url_list',
+                            'cache:routes_by_url_list',
                             j_encode( static::$routesByUrl )
                         );
                     }
@@ -235,8 +243,8 @@ class Router
             );
 
         if ( !array_key_exists( $data->name, static::$routesList ) &&
-             array_key_exists( $data->httpMethod, static::$links ) &&
-             array_key_exists( $data->url, static::$links[ $data->httpMethod ] )
+            array_key_exists( $data->httpMethod, static::$links ) &&
+            array_key_exists( $data->url, static::$links[ $data->httpMethod ] )
         )
             throw new ConflictHttpException( "Route for url `$data->url` already exists!" );
 
@@ -329,7 +337,8 @@ class Router
 
                         return true;
                     }
-                    elseif ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] ) {
+
+                    if ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] ) {
                         continueLoop:
 
                         break;
@@ -428,7 +437,7 @@ class Router
                 $routeMiddleware = [ $routeMiddleware ];
 
             foreach ( $routeMiddleware as $middleware ) {
-                $middlewareInstance = new $middleware( static::getRequest() );
+                $middlewareInstance = new $middleware( static::getRequest(), self::$kernel );
 
                 new MiddlewareEventDispatcher(
                     $middlewareInstance,

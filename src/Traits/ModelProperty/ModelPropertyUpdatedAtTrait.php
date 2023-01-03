@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -26,24 +25,21 @@ use function is_string;
 trait ModelPropertyUpdatedAtTrait
 {
 
-    /**
-     * @ORM\Column(type="datetime", name="updated_at", options={"default": "CURRENT_TIMESTAMP"}, nullable=true)
-     */
     #[Validate\DateTime]
     #[TranslatablePropertyName( 'updated_at_property' )]
-    #[ORM\Column( name: 'updated_at', type: 'datetime', nullable: true, options: [ 'default' => 'CURRENT_TIMESTAMP'] )]
-    protected null|string|DateTimeInterface $updatedAt = null;
+    #[ORM\Column( name: 'updated_at', type: 'datetime', nullable: true, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
+    protected string|DateTimeInterface|null $updatedAt = null;
 
 
     final public function getUpdatedAt(): DateTimeInterface
     {
-        if( is_string( $this->updatedAt))
-            return ($this->updatedAt = new DateTime( $this->updatedAt ));
+        if ( is_string( $this->updatedAt ) )
+            return ( $this->updatedAt = new DateTime( $this->updatedAt ) );
 
         return $this->updatedAt;
     }
 
-    final public function setUpdatedAt(DateTimeInterface $updatedAt): void
+    final public function setUpdatedAt( DateTimeInterface $updatedAt ): void
     {
         $this->updatedAt = $updatedAt;
     }

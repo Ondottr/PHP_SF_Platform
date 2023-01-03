@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -20,7 +19,7 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraintValidator;
 use function in_array;
 
 /**
- * @property \PHP_SF\System\Attributes\Validator\Constraints\OneOfTheValues constraint
+ * @property OneOfTheValues constraint
  */
 final class OneOfTheValuesValidator extends AbstractConstraintValidator
 {
@@ -32,11 +31,11 @@ final class OneOfTheValuesValidator extends AbstractConstraintValidator
             return true;
 
 
-        if ( !in_array( $val, $this->constraint->values, true ) ) {
+        if ( !in_array( $val, $this->constraint->arr, true ) ) {
             $this->setError(
                 'one_of_the_values_validation_error',
                 _t( $this->getTranslatablePropertyName() ),
-                implode( ', ', $this->constraint->values )
+                implode( ', ', $this->constraint->arr )
             );
 
             return false;

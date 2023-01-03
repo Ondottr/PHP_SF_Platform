@@ -2,16 +2,20 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use ArgumentCountError;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Interface\EventSubscriberInterface;
 use PHP_SF\System\Interface\MiddlewareInterface;
+use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
 use PHP_SF\System\Traits\RedirectTrait;
+use ReflectionClass;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use function array_key_exists;
 
+use function array_key_exists;
 
 abstract class Middleware implements MiddlewareInterface, EventSubscriberInterface
 {
@@ -19,7 +23,8 @@ abstract class Middleware implements MiddlewareInterface, EventSubscriberInterfa
 
 
     public function __construct(
-        protected ?Request $request
+        protected readonly Request|null $request,
+        private readonly Kernel $kernel,
     )
     {
         if (( $middlewareResult = $this->result() ) === true)
@@ -46,27 +51,63 @@ abstract class Middleware implements MiddlewareInterface, EventSubscriberInterfa
 
     abstract public function result(): bool|JsonResponse|RedirectResponse|Response;
 
-
-    public function dispatchEvent(AbstractEventListener $eventListener, mixed $args): bool
+    final protected function changeHeaderTemplateClassName( string $headerClassName ): void
     {
-        if ($eventListener::isExecuted() || !array_key_exists(static::class, $eventListener->getListeners()))
+        $this->kernel->setHeaderTemplateClassName( $headerClassName );
+    }
+
+    final protected function changeFooterTemplateClassName( string $footerClassName ): void
+    {
+        $this->kernel->setFooterTemplateClassName( $footerClassName );
+    }
+
+    final public function dispatchEvent( AbstractEventListener $eventListener, mixed $args ): bool
+    {
+        if ( $eventListener::isExecuted() || !array_key_exists( static::class, $eventListener->getListeners() ) )
             return false;
 
-        foreach ($eventListener->getListeners() as $middleware => $listener)
-            if ($middleware === static::class)
-                break;
+        foreach ( $eventListener->getListeners() as $middleware => $listenerMethod ) {
+            if ( $middleware === self::class )
+                continue;
 
-        $parameters = [];
+            $parameters = [];
 
-        foreach ($listener->getParameters() as $parameter) {
-            foreach ($args as $argument) {
-                if ($argument instanceof ( $parameter->getType()?->getName() ))
-                    $parameters[ $parameter->getName() ] = $argument;
+            $listener = ( new ReflectionClass( $eventListener ) )
+                ->getMethod( $listenerMethod );
+
+            foreach ( $listener->getParameters() as $parameter )
+                foreach ( $args as $argument ) {
+                    $rc = ( new ReflectionClass( $argument ) )
+                        ->getParentClass();
+
+                    if ( $argument instanceof ( $parameter->getType()?->getName() ) ||
+                        ( $rc instanceof ReflectionClass && $rc->getName() === ( $parameter->getType()?->getName() ) )
+                    )
+                        $parameters[ $parameter->getName() ] = $argument;
+                }
+
+
+            try {
+                $listener->invoke( $eventListener, ...$parameters );
+            } catch ( ArgumentCountError $e ) {
+                foreach ( $args as $argument )
+                    $availableArguments[] = $argument::class;
+
+                throw new InvalidConfigurationException(
+                    sprintf(
+                        'The listener method "%s" of the "%s" class requires more arguments than the middleware "%s" can provide. Available arguments for "%s" middleware: %s',
+                        $listenerMethod,
+                        get_class( $eventListener ),
+                        $middleware,
+                        static::class,
+                        implode( ', ', array_values( $availableArguments ) ),
+                    ),
+                    $e->getCode(), $e
+                );
             }
         }
 
         $eventListener::markExecuted();
-        $listener->invoke($eventListener, ...$parameters);
 
         return true;
     }

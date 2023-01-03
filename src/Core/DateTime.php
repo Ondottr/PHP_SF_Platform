@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /**
  *  Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -26,7 +25,7 @@ class DateTime extends \DateTime
 
     public function __construct(
         string        $datetime = 'now',
-        ?DateTimeZone $timezone = new DateTimeZone( DEFAULT_TIMEZONE['name'] )
+        DateTimeZone|null $timezone = new DateTimeZone( DEFAULT_TIMEZONE['name'] )
     ) {
         parent::__construct( $datetime, $timezone );
     }

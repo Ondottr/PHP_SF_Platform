@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -16,11 +15,11 @@
 namespace PHP_SF\Framework\Http\Middleware;
 
 use App\Entity\User;
-use PHP_SF\System\Kernel;
-use PHP_SF\System\Router;
+use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Interface\UserInterface;
-use PHP_SF\System\Classes\Abstracts\Middleware;
+use PHP_SF\System\Kernel;
+use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class auth extends Middleware
@@ -29,28 +28,27 @@ class auth extends Middleware
     public static false|UserInterface $user = false;
 
 
-    final public static function user( bool $cacheEnabled = true ): bool|UserInterface
+    final public static function user(): bool|UserInterface
     {
-        if ( !$cacheEnabled && self::$user !== false ) {
-            return em( false )->getRepository( User::class )->find( self::$user->getId() );
-        }
+        if ( self::$user !== false )
+            return em()
+                ->getRepository( User::class )
+                ->find( self::$user->getId() );
 
         return self::$user;
     }
 
+
     /**
      * @return bool|RedirectResponse|JsonResponse
      */
-    public function result(): bool|RedirectResponse|JsonResponse
+    final public function result(): bool|RedirectResponse|JsonResponse
     {
         self::logInUser();
 
         if ( !self::isAuthenticated() ) {
-            if ( str_starts_with( Router::$currentRoute->url, '/api/' ) ) {
-                return new JsonResponse( [
-                                             'error' => 'Unauthorized!',
-                                         ], JsonResponse::HTTP_UNAUTHORIZED );
-            }
+            if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
+                return new JsonResponse( [ 'error' => 'Unauthorized!' ], JsonResponse::HTTP_UNAUTHORIZED );
 
             return $this->redirectTo( 'login_page' );
         }
@@ -59,7 +57,7 @@ class auth extends Middleware
     }
 
 
-    public static function logInUser( UserInterface $user = null ): void
+    public static function logInUser( UserInterface|null $user = null ): void
     {
         if ( $user === null ) {
             $userId = s()->get( 'session_user_id' );
@@ -69,9 +67,8 @@ class auth extends Middleware
                     ->getRepository( Kernel::getApplicationUserClassName() ) )
                     ->find( $userId );
 
-                if ( $user === null ) {
+                if ( $user === null )
                     return;
-                }
 
                 self::$user = $user;
             }

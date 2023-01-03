@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -15,8 +14,8 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\DBAL\Types\Types;
+use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
@@ -406,7 +405,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     }
 
 
-    public function jsonSerialize(): array|int
+    final public function jsonSerialize(): array|int
     {
         if ( $this instanceof Proxy && self::isForceSerialiseEnabled() === false )
             return $this->id;
@@ -425,12 +424,12 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
         return isset( self::$__force_serialise__ ) && self::$__force_serialise__;
     }
 
-    public function getServerName(): string
+    final public function getServerName(): string
     {
         return $this->serverName;
     }
 
-    public function setServerName( string $serverName ): void
+    final public function setServerName( string $serverName ): void
     {
         $this->serverName = $serverName;
     }

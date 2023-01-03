@@ -33,25 +33,26 @@ final class Kernel
     {
         require_once __DIR__ . '/../functions/functions.php';
 
-        if (DEV_MODE === true) {
-            apcu_clear_cache();
+        if ( DEV_MODE === true ) {
+            if ( function_exists( 'apcu_clear_cache' ) )
+                apcu_clear_cache();
+
             Debug::enable();
         }
 
         $this->setDefaultLocale();
 
-        $this->addControllers(__DIR__ . '/../app/Http/Controller');
+        $this->addControllers( __DIR__ . '/../app/Http/Controller' );
 
-        $this->addEntities(ENTITY_DIRECTORY);
+        $this->addEntities( ENTITY_DIRECTORY );
 
-        $this->addTranslationFiles(__DIR__ . '/../lang');
+        $this->addTranslationFiles( __DIR__ . '/../lang' );
 
-        $this->addTemplatesDirectory('Platform/templates', 'PHP_SF\Templates');
+        $this->addTemplatesDirectory( 'Platform/templates', 'PHP_SF\Templates' );
 
-        register_shutdown_function(static function () {
-
+        register_shutdown_function( static function () {
             rp()->execute();
-        });
+        } );
     }
 
     public static function isAutoTemplateClassesEnables(): bool
@@ -140,13 +141,15 @@ final class Kernel
         return $this;
     }
 
-    public function setHeaderTemplateClassName(string $headerTemplateClassName): self
+    public function setHeaderTemplateClassName( string $headerTemplateClassName ): self
     {
-        if (!class_exists($headerTemplateClassName)) {
-            throw new InvalidConfigurationException(sprintf(
-                                                        'Header template class "%s" does not exist',
-                                                        $headerTemplateClassName
-                                                    ));
+        if ( class_exists( $headerTemplateClassName ) === false ) {
+            throw new InvalidConfigurationException(
+                sprintf(
+                    'Header template class "%s" does not exist',
+                    $headerTemplateClassName
+                )
+            );
         }
 
         self::$headerTemplateClassName = $headerTemplateClassName;
@@ -154,13 +157,15 @@ final class Kernel
         return $this;
     }
 
-    public function setFooterTemplateClassName(string $footerTemplateClassName): self
+    public function setFooterTemplateClassName( string $footerTemplateClassName ): self
     {
-        if (!class_exists($footerTemplateClassName)) {
-            throw new InvalidConfigurationException(sprintf(
-                                                        'Footer template class "%s" does not exist',
-                                                        $footerTemplateClassName
-                                                    ));
+        if ( class_exists( $footerTemplateClassName ) === false ) {
+            throw new InvalidConfigurationException(
+                sprintf(
+                    'Footer template class "%s" does not exist',
+                    $footerTemplateClassName
+                )
+            );
         }
 
         self::$footerTemplateClassName = $footerTemplateClassName;

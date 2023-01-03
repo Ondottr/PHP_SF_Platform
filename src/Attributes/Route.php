@@ -10,10 +10,10 @@ class Route
 {
 
     public function __construct(
-        private string            $url,
-        private string            $httpMethod,
-        private ?string           $name = null,
-        private null|string|array $middleware = null
+        private readonly string            $url,
+        private readonly string            $httpMethod,
+        private readonly string|null       $name = null,
+        private readonly string|array|null $middleware = null
     ) {}
 
 }

@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -21,5 +20,7 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraint;
 #[Attribute( Attribute::TARGET_PROPERTY )]
 class Max extends AbstractConstraint
 {
-    public function __construct( public int $value ) {}
+    public function __construct( public int|float $value )
+    {
+    }
 }

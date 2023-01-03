@@ -69,7 +69,8 @@ class ApiCacheController extends AbstractController
     #[Route( url: 'api/admin_panel/cache_clear/apcu', httpMethod: 'GET', middleware: [ admin::class, api::class ] )]
     public function api_clear_apcu_cache(): JsonResponse
     {
-        apcu_clear_cache();
+        if ( function_exists( 'apcu_clear_cache' ) )
+            apcu_clear_cache();
 
         return new JsonResponse( [ 'status' => 'ok' ], JsonResponse::HTTP_OK );
     }
