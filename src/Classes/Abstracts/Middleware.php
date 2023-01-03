@@ -2,13 +2,16 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use ArgumentCountError;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Interface\EventSubscriberInterface;
 use PHP_SF\System\Interface\MiddlewareInterface;
+use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
 use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -20,7 +23,8 @@ abstract class Middleware implements MiddlewareInterface, EventSubscriberInterfa
 
 
     public function __construct(
-        protected Request|null $request
+        protected readonly Request|null $request,
+        private readonly Kernel $kernel,
     )
     {
         if (( $middlewareResult = $this->result() ) === true)
@@ -47,6 +51,15 @@ abstract class Middleware implements MiddlewareInterface, EventSubscriberInterfa
 
     abstract public function result(): bool|JsonResponse|RedirectResponse|Response;
 
+    final protected function changeHeaderTemplateClassName( string $headerClassName ): void
+    {
+        $this->kernel->setHeaderTemplateClassName( $headerClassName );
+    }
+
+    final protected function changeFooterTemplateClassName( string $footerClassName ): void
+    {
+        $this->kernel->setFooterTemplateClassName( $footerClassName );
+    }
 
     final public function dispatchEvent( AbstractEventListener $eventListener, mixed $args ): bool
     {
@@ -54,7 +67,7 @@ abstract class Middleware implements MiddlewareInterface, EventSubscriberInterfa
             return false;
 
         foreach ( $eventListener->getListeners() as $middleware => $listenerMethod ) {
-            if ( $middleware === static::class )
+            if ( $middleware === self::class )
                 continue;
 
             $parameters = [];
@@ -63,12 +76,35 @@ abstract class Middleware implements MiddlewareInterface, EventSubscriberInterfa
                 ->getMethod( $listenerMethod );
 
             foreach ( $listener->getParameters() as $parameter )
-                foreach ( $args as $argument )
-                    if ( $argument instanceof ( $parameter->getType()?->getName() ) )
+                foreach ( $args as $argument ) {
+                    $rc = ( new ReflectionClass( $argument ) )
+                        ->getParentClass();
+
+                    if ( $argument instanceof ( $parameter->getType()?->getName() ) ||
+                        ( $rc instanceof ReflectionClass && $rc->getName() === ( $parameter->getType()?->getName() ) )
+                    )
                         $parameters[ $parameter->getName() ] = $argument;
+                }
 
 
-            $listener->invoke( $eventListener, ...$parameters );
+            try {
+                $listener->invoke( $eventListener, ...$parameters );
+            } catch ( ArgumentCountError $e ) {
+                foreach ( $args as $argument )
+                    $availableArguments[] = $argument::class;
+
+                throw new InvalidConfigurationException(
+                    sprintf(
+                        'The listener method "%s" of the "%s" class requires more arguments than the middleware "%s" can provide. Available arguments for "%s" middleware: %s',
+                        $listenerMethod,
+                        get_class( $eventListener ),
+                        $middleware,
+                        static::class,
+                        implode( ', ', array_values( $availableArguments ) ),
+                    ),
+                    $e->getCode(), $e
+                );
+            }
         }
 
         $eventListener::markExecuted();
