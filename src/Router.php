@@ -18,6 +18,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionUnionType;
 use RuntimeException;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Error\UndefinedMethodError;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,39 +31,45 @@ use function count;
 use function function_exists;
 use function is_array;
 
-
 class Router
 {
-
     use RedirectTrait;
 
 
-    protected const ALLOWED_HTTP_METHODS = [
+    private static AbstractController $controller;
+    private static JsonResponse|Response|RedirectResponse $routeMethodResponse;
+
+    private const ALLOWED_HTTP_METHODS = [
         'GET' => '', 'POST' => '', 'PUT' => '', 'PATCH' => '', 'DELETE' => '',
     ];
 
-    public static array                                     $links       = [];
-    public static object                                    $currentRoute;
-    protected static array                                  $routeParams = [];
-    protected static Request                                $requestData;
-    protected static JsonResponse|Response|RedirectResponse $routeMethodResponse;
+    public static array    $links       = [];
+    public static object   $currentRoute;
+    private static array   $routeParams = [];
+    private static Request $requestData;
     /**
-     * @var array|object[]
+     * @var array<object>
      */
     private static array $routesList = [];
     /**
-     * @var array|object[]
+     * @var array<object>
      */
-    private static array              $routesByUrl            = [];
-    private static string             $currentHttpMethod;
-    private static array              $controllersDirectories = [];
-    private static AbstractController $controller;
+    private static array  $routesByUrl            = [];
+    private static string $currentHttpMethod;
+    private static array  $controllersDirectories = [];
 
+    private static Kernel $kernel;
 
     private function __construct() {}
 
-    public static function init(): void
+    public static function init( Kernel|null $kernel = null ): void
     {
+        if ( $kernel !== null )
+            self::$kernel = $kernel;
+
+        elseif ( isset( self::$kernel ) === false )
+            throw new InvalidConfigurationException( 'Kernel must be set before calling Router::init() without passing it as a parameter!' );
+
         static::parseRoutes();
 
         if ( static::setCurrentRoute() === true )
@@ -236,8 +243,8 @@ class Router
             );
 
         if ( !array_key_exists( $data->name, static::$routesList ) &&
-             array_key_exists( $data->httpMethod, static::$links ) &&
-             array_key_exists( $data->url, static::$links[ $data->httpMethod ] )
+            array_key_exists( $data->httpMethod, static::$links ) &&
+            array_key_exists( $data->url, static::$links[ $data->httpMethod ] )
         )
             throw new ConflictHttpException( "Route for url `$data->url` already exists!" );
 
@@ -330,7 +337,8 @@ class Router
 
                         return true;
                     }
-                    elseif ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] ) {
+
+                    if ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] ) {
                         continueLoop:
 
                         break;
@@ -429,7 +437,7 @@ class Router
                 $routeMiddleware = [ $routeMiddleware ];
 
             foreach ( $routeMiddleware as $middleware ) {
-                $middlewareInstance = new $middleware( static::getRequest() );
+                $middlewareInstance = new $middleware( static::getRequest(), self::$kernel );
 
                 new MiddlewareEventDispatcher(
                     $middlewareInstance,

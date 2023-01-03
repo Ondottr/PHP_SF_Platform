@@ -2,20 +2,21 @@
 
 namespace PHP_SF\System;
 
-use ReflectionClass;
+use PHP_SF\System\Classes\Helpers\Locale;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\Translator;
+use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
-use PHP_SF\System\Core\TemplatesCache;
-use PHP_SF\System\Classes\Helpers\Locale;
-use Symfony\Component\ErrorHandler\Debug;
-use PHP_SF\System\Database\DoctrineEntityManager;
-use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\ErrorHandler\Debug;
+use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+
+use function array_key_exists;
 use function define;
 use function defined;
 use function in_array;
-use function array_key_exists;
 
 
 final class Kernel
@@ -29,7 +30,7 @@ final class Kernel
     {
         require_once __DIR__ . '/../functions/functions.php';
 
-        if (DEV_MODE === true) {
+        if ( DEV_MODE === true ) {
             if ( function_exists( 'apcu_clear_cache' ) )
                 apcu_clear_cache();
 
@@ -38,18 +39,17 @@ final class Kernel
 
         $this->setDefaultLocale();
 
-        $this->addControllers(__DIR__ . '/../app/Http/Controller');
+        $this->addControllers( __DIR__ . '/../app/Http/Controller' );
 
-        $this->addEntities(ENTITY_DIRECTORY);
+        $this->addEntities( ENTITY_DIRECTORY );
 
-        $this->addTranslationFiles(__DIR__ . '/../lang');
+        $this->addTranslationFiles( __DIR__ . '/../lang' );
 
-        $this->addTemplatesDirectory('Platform/templates', 'PHP_SF\Templates');
+        $this->addTemplatesDirectory( 'Platform/templates', 'PHP_SF\Templates' );
 
-        register_shutdown_function(static function () {
-
+        register_shutdown_function( static function () {
             rp()->execute();
-        });
+        } );
     }
 
     public function addControllers(string $path): self
@@ -125,13 +125,15 @@ final class Kernel
         return $this;
     }
 
-    public function setHeaderTemplateClassName(string $headerTemplateClassName): self
+    public function setHeaderTemplateClassName( string $headerTemplateClassName ): self
     {
-        if (!class_exists($headerTemplateClassName)) {
-            throw new InvalidConfigurationException(sprintf(
-                                                        'Header template class "%s" does not exist',
-                                                        $headerTemplateClassName
-                                                    ));
+        if ( class_exists( $headerTemplateClassName ) === false ) {
+            throw new InvalidConfigurationException(
+                sprintf(
+                    'Header template class "%s" does not exist',
+                    $headerTemplateClassName
+                )
+            );
         }
 
         self::$headerTemplateClassName = $headerTemplateClassName;
@@ -139,13 +141,15 @@ final class Kernel
         return $this;
     }
 
-    public function setFooterTemplateClassName(string $footerTemplateClassName): self
+    public function setFooterTemplateClassName( string $footerTemplateClassName ): self
     {
-        if (!class_exists($footerTemplateClassName)) {
-            throw new InvalidConfigurationException(sprintf(
-                                                        'Footer template class "%s" does not exist',
-                                                        $footerTemplateClassName
-                                                    ));
+        if ( class_exists( $footerTemplateClassName ) === false ) {
+            throw new InvalidConfigurationException(
+                sprintf(
+                    'Footer template class "%s" does not exist',
+                    $footerTemplateClassName
+                )
+            );
         }
 
         self::$footerTemplateClassName = $footerTemplateClassName;
