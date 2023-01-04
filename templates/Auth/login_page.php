@@ -14,6 +14,7 @@
 
 namespace PHP_SF\Templates\Auth;
 
+use App\AdminPanelView\Layout\Components\admin_panel_errors_block_component;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 
 final class login_page extends AbstractView
@@ -26,7 +27,7 @@ final class login_page extends AbstractView
 
             <form action="" method="POST">
 
-                <?php showErrors() ?>
+<!--                --><?php //showErrors() ?>
 
                 <table>
                     <tbody>

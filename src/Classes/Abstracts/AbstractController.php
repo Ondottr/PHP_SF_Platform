@@ -16,6 +16,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use App\Kernel;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Traits\ControllerTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Form\FormFactory;

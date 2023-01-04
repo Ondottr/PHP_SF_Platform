@@ -18,6 +18,23 @@ use const PHP_SAPI;
 final class RedirectResponse extends Response
 {
 
+    public const ALERT_PRIMARY   = 'primary';
+    public const ALERT_SECONDARY = 'secondary';
+    public const ALERT_SUCCESS   = 'success';
+    public const ALERT_DANGER    = 'danger';
+    public const ALERT_WARNING   = 'warning';
+    public const ALERT_INFO      = 'info';
+
+    public const ALERT_TYPES = [
+        self::ALERT_PRIMARY,
+        self::ALERT_SECONDARY,
+        self::ALERT_SUCCESS,
+        self::ALERT_DANGER,
+        self::ALERT_WARNING,
+        self::ALERT_INFO,
+    ];
+
+
     public function __construct(
         #[Immutable] private string $targetUrl,
         #[Immutable] private ?float $requestDataId = null
@@ -52,13 +69,13 @@ final class RedirectResponse extends Response
 
         ?>
 
-      <script>
-        history.replaceState({}, '', '<?= $this->getTargetUrl() ?><?php if (!empty($_GET)) {
-            echo '?';
-        } ?><?php foreach ($_GET as $key => $value) {
-            echo "$key=$value&";
-        } ?>');
-      </script>
+        <script>
+            history.replaceState({}, '', '<?= $this->getTargetUrl() ?><?php if (!empty($_GET)) {
+                echo '?';
+            } ?><?php foreach ($_GET as $key => $value) {
+                echo "$key=$value&";
+            } ?>');
+        </script>
 
         <?php
 
@@ -79,7 +96,7 @@ final class RedirectResponse extends Response
         return $this->targetUrl;
     }
 
-    public function getRequestDataId(): ?float
+    public function getRequestDataId(): float|null
     {
         return $this->requestDataId;
     }

@@ -47,55 +47,48 @@ function formValue(string $name): string
     return (string)( $GLOBALS['form_data'][ $name ] ?? '' );
 }
 
-function showMessages(string $messageType = null, bool $onlyFirst = true): void
-{
-    $messages = getMessages($messageType);
 
-    if (empty($messages)) {
-        return;
-    }
-
-    echo '<div class="success">';
-
-    if (!is_iterable($messages)) {
-        echo $messages;
-    } else {
-        foreach ($messages as $message) {
-            echo $message . ' <br />';
-
-            if ($onlyFirst) {
-                break;
-            }
-        }
-    }
-
-    echo '</div>';
-}
-
-function showErrors(string $errorType = null, bool $onlyFirst = true): void
-{
-    $errors = getErrors($errorType);
-
-    if (empty($errors)) {
-        return;
-    }
-
-    echo '<div class="error">';
-
-    if (!is_iterable($errors)) {
-        echo $errors;
-    } else {
-        foreach ($errors as $error) {
-            echo $error . ' <br />';
-
-            if ($onlyFirst) {
-                break;
-            }
-        }
-    }
-
-    echo '</div>';
-}
+//function showMessages( string $messageType = null, bool $onlyFirst = true ): void
+//{
+//    $messages = getMessages( $messageType );
+//
+//    if ( empty( $messages ) )
+//        return;
+//
+//    if ( is_iterable( $messages ) === false )
+//        echo $messages;
+//
+//    else {
+//        foreach ( $messages as $message ) {
+//            echo $message . ' <br />';
+//
+//            if ( $onlyFirst )
+//                break;
+//        }
+//    }
+//}
+//
+//
+//function showErrors( string $errorType = null, bool $onlyFirst = true ): void
+//{
+//    $errors = getErrors( $errorType );
+//
+//    if ( empty( $errors ) )
+//        return;
+//
+//    if ( is_iterable( $errors ) === false )
+//        echo $errors;
+//
+//    else {
+//        foreach ( $errors as $error ) {
+//            echo $error . ' <br />';
+//
+//            if ( $onlyFirst )
+//                break;
+//
+//        }
+//    }
+//}
 
 function formInput(
     string     $name,

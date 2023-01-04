@@ -38,6 +38,12 @@ class auth extends Middleware
         return self::$user;
     }
 
+    public static function logOutUser(): void
+    {
+        s()->clear();
+        self::$user = false;
+    }
+
 
     /**
      * @return bool|RedirectResponse|JsonResponse
