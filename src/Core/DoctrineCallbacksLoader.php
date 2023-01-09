@@ -1,6 +1,4 @@
 <?php /** @noinspection MagicMethodsValidityInspection */ declare( strict_types=1 );
-
-
 /**
  *  Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -14,20 +12,17 @@
  *  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 namespace PHP_SF\System\Core;
 
-use Doctrine\ORM\Events;
 use Doctrine\Common\EventArgs;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
-use PHP_SF\System\Interface\DoctrineCallbacksLoaderInterface;
 use PHP_SF\System\Classes\Abstracts\AbstractDoctrineLifecycleCallback;
-use function in_array;
-use function array_key_exists;
+use PHP_SF\System\Interface\DoctrineCallbacksLoaderInterface;
 
-/**
- * @ORM\HasLifecycleCallbacks
- */
+use function array_key_exists;
+use function in_array;
+
 abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterface
 {
 
@@ -42,52 +37,45 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
         Events::postUpdate,
     ];
 
-    /**
-     * @ORM\PreFlush
-     */
+    #[ORM\PreFlush]
     final public function __preFlush( EventArgs $args ): void
     {
         $this->getCallbackClass( Events::preFlush, $args )
              ?->callback();
     }
 
-    final public function getCallbackClass( string $callback, EventArgs $args ): ?AbstractDoctrineLifecycleCallback
+    final public function getCallbackClass( string $callback, EventArgs $args ): AbstractDoctrineLifecycleCallback|null
     {
-        return !in_array( $callback, self::AVAILABLE_CALLBACKS, true ) ||
-               !array_key_exists( $callback, $this->getLifecycleCallbacks() ) ? null
-            : new ( $this->getLifecycleCallbacks()[ $callback ] )( $this, $args );
+        if ( in_array( $callback, self::AVAILABLE_CALLBACKS, true ) === false ||
+            array_key_exists( $callback, $this->getLifecycleCallbacks() ) === false
+        )
+            return null;
+
+        return new ( $this->getLifecycleCallbacks()[ $callback ] )( $this, $args );
     }
 
-    /**
-     * @ORM\PreRemove
-     */
+    #[ORM\PreRemove]
     final public function __preRemove( EventArgs $args ): void
     {
         $this->getCallbackClass( Events::preRemove, $args )
              ?->callback();
     }
 
-    /**
-     * @ORM\PrePersist
-     */
+    #[ORM\PrePersist]
     final public function __prePersist( EventArgs $args ): void
     {
         $this->getCallbackClass( Events::prePersist, $args )
              ?->callback();
     }
 
-    /**
-     * @ORM\PreUpdate
-     */
+    #[ORM\PreUpdate]
     final public function __preUpdate( EventArgs $args ): void
     {
         $this->getCallbackClass( Events::preUpdate, $args )
              ?->callback();
     }
 
-    /**
-     * @ORM\PostRemove
-     */
+    #[ORM\PostRemove]
     final public function __postRemove( EventArgs $args ): void
     {
         static::clearRepositoryCache();
@@ -97,9 +85,7 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
              ?->callback();
     }
 
-    /**
-     * @ORM\PostPersist
-     */
+    #[ORM\PostPersist]
     final public function __postPersist( EventArgs $args ): void
     {
         static::clearRepositoryCache();
@@ -109,18 +95,14 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
              ?->callback();
     }
 
-    /**
-     * @ORM\PostLoad
-     */
+    #[ORM\PostLoad]
     final public function __postLoad( EventArgs $args ): void
     {
         $this->getCallbackClass( Events::postLoad, $args )
              ?->callback();
     }
 
-    /**
-     * @ORM\PostUpdate
-     */
+    #[ORM\PostUpdate]
     final public function __postUpdate( EventArgs $args ): void
     {
         static::clearRepositoryCache();

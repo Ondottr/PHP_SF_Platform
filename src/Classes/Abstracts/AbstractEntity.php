@@ -14,8 +14,8 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
@@ -49,14 +49,13 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     private array        $validationErrors;
 
 
-    public function __construct( bool $isCacheEnabled = true )
+    public function __construct()
     {
-        $this->setDefaultValues( $isCacheEnabled );
+        $this->setDefaultValues();
     }
 
-    /** @noinspection PhpVariableVariableInspection */
 
-    private function setDefaultValues( bool $isCacheEnabled = true ): void
+    private function setDefaultValues(): void
     {
         $annotations     = new AnnotationReader();
         $reflectionClass = new ReflectionClass( static::class );
