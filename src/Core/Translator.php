@@ -131,7 +131,7 @@ EOF
      * @throws InvalidConfigurationException if provided locale is not supported ( {@see LANGUAGES_LIST} )
      * @throws RuntimeException if provided object or array is not in correct format or empty
      */
-    public function translateFromArray( array|object $object, string|null $localeName = null, string|null $localeKey = null ): string
+    public function translateFromArray( array|object $object, string|null $localeName = null, string|null $localeKey = null ): string|array|object
     {
         if ( is_object( $object ) )
             $object = (array)$object;

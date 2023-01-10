@@ -457,11 +457,9 @@ class Router
     }
 
     #[NoReturn]
-    protected static function sendRouteMethodResponse(): never
+    protected static function sendRouteMethodResponse(): void
     {
         static::$routeMethodResponse->send();
-
-        die();
     }
 
     #[Pure]

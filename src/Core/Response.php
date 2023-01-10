@@ -32,7 +32,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
      * @noinspection PhpMissingParentCallCommonInspection
      * @noinspection OffsetOperationsInspection
      */
-    #[NoReturn] public function send(): never
+    #[NoReturn] public function send(): static
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             if ( TEMPLATES_CACHE_ENABLED &&
@@ -91,8 +91,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         elseif ( !in_array( PHP_SAPI, [ 'cli', 'phpdbg' ], true ) )
             self::closeOutputBuffers( 0, true );
 
-
-        die();
+        return $this;
     }
 
     public function getDataFromController(): array
