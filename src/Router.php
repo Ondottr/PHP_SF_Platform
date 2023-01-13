@@ -447,11 +447,58 @@ class Router
         }
     }
 
+    /**
+     * @throws ReflectionException
+     * @throws RouteParameterException
+     */
     private static function initializeRouteMethod(): void
     {
-        static::$routeMethodResponse = ( self::$controller )->{static::$currentRoute->method}(
-            ...static::$routeParams
-        );
+        $reflectionMethod = new ReflectionMethod( static::$currentRoute->class, static::$currentRoute->method );
+        $methodParameters = $reflectionMethod->getParameters();
+        $methodParametersCount = count( $methodParameters );
+        if ( $methodParametersCount === 0 ) {
+            if ( count( static::$routeParams ) !== 0 )
+                throw new RouteParameterException(
+                    sprintf( 'Method parameters count in the %s::%s route do not match the variables count from route URL!',
+                        static::$currentRoute->class, $reflectionMethod->getName()
+                    )
+                );
+
+            static::$routeMethodResponse = $reflectionMethod->invoke( self::$controller );
+
+            return;
+        }
+
+        $methodParametersValues = [];
+        foreach ( $methodParameters as $reflectionParameter ) {
+            if ( $reflectionParameter->getType() instanceof ReflectionUnionType )
+                throw new RouteParameterException(
+                    sprintf( 'Method parameter "%s" in the %s::%s route cannot be a union type!',
+                        $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
+                    )
+                );
+
+            $methodParametersValues[] = static::$routeParams[ $reflectionParameter->getName() ];
+
+        }
+
+        if ( $methodParametersCount !== count( $methodParametersValues ) || $methodParametersCount !== count( static::$routeParams ) )
+            throw new RouteParameterException(
+                sprintf( 'Method parameters count in the %s::%s route do not match the variables count from route URL!',
+                    static::$currentRoute->class, $reflectionMethod->getName()
+                )
+            );
+
+
+        try {
+            static::$routeMethodResponse = $reflectionMethod->invokeArgs( self::$controller, $methodParametersValues );
+        } catch ( ReflectionException $e ) {
+            throw new RouteParameterException(
+                sprintf( 'Method parameters in the %s::%s route do not match the variables from route URL!',
+                    static::$currentRoute->class, $reflectionMethod->getName()
+                ), $e->getCode(), $e
+            );
+        }
     }
 
     #[NoReturn]
