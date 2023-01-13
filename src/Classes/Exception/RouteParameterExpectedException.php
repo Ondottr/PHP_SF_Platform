@@ -15,17 +15,14 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-use Exception;
-
-final class RouteParameterExpectedException extends Exception
+final class RouteParameterExpectedException extends RouteParameterException
 {
     public function __construct( string $routeName, string $parameter )
     {
         parent::__construct(
             sprintf(
                 'Route parameter `%s` expected for the "%s" route',
-                $parameter,
-                $routeName
+                $parameter, $routeName
             )
         );
     }

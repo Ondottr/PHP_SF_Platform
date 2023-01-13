@@ -8,7 +8,10 @@ function asset(string $path): string
     return "/$path";
 }
 
-function getMessages(string $messageType = null): array|string|false
+/**
+ * @noinspection GlobalVariableUsageInspection
+ */
+function getMessages( string $messageType = null): array|string|false
 {
     if (!array_key_exists('messages', $GLOBALS) || empty($GLOBALS[ 'messages' ])) {
         return [];
@@ -25,7 +28,10 @@ function getMessages(string $messageType = null): array|string|false
     return false;
 }
 
-function getErrors(string $errorType = null): array|string|false
+/**
+ * @noinspection GlobalVariableUsageInspection
+ */
+function getErrors( string $errorType = null): array|string|false
 {
     if (!array_key_exists('errors', $GLOBALS) || empty($GLOBALS[ 'errors' ])) {
         return [];
@@ -42,7 +48,10 @@ function getErrors(string $errorType = null): array|string|false
     return false;
 }
 
-function formValue(string $name): string
+/**
+ * @noinspection GlobalVariableUsageInspection
+ */
+function formValue( string $name): string
 {
     return (string)( $GLOBALS['form_data'][ $name ] ?? '' );
 }
@@ -116,12 +125,18 @@ function formInput(
     $inputStr .= sprintf(' value="%s" ', ( !empty(formValue($name)) ? formValue($name) : $defaultValue ));
     $inputStr .= $isRequired ? ' required ' : '';
     $inputStr .= !empty($placeholder) ? sprintf(' placeholder="%s" ', $placeholder) : '';
-    $inputStr .= !empty($styles) ? sprintf(' style="%s" ', implode('; ', $styles)) : '';
     $inputStr .= !empty($classes) ? sprintf('class="%s"', implode(' ', $classes)) : '';
     $inputStr .= !empty($length) ? sprintf('minlength="%d" maxlength="%d"', $length[ 0 ], $length[ 1 ]) : '';
     $inputStr .= ( $type === 'number' && !empty( $minMax ) ) ? sprintf( 'min="%d" max="%d"', $minMax[0], $minMax[1] )
         : '';
     $inputStr .= $isChecked ? ' checked ' : '';
+
+    if ( empty( $styles ) === false ) {
+        $inputStr .= ' style="';
+        foreach ( $styles as $styleName => $styleValue )
+            $inputStr .= sprintf( '%s: %s; ', $styleName, $styleValue );
+        $inputStr .= '" ';
+    }
 
     foreach ( $customAttributes as $attr => $attrValue )
         $inputStr .= " $attr=\"$attrValue\"" ;

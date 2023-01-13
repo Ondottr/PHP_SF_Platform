@@ -52,7 +52,7 @@ trait RedirectTrait
      * If request already has a form data with the same name, it will be replaced <br />
      * Works with all HTTP methods, not only POST
      *
-     * @return \PHP_SF\System\Core\RedirectResponse
+     * @return RedirectResponse
      */
     final protected function redirectTo( string $linkOrRoute, array|null $withParams = null, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse {
         $withParams ??= [];
@@ -80,7 +80,7 @@ trait RedirectTrait
         $formData ??= [];
 
         return $this->toUrl(
-            str_replace( $this->request->headers->get('origin'), '', $this->request->headers->get('referer') ),
+            str_replace( $this->request->headers->get( 'origin' ) ?? [ $this->request->headers->get( 'host' ), 'https://', 'http://' ], '', $this->request->headers->get( 'referer' ) ),
             $get, $post, $errors, $messages, $formData
         );
     }

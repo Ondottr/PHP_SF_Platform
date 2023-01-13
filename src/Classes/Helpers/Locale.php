@@ -1,4 +1,5 @@
-<?php declare( strict_types=1 );
+<?php /** @noinspection SpellCheckingInspection @noinspection PhpUnused */
+declare( strict_types=1 );
 
 /**
  *  Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
@@ -19,7 +20,6 @@ use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
 use ReflectionClass;
 use ReflectionProperty;
-
 use function array_flip;
 use function array_key_exists;
 
@@ -459,11 +459,13 @@ final class Locale
     private static array $localesList;
     private static array $localeKeysList;
 
+
     private function __construct() {}
+
 
     public static function getLocaleKey( string $localeName ): string
     {
-        if ( !self::checkLocaleName( $localeName ) )
+        if ( self::checkLocaleName( $localeName ) === false )
             throw new UndefinedLocaleKeyException( $localeName );
 
         return self::getLocaleKeysList()[ $localeName ];
@@ -479,7 +481,7 @@ final class Locale
      */
     public static function getLocaleKeysList(): array
     {
-        if ( !isset( self::$localeKeysList ) )
+        if ( isset( self::$localeKeysList ) === false )
             self::setLocaleKeysList();
 
         return self::$localeKeysList;
@@ -495,7 +497,7 @@ final class Locale
      */
     public static function getLocaleNamesList(): array
     {
-        if ( !isset( self::$localesList ) )
+        if ( isset( self::$localesList ) === false )
             self::setLocaleNamesList();
 
         return self::$localesList;
@@ -509,7 +511,7 @@ final class Locale
 
     public static function getLocaleName( string $localeKey ): string
     {
-        if ( !self::checkLocaleKey( $localeKey ) )
+        if ( self::checkLocaleKey( $localeKey ) === false )
             throw new UndefinedLocaleNameException( $localeKey );
 
         return self::getLocaleNamesList()[ $localeKey ];

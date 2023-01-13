@@ -9,12 +9,15 @@ use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
+use PHP_SF\System\Classes\Exception\RouteParameterException;
 use PHP_SF\System\Core\MiddlewareEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\System\Interface\MiddlewareInterface;
 use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
 use ReflectionUnionType;
 use RuntimeException;
@@ -24,7 +27,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
-
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -43,9 +45,9 @@ class Router
         'GET' => '', 'POST' => '', 'PUT' => '', 'PATCH' => '', 'DELETE' => '',
     ];
 
-    public static array    $links       = [];
-    public static object   $currentRoute;
-    private static array   $routeParams = [];
+    public static array $links = [];
+    public static object $currentRoute;
+    private static array $routeParams = [];
     private static Request $requestData;
     /**
      * @var array<object>
@@ -54,9 +56,9 @@ class Router
     /**
      * @var array<object>
      */
-    private static array  $routesByUrl            = [];
+    private static array $routesByUrl = [];
     private static string $currentHttpMethod;
-    private static array  $controllersDirectories = [];
+    private static array $controllersDirectories = [];
 
     private static Kernel $kernel;
 
@@ -81,9 +83,8 @@ class Router
     {
         if ( empty( static::$routesList ) ) {
             if ( ( $routesList = rc()->get( 'cache:routes_list' ) ) === null ) {
-                foreach ( static::getControllersDirectories() as $controllersDirectory ) {
+                foreach ( static::getControllersDirectories() as $controllersDirectory )
                     static::controllersFromDir( $controllersDirectory );
-                }
 
                 if ( DEV_MODE === false ) {
                     rp()->set(
@@ -91,10 +92,9 @@ class Router
                         j_encode( static::$routesList )
                     );
                 }
-            }
-            else {
+            } else
                 static::$routesList = j_decode( $routesList, true );
-            }
+
 
             if ( empty( static::$routesByUrl ) ) {
                 if ( ( $routesByUrl = rc()->get( 'cache:routes_by_url_list' ) ) === null ) {
@@ -108,10 +108,9 @@ class Router
                             j_encode( static::$routesByUrl )
                         );
                     }
-                }
-                else {
+                } else
                     static::$routesByUrl = j_decode( $routesByUrl, true );
-                }
+
             }
         }
     }
@@ -128,19 +127,19 @@ class Router
         foreach ( $filesAndDirectories as $fileOrDirectory ) {
             $path = "$dir/$fileOrDirectory";
 
-            if ( is_dir( $path ) ) {
+            if ( is_dir( $path ) )
                 static::controllersFromDir( $path );
-            }
-            else {
-                $array1   = explode( '/', $path );
-                $fileName = str_replace( '.php', '', ( end( $array1 ) ) );
-                $array2   = explode( '../', "$dir/$fileName" );
 
-                if ( is_dir( sprintf( '../%s', end( $array2 ) ) ) ) {
+            else {
+                $array1 = explode( '/', $path );
+                $fileName = str_replace( '.php', '', ( end( $array1 ) ) );
+                $array2 = explode( '../', "$dir/$fileName" );
+
+                if ( is_dir( sprintf( '../%s', end( $array2 ) ) ) )
                     static::controllersFromDir( end( $array2 ) );
-                }
+
                 else {
-                    $var       = explode( 'namespace ', file_get_contents( $path ) );
+                    $var = explode( 'namespace ', file_get_contents( $path ) );
                     $namespace = explode( ';', $var[1], 2 )[0];
                     static::routesFromController( $namespace, $fileName );
                 }
@@ -172,11 +171,11 @@ class Router
 
                 static::setRoute(
                     (object)[
-                        'url'        => $url,
+                        'url' => $url,
                         'httpMethod' => $arguments['httpMethod'],
-                        'class'      => $reflectionClass->getName(),
-                        'name'       => $arguments['name'] ?? $reflectionMethod->getName(),
-                        'method'     => $reflectionMethod->getName(),
+                        'class' => $reflectionClass->getName(),
+                        'name' => $arguments['name'] ?? $reflectionMethod->getName(),
+                        'method' => $reflectionMethod->getName(),
                         'middleware' => $arguments['middleware'] ?? null,
                     ]
                 );
@@ -196,7 +195,7 @@ class Router
         $arr1 = ( explode( '{$', $data->url ) );
         unset( $arr1[0] );
 
-        $arr2        = [];
+        $arr2 = [];
         $routeParams = [];
         foreach ( $arr1 as $str )
             $arr2[] = explode( '/', $str )[0];
@@ -204,12 +203,12 @@ class Router
             $routeParams[] = explode( '}', $str )[0];
 
         static::$routesList[ $data->name ] = [
-            'url'         => $data->url,
-            'class'       => $data->class,
-            'method'      => $data->method,
-            'name'        => $data->name,
-            'httpMethod'  => $data->httpMethod,
-            'middleware'  => $data->middleware,
+            'url' => $data->url,
+            'class' => $data->class,
+            'method' => $data->method,
+            'name' => $data->name,
+            'httpMethod' => $data->httpMethod,
+            'middleware' => $data->middleware,
             'routeParams' => $routeParams,
         ];
 
@@ -267,10 +266,10 @@ class Router
                         $data
                     );
                 }
-            }
-            else
+
+            } else
                 self::checkMethodParameterType(
-                    $reflectionNameType->getType()->getName(),
+                    $reflectionNameType->getType()?->getName(),
                     $reflectionNameType->getName(),
                     $data
                 );
@@ -294,7 +293,7 @@ class Router
     {
         static::$routeParams = [];
 
-        $currentUrl      = static::getCurrentRequestUrl();
+        $currentUrl = static::getCurrentRequestUrl();
         $currentUrlArray = explode( '/', $currentUrl );
 
         $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -327,10 +326,9 @@ class Router
                                     '',
                                     $routeUrlArray[ $i ]
                                 ) ] = $currentUrlArray[ $i ];
-                            }
-                            elseif ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] ) {
+
+                            } elseif ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] )
                                 goto continueLoop;
-                            }
 
                             $i++;
                         }

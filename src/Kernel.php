@@ -12,7 +12,6 @@ use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
-
 use function array_key_exists;
 use function define;
 use function defined;
@@ -24,9 +23,6 @@ final class Kernel
     private static string $applicationUserClassName = '';
     private static string $headerTemplateClassName  = header::class;
     private static string $footerTemplateClassName  = footer::class;
-
-    private static bool $isAutoTemplateClassesEnables = true;
-
 
     public function __construct()
     {
@@ -53,19 +49,6 @@ final class Kernel
             rp()->execute();
         } );
     }
-
-    public static function isAutoTemplateClassesEnables(): bool
-    {
-        return self::$isAutoTemplateClassesEnables;
-    }
-
-    public function autoTemplateClasses( bool $enabled ): self
-    {
-        self::$isAutoTemplateClassesEnables = $enabled;
-
-        return $this;
-    }
-
 
     public function addControllers(string $path): self
     {
@@ -180,6 +163,7 @@ final class Kernel
 
     private function setDefaultLocale(): void
     {
+        /** @noinspection GlobalVariableUsageInspection */
         if ( !array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER) || s()->has( 'locale' ) ) {
             define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
 
@@ -187,6 +171,7 @@ final class Kernel
         }
 
         $rc                              = new ReflectionClass( Locale::class );
+        /** @noinspection GlobalVariableUsageInspection */
         $userAcceptLanguages             = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
 
         foreach ( $userAcceptLanguages as $langCode )

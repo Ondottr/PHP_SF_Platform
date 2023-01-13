@@ -1,4 +1,5 @@
-<?php /** @noinspection MagicMethodsValidityInspection */ declare( strict_types=1 );
+<?php /** @noinspection MagicMethodsValidityInspection */
+declare( strict_types=1 );
 /**
  *  Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -19,7 +20,6 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Classes\Abstracts\AbstractDoctrineLifecycleCallback;
 use PHP_SF\System\Interface\DoctrineCallbacksLoaderInterface;
-
 use function array_key_exists;
 use function in_array;
 
@@ -40,8 +40,7 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
     #[ORM\PreFlush]
     final public function __preFlush( EventArgs $args ): void
     {
-        $this->getCallbackClass( Events::preFlush, $args )
-             ?->callback();
+        $this->getCallbackClass( Events::preFlush, $args )?->callback();
     }
 
     final public function getCallbackClass( string $callback, EventArgs $args ): AbstractDoctrineLifecycleCallback|null
@@ -57,22 +56,19 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
     #[ORM\PreRemove]
     final public function __preRemove( EventArgs $args ): void
     {
-        $this->getCallbackClass( Events::preRemove, $args )
-             ?->callback();
+        $this->getCallbackClass( Events::preRemove, $args )?->callback();
     }
 
     #[ORM\PrePersist]
     final public function __prePersist( EventArgs $args ): void
     {
-        $this->getCallbackClass( Events::prePersist, $args )
-             ?->callback();
+        $this->getCallbackClass( Events::prePersist, $args )?->callback();
     }
 
     #[ORM\PreUpdate]
     final public function __preUpdate( EventArgs $args ): void
     {
-        $this->getCallbackClass( Events::preUpdate, $args )
-             ?->callback();
+        $this->getCallbackClass( Events::preUpdate, $args )?->callback();
     }
 
     #[ORM\PostRemove]
@@ -98,8 +94,7 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
     #[ORM\PostLoad]
     final public function __postLoad( EventArgs $args ): void
     {
-        $this->getCallbackClass( Events::postLoad, $args )
-             ?->callback();
+        $this->getCallbackClass( Events::postLoad, $args )?->callback();
     }
 
     #[ORM\PostUpdate]

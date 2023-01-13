@@ -1,4 +1,5 @@
-<?php declare( strict_types=1 );
+<?php /** @noinspection MethodShouldBeFinalInspection @noinspection PhpUnused */
+declare( strict_types=1 );
 
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
@@ -15,11 +16,11 @@
 
 namespace PHP_SF\Framework\Http\Controller\Api;
 
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\Framework\Http\Middleware\api;
 use PHP_SF\Framework\Http\Middleware\admin;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use PHP_SF\Framework\Http\Middleware\api;
+use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 
 class ApiCacheController extends AbstractController
@@ -47,7 +48,7 @@ class ApiCacheController extends AbstractController
     #[Route( url: 'api/cache_clear/all', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
     public function api_clear_all_cache(): JsonResponse
     {
-        $keys = rc()->keys( SERVER_NAME . ':cache:*' );
+        $keys = rc()->keys( env( 'SERVER_PREFIX' ) . ':cache:*' );
 
         foreach ( $keys as $key )
             rp()->del( $key );
@@ -58,7 +59,7 @@ class ApiCacheController extends AbstractController
     #[Route( url: 'api/cache_clear/templates', httpMethod: 'GET', middleware: [ api::class, admin::class ] )]
     public function api_clear_templates_cache(): JsonResponse
     {
-        $dir = sprintf( '/tmp/%s/PHP_SF/CachedTemplates', SERVER_NAME );
+        $dir = sprintf( '/tmp/%s/PHP_SF/CachedTemplates', env( 'SERVER_PREFIX' ) );
 
         if ( file_exists( $dir ) && is_dir( $dir ) )
             exec( sprintf( 'rm -rf %s', escapeshellarg( $dir ) ) );

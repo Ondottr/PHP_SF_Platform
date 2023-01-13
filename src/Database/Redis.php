@@ -13,7 +13,7 @@ final class Redis
 
     private function __construct()
     {
-        self::$rc = new Client( options: [ 'prefix' => sprintf( '%s:%s:', SERVER_NAME, env( 'APP_ENV' ) ) ] );
+        self::$rc = new Client( options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ] );
         self::$rp = self::$rc->pipeline();
 
         self::$rc

@@ -56,9 +56,8 @@ final class TemplatesCache
 
     public static function getInstance(): self
     {
-        if ( !isset( self::$instance ) )
+        if ( isset( self::$instance ) === false )
             self::setInstance();
-
 
         return self::$instance;
     }
@@ -90,29 +89,25 @@ final class TemplatesCache
             $newClassName     = str_replace( $namespace, $newNamespace, $className );
 
             $newFileDirectory = sprintf(
-                '/tmp/%s/%s.php',
-                SERVER_NAME,
-                str_replace( '\\', '/', $newClassName )
+                '/tmp/%s/%s.php', env( 'SERVER_PREFIX' ), str_replace( '\\', '/', $newClassName )
             );
             $arr              = explode( '/', $newFileDirectory );
             $fileName         = array_pop( $arr );
             $newFileDirectory = implode( '/', $arr );
 
             $currentClassDirectory = sprintf(
-                '%s/../../../%s/%s.php',
-                __DIR__,
-                $directory,
+                '%s/../../../%s/%s.php', __DIR__, $directory,
                 str_replace( [ $namespace, '\\' ], [ '', '/' ], $className )
             );
         }
 
-        if ( !isset( $newClassName, $currentClassDirectory ) )
+        if ( isset( $newClassName, $currentClassDirectory ) === false )
             return false;
 
 
         if ( ( file_exists( $newFileDirectory ) === false ) &&
-            !mkdir( $newFileDirectory, recursive: true ) &&
-            !is_dir( $newFileDirectory )
+            mkdir( $newFileDirectory, recursive: true ) === false &&
+            is_dir( $newFileDirectory ) === false
         )
             throw new RuntimeException( _t( 'Directory “%s” was not created!', $newFileDirectory ) );
 
@@ -131,10 +126,7 @@ final class TemplatesCache
                     str_contains( $fileContent, sprintf( '\%s;', $importedView ) ) === false
                 ) {
                     $fileContent = str_replace(
-                        [
-                            sprintf( '$this->import(%s', $importedView ),
-                            sprintf( '$this->import( %s', $importedView )
-                        ],
+                        [ sprintf( '$this->import(%s', $importedView ), sprintf( '$this->import( %s', $importedView ) ],
                         sprintf( '$this->import(\%s\%s', $currentNamespace, $importedView ),
                         $fileContent
                     );
@@ -190,8 +182,7 @@ final class TemplatesCache
 
 
         return [
-            'className' => $newClassName, DEV_MODE === true,
-            'fileName'  => $newFileDirectory,
+            'className' => $newClassName, DEV_MODE === true, 'fileName'  => $newFileDirectory,
         ];
     }
 
@@ -219,10 +210,5 @@ final class TemplatesCache
         }
 
         return $s;
-    }
-
-    private function __clone(): void
-    {
-        trigger_error( 'err' );
     }
 }

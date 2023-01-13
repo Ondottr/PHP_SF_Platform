@@ -15,9 +15,7 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
-
-final class InvalidRouteMethodParameterTypeException extends InvalidTypeException
+final class InvalidRouteMethodParameterTypeException extends RouteParameterException
 {
 
     public function __construct( string $type, string $propertyName, object $data )
@@ -25,10 +23,7 @@ final class InvalidRouteMethodParameterTypeException extends InvalidTypeExceptio
         parent::__construct(
             sprintf(
                 'Invalid method parameter type in %s::%s for property “%s”, available types: "string|int|float" and `%s` provided!',
-                $data->class,
-                $data->method,
-                $propertyName,
-                $type
+                $data->class, $data->method, $propertyName, $type
             )
         );
     }

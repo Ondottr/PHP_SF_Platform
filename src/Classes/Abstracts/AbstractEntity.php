@@ -23,11 +23,9 @@ use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
-use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
 use ReflectionProperty;
-
 use function array_key_exists;
 use function assert;
 use function count;
@@ -45,7 +43,6 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     private static bool  $__force_serialise__;
     private static array $entitiesList = [];
     private array        $changedProperties;
-    private string       $serverName = SERVER_NAME;
     private array        $validationErrors;
 
 
@@ -57,7 +54,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     private function setDefaultValues(): void
     {
-        $annotations     = new AnnotationReader();
+        $annotations     = new AnnotationReader;
         $reflectionClass = new ReflectionClass( static::class );
 
         $annotations->getClassAnnotations( $reflectionClass );
@@ -69,10 +66,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
             $isNullable = false;
 
             $annotationProperty = $annotations
-                ->getPropertyAnnotation(
-                    $reflectionClass->getProperty( $property ),
-                    ORM\Column::class
-                );
+                ->getPropertyAnnotation( $reflectionClass->getProperty( $property ), ORM\Column::class );
 
             if ( $annotationProperty === null )
                 $annotationProperty = $annotations
@@ -165,12 +159,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     }
 
     /**
-     * Use this method if you want to create an instance of an existing entity <strong>without</strong> future saving
-     * to DB!
-     *
-     * @noinspection PhpVariableVariableInspection
+     * Use this method if you want to create an instance of an existing entity <strong>without</strong> future saving to DB!
      */
-    final public static function createFromParams( object|null $arr, string $serverName = null ): static|null
+    final public static function createFromParams( object|null $arr ): static|null
     {
         if ( $arr === null )
             return null;
@@ -188,17 +179,13 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                 else
                     $entity->$property = $arr->$property;
 
-            }
-            elseif ( is_object( $arr->$property ) && isset( $arr->$property->date ) )
+            } elseif ( is_object( $arr->$property ) && isset( $arr->$property->date ) )
                 $entity->$property = new DateTime( $arr->$property->date );
 
             else
                 $entity->$property = $arr->$property;
 
         }
-
-        if ( $serverName !== null )
-            $entity->setServerName( $serverName );
 
         return $entity;
     }
@@ -212,7 +199,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final protected static function getClearRepositoryCacheKey(): string
     {
-        return sprintf( '%s:cache:repository:*%s*', SERVER_NAME, self::getClassName() );
+        return sprintf( '%s:cache:repository:*', self::getClassName() );
     }
 
     final public static function getClassName( string $className = null ): string
@@ -233,36 +220,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final protected static function getClearQueryBuilderCacheKey(): string
     {
-        return sprintf(
-            '%s:cache:queryBuilder:*%s*',
-            SERVER_NAME,
-            str_replace( '\\', '\\\\', static::class )
+        return sprintf( '%s:cache:queryBuilder:*%s*',
+            env( 'SERVER_PREFIX' ), str_replace( '\\', '\\\\', static::class )
         );
-    }
-
-    public static function getEntitiesList(): array
-    {
-        if ( !empty( self::$entitiesList ) )
-            return self::$entitiesList;
-
-
-        $entities = [];
-        foreach ( DoctrineEntityManager::getEntityDirectories() as $item )
-            $entities = array_merge( array_diff( scandir( $item ), [ '.', '..' ] ) );
-
-
-        foreach ( $entities as $key => $entity )
-            $entities[ $key ] = 'App\Entity\\' . str_replace( '.php', '', $entity );
-
-
-        return ( self::$entitiesList = $entities );
-    }
-
-    final public static function setForceSerialise( bool $_force_serialise ): string
-    {
-        self::$__force_serialise__ = $_force_serialise;
-
-        return static::class;
     }
 
     final public function validate( bool $isUpdated = false ): array|bool
@@ -290,7 +250,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
 
             if ( $annotationProperty && $annotationProperty->unique === true ) {
-                if ( !isset( $this->$propertyName ) ) {
+                if ( isset( $this->$propertyName ) === false ) {
                     if ( $annotationProperty->nullable === true )
                         continue;
 
@@ -355,9 +315,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                     $validationConstraint->setPropertyName( $propertyName );
 
                     $validator = new ( $reflectionAttribute->getName() . 'Validator' )(
-                        $this->$propertyName,
-                        $validationConstraint,
-                        $this
+                        $this->$propertyName, $validationConstraint, $this
                     );
                     assert( $validator instanceof AbstractConstraintValidator );
 
@@ -368,9 +326,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                 }
                 elseif ( !$annotationProperty || $annotationProperty->nullable !== true ) {
                     $this->validationErrors[ $propertyName ] =
-                        _t(
-                            sprintf( '%s_field_cannot_be_empty', $this->getTranslatablePropertyName( $propertyName ) )
-                        );
+                        _t( sprintf( '%s_field_cannot_be_empty',
+                            $this->getTranslatablePropertyName( $propertyName )
+                        ) );
 
                     return $this->getValidationErrors();
                 }
@@ -382,17 +340,15 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final public function getTranslatablePropertyName( string $propertyName ): string
     {
-        if ( empty(
-        $translatablePropertyName = ( new ReflectionProperty( static::class, $propertyName ) )
+        if ( empty( $translatablePropertyName = ( new ReflectionProperty( static::class, $propertyName ) )
             ->getAttributes( TranslatablePropertyName::class )
-        ) ) {
+        ) )
             throw new InvalidEntityConfigurationException(
                 sprintf(
-                    'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the "%s" property in the "%s" class',
+                    'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
                     $propertyName, static::class
                 )
             );
-        }
 
         return $translatablePropertyName[0]->getArguments()[0];
     }
@@ -421,16 +377,6 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     private static function isForceSerialiseEnabled(): bool
     {
         return isset( self::$__force_serialise__ ) && self::$__force_serialise__;
-    }
-
-    final public function getServerName(): string
-    {
-        return $this->serverName;
-    }
-
-    final public function setServerName( string $serverName ): void
-    {
-        $this->serverName = $serverName;
     }
 
 }
