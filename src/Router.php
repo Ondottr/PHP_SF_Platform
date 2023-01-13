@@ -418,6 +418,13 @@ class Router
 
             foreach ( $reflectionMethod->getParameters() as $reflectionParameter ) {
                 if ( $reflectionParameter->getType() instanceof ReflectionUnionType === false ) {
+                    if ( array_key_exists( $reflectionParameter->getName(), static::$routeParams ) === false )
+                        throw new RouteParameterException(
+                            sprintf( 'Method parameter "%s" in the %s::%s route does not match the variables from route URL!',
+                                $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
+                            )
+                        );
+
                     $parameterValue = static::$routeParams[ $reflectionParameter->getName() ];
 
                     settype( $parameterValue, $reflectionParameter->getType()->getName() );
