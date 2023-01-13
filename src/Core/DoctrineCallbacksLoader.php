@@ -74,21 +74,37 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
     #[ORM\PostRemove]
     final public function __postRemove( EventArgs $args ): void
     {
+        rp()->execute();
+
+        foreach ( rc()->keys( '*query_cache*' ) as $key )
+            rp()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+        foreach ( rc()->keys( '*result_cache*' ) as $key )
+            rp()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+
         static::clearRepositoryCache();
         static::clearQueryBuilderCache();
 
-        $this->getCallbackClass( Events::postRemove, $args )
-             ?->callback();
+        rp()->execute();
+
+        $this->getCallbackClass( Events::postRemove, $args )?->callback();
     }
 
     #[ORM\PostPersist]
     final public function __postPersist( EventArgs $args ): void
     {
+        rp()->execute();
+
+        foreach ( rc()->keys( '*query_cache*' ) as $key )
+            rp()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+        foreach ( rc()->keys( '*result_cache*' ) as $key )
+            rp()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+
         static::clearRepositoryCache();
         static::clearQueryBuilderCache();
 
-        $this->getCallbackClass( Events::postPersist, $args )
-             ?->callback();
+        rp()->execute();
+
+        $this->getCallbackClass( Events::postPersist, $args )?->callback();
     }
 
     #[ORM\PostLoad]
@@ -100,11 +116,19 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
     #[ORM\PostUpdate]
     final public function __postUpdate( EventArgs $args ): void
     {
+        rp()->execute();
+
+        foreach ( rc()->keys( '*query_cache*' ) as $key )
+            rp()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+        foreach ( rc()->keys( '*result_cache*' ) as $key )
+            rp()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+
         static::clearRepositoryCache();
         static::clearQueryBuilderCache();
 
-        $this->getCallbackClass( Events::postUpdate, $args )
-             ?->callback();
+        rp()->execute();
+
+        $this->getCallbackClass( Events::postUpdate, $args )?->callback();
     }
 
 }

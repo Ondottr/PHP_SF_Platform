@@ -72,6 +72,8 @@ class Router
         elseif ( isset( self::$kernel ) === false )
             throw new InvalidConfigurationException( 'Kernel must be set before calling Router::init() without passing it as a parameter!' );
 
+        DoctrineEntityManager::invalidateEntityManager( self::$kernel );
+
         static::parseRoutes();
 
         if ( static::setCurrentRoute() === true )

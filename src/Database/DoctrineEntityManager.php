@@ -25,21 +25,26 @@ use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Query;
 use Exception;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
+use PHP_SF\System\Kernel;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 final class DoctrineEntityManager extends EntityManager
 {
 
-    private static self $entityManager;
+    private static self|null $entityManager = null;
     /**
      * @var array<string>
      */
     private static array $entityDirectories = [];
 
+    public static function invalidateEntityManager( Kernel $kernel ): void
+    {
+        self::$entityManager = null;
+    }
 
     public static function getEntityManager(): self
     {
-        if ( isset( self::$entityManager ) === false )
+        if ( self::$entityManager === null )
             self::setEntityManager();
 
         return self::$entityManager;
@@ -50,12 +55,17 @@ final class DoctrineEntityManager extends EntityManager
         $config = ORMSetup::createAttributeMetadataConfiguration(
             self::getEntityDirectories(), DEV_MODE,
             __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
-            new RedisAdapter( rc() )
+            env( 'DOCTRINE_CACHE_ENABLED' ) === 'true' ? new RedisAdapter( rc() ) : null
         );
 
-        $config->setResultCache( new RedisAdapter( rc(), 'result_cache' ) );
-        $config->setQueryCache( new RedisAdapter( rc(), 'query_cache' ) );
-        $config->setMetadataCache( new RedisAdapter( rc(), 'metadata_cache' ) );
+        if ( env( 'DOCTRINE_CACHE_ENABLED' ) === 'true' )
+            $config->setResultCache( new RedisAdapter( rc(), 'result_cache' ) );
+
+        if ( env( 'DOCTRINE_CACHE_ENABLED' ) === 'true' )
+            $config->setQueryCache( new RedisAdapter( rc(), 'query_cache' ) );
+
+        if ( env( 'DOCTRINE_CACHE_ENABLED' ) === 'true' )
+            $config->setMetadataCache( new RedisAdapter( rc(), 'metadata_cache' ) );
 
         $config->setProxyNamespace( 'Proxies' );
 
