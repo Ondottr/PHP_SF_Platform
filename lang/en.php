@@ -15,7 +15,6 @@
 return [
     //
     //
-    'accept_checkbox' => '<a href="#eula">License agreement</a>, <a href="#privacy_policy_page">Privacy policy</a> and <a href="#terms_of_use_page">Terms of use</a>.',
     'accept_checkbox_description' => 'I hereby certify that I am over the age of 13 or other minimum age of consent as required by the laws of my country. Please ask your legal representative to consent for you by ticking the appropriate box if you are below the minimum age of consent under the laws of your country.',
     //
     //
@@ -28,7 +27,6 @@ return [
     //
     //
     'login' => 'Login',
-    'login_button' => 'Login',
     //
     //
     'ok' => 'Ok',
@@ -41,9 +39,6 @@ return [
     //
     'range_validation_error' => 'Field `%s` should be between `%s` and `%s`.',
     'register' => 'Register',
-    //
-    //
-    'sec' => 'sec',
     //
     //
     'to_long_length_validation_error' => 'Field %s is too long. It should have %s character or less.',

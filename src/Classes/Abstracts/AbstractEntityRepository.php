@@ -21,11 +21,6 @@ abstract class AbstractEntityRepository
     extends EntityRepository
 {
 
-    /**
-     * @deprecated Use {@see getClassName()} instead.
-     */
-    abstract protected static function getEntityClass(): string;
-
     final public function add( AbstractEntity $entity, bool $flush = true ): void
     {
         em()->persist( $entity );

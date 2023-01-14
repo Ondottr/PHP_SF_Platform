@@ -14,7 +14,6 @@
 
 namespace PHP_SF\Templates\Auth;
 
-use App\AdminPanelView\Layout\Components\admin_panel_errors_block_component;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 
 final class login_page extends AbstractView
@@ -33,7 +32,7 @@ final class login_page extends AbstractView
                     <tbody>
 
                     <tr>
-                        <td><?= _t( 'email' ) ?>:</td>
+                        <td><?= _t( 'Email' ) ?>:</td>
                         <td><?php formInput( 'email', [ 6, 50 ], _t( 'email' ) ) ?></td>
                     </tr>
 
@@ -43,7 +42,7 @@ final class login_page extends AbstractView
                     </tr>
 
                     <tr>
-                        <td><input type="submit" value="<?= _t( 'login_button' ) ?>"></td>
+                        <td><input type="submit" value="<?= _t( 'Sign In' ) ?>"></td>
                         <td><a href="<?= routeLink( 'password_recovery' ) ?>"><?= _t( 'forgot_password' ) ?></a></td>
                     </tr>
 
