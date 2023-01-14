@@ -18,7 +18,6 @@ return [
     'accept_checkbox_description' => 'I hereby certify that I am over the age of 13 or other minimum age of consent as required by the laws of my country. Please ask your legal representative to consent for you by ticking the appropriate box if you are below the minimum age of consent under the laws of your country.',
     //
     //
-    'email' => 'E-mail',
     'email_field_description' => 'Enter your email address',
     'email_validation_error' => 'Field `%s` is not a valid email address.',
     //

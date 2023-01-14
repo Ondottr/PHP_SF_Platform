@@ -22,7 +22,11 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraint;
 final class Range extends AbstractConstraint
 {
     public function __construct(
-        public float|int $min,
-        public float|int $max
-    ) {}
+        public readonly float|int $min,
+        public readonly float|int $max,
+        public readonly bool|null $allowNull = null,
+    )
+    {
+        $allowNull ??= false;
+    }
 }

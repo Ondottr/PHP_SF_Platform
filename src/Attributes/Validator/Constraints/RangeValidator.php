@@ -24,13 +24,13 @@ final class RangeValidator extends AbstractConstraintValidator
 {
     public function validate(): bool
     {
-        $val = $this->getValue();
-
         if ( $this->isDefaultValue() )
             return true;
-        
 
-        if ( $val < $this->constraint->min || $val > $this->constraint->max ) {
+        if ( $this->constraint->allowNull === true && $this->getValue() === null )
+            return true;
+
+        if ( $this->getValue() < $this->constraint->min || $this->getValue() > $this->constraint->max ) {
             $this->setError(
                 'range_validation_error',
                 _t( $this->getTranslatablePropertyName() ),

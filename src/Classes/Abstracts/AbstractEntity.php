@@ -17,6 +17,8 @@ namespace PHP_SF\System\Classes\Abstracts;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
@@ -40,10 +42,10 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     use ModelPropertyIdTrait;
 
 
-    private static bool  $__force_serialise__;
+    private static bool $__force_serialise__;
     private static array $entitiesList = [];
-    private array        $changedProperties;
-    private array        $validationErrors;
+    private array $changedProperties;
+    private array $validationErrors;
 
 
     public function __construct()
@@ -54,7 +56,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     private function setDefaultValues(): void
     {
-        $annotations     = new AnnotationReader;
+        $annotations = new AnnotationReader;
         $reflectionClass = new ReflectionClass( static::class );
 
         $annotations->getClassAnnotations( $reflectionClass );
@@ -101,25 +103,24 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
                     $this->$property = match ( $annotationProperty->type ) {
 
-                        Types::STRING, Types::TEXT                     => $defaultValue,
+                        Types::STRING, Types::TEXT => $defaultValue,
 
-                        Types::ARRAY, Types::SIMPLE_ARRAY              => j_decode( $defaultValue, true ),
+                        Types::ARRAY, Types::SIMPLE_ARRAY => j_decode( $defaultValue, true ),
 
-                        Types::OBJECT, Types::JSON                     => j_decode( $defaultValue ),
+                        Types::OBJECT, Types::JSON => j_decode( $defaultValue ),
 
                         Types::INTEGER, Types::SMALLINT, Types::BIGINT => (int)$defaultValue,
 
-                        Types::FLOAT, Types::DECIMAL, Types::BLOB      => (float)$defaultValue,
+                        Types::FLOAT, Types::DECIMAL, Types::BLOB => (float)$defaultValue,
 
-                        Types::BOOLEAN                                 => (bool)$defaultValue,
+                        Types::BOOLEAN => (bool)$defaultValue,
 
                         Types::DATE_MUTABLE, Types::TIME_MUTABLE,
-                        Types::DATETIME_MUTABLE                        => new DateTime
+                        Types::DATETIME_MUTABLE => new DateTime
 
                     };
                 }
-            }
-            elseif ( $annotationProperty instanceof ORM\ManyToOne || $annotationProperty instanceof ORM\OneToOne ) {
+            } elseif ( $annotationProperty instanceof ORM\ManyToOne || $annotationProperty instanceof ORM\OneToOne ) {
                 $targetEntity = $annotationProperty->targetEntity;
 
                 $annotationProperty = $annotations
@@ -136,7 +137,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                 }
 
                 if ( isset( $annotationProperty->columnDefinition ) ) {
-                    $arr          = explode( 'DEFAULT ', $annotationProperty->columnDefinition );
+                    $arr = explode( 'DEFAULT ', $annotationProperty->columnDefinition );
                     $defaultValue = (int)end( $arr );
 
                     $this->$property = em()
@@ -285,7 +286,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
         foreach ( $properties as $ReflectionProperty ) {
             $propertyName = $ReflectionProperty->getName();
-            if( $propertyName === 'id' )
+            if ( $propertyName === 'id' )
                 continue;
 
             if ( isset( $this->changedProperties ) && !array_key_exists( $propertyName, $this->changedProperties ) )
@@ -295,18 +296,19 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                 continue;
 
 
-            $annotationProperty = $annotations
-                ->getPropertyAnnotation( $ReflectionProperty, ORM\Column::class );
+            unset( $annotationProperty );
+            foreach ( $ReflectionProperty->getAttributes() as $ra )
+                if ( $ra->getName() === Column::class )
+                    $annotationProperty = $ra;
 
-            if ( $annotationProperty === null )
-                $annotationProperty = $annotations
-                    ->getPropertyAnnotation( $ReflectionProperty, ORM\JoinColumn::class );
+            if ( isset( $annotationProperty ) === false )
+                foreach ( $ReflectionProperty->getAttributes() as $ra )
+                    if ( $ra->getName() === JoinColumn::class )
+                        $annotationProperty = $ra;
 
 
             foreach ( $reflectionAttributes as $reflectionAttribute ) {
-                $validationConstraint = new ( $reflectionAttribute->getName() )(
-                    ...$reflectionAttribute->getArguments()
-                );
+                $validationConstraint = new ( $reflectionAttribute->getName() )( ...$reflectionAttribute->getArguments() );
 
                 if ( isset( $this->$propertyName ) ) {
                     if ( $validationConstraint instanceof AbstractConstraint === false )
@@ -323,12 +325,17 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                     if ( ( $err = $validator->getError() ) !== false )
                         $this->validationErrors[ $propertyName ] = $err;
 
-                }
-                elseif ( !$annotationProperty || $annotationProperty->nullable !== true ) {
-                    $this->validationErrors[ $propertyName ] =
-                        _t( sprintf( '%s_field_cannot_be_empty',
-                            $this->getTranslatablePropertyName( $propertyName )
-                        ) );
+                } elseif ( $annotationProperty !== null ) {
+                    if ( array_key_exists( 'nullable', $annotationProperty->getArguments() ) ) {
+                        if ( $annotationProperty->getArguments()['nullable'] === false )
+                            $this->validationErrors[ $propertyName ] =
+                                _t( sprintf( '%s_cannot_be_null', $this->getTranslatablePropertyName( $propertyName ) ) );
+
+                    } else {
+                        $this->validationErrors[ $propertyName ] =
+                            _t( sprintf( '%s_cannot_be_null', $this->getTranslatablePropertyName( $propertyName ) ) );
+
+                    }
 
                     return $this->getValidationErrors();
                 }
