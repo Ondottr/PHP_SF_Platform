@@ -5,22 +5,16 @@ namespace PHP_SF\Templates\Layout;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\Templates\Layout\Header\head;
 
+// @formatter:off
+final class header extends AbstractView { public function show(): void { ?>
+<!--@formatter:on-->
 
-final class header extends AbstractView
-{
+    <?php $this->import( head::class, htmlClassTagEnabled: false ) ?>
 
-    public function show(): void
-    {
-        $this->import(head::class);
-
-        ?>
-
-      <div class="header">
+    <div class="header">
 
 
-      </div>
+    </div>
 
-        <?php
-    }
-
-}
+    <!--@formatter:off-->
+<?php } }

@@ -8,6 +8,11 @@ function asset(string $path): string
     return "/$path";
 }
 
+function pageTitle(): string
+{
+    return s()->get( 'page_title', APPLICATION_NAME );
+}
+
 /**
  * @noinspection GlobalVariableUsageInspection
  */
