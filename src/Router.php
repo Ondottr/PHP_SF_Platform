@@ -487,8 +487,14 @@ class Router
                     )
                 );
 
-            $methodParametersValues[] = static::$routeParams[ $reflectionParameter->getName() ];
+            if ( array_key_exists( $reflectionParameter->getName(), static::$routeParams ) === false )
+                throw new RouteParameterException(
+                    sprintf( 'Route url does not contain the "%s" parameter in the %s::%s route!',
+                        $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
+                    )
+                );
 
+            $methodParametersValues[] = static::$routeParams[ $reflectionParameter->getName() ];
         }
 
         if ( $methodParametersCount !== count( $methodParametersValues ) || $methodParametersCount !== count( static::$routeParams ) )
