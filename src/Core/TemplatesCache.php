@@ -18,16 +18,14 @@ final class TemplatesCache
     #[Immutable( Immutable::CONSTRUCTOR_WRITE_SCOPE )]
     private static array $templatesDefinition = [];
 
-    private static array $templatesNamespaces  = [];
+    private static array $templatesNamespaces = [];
     private static array $templatesDirectories = [];
 
 
     private function __construct()
     {
         foreach ( $this->getTemplatesDirectories() as $dir )
-            if ( file_exists( ( $path = __DIR__ . '/../../../' . $dir ) ) === false ||
-                is_dir( $path ) === false
-            )
+            if ( file_exists( ( $path = __DIR__ . '/../../../' . $dir ) ) === false || is_dir( $path ) === false )
                 throw new InvalidConfigurationException( sprintf( 'Invalid template directory “%s”', $dir ) );
 
 
@@ -67,11 +65,8 @@ final class TemplatesCache
         self::$instance = new self;
     }
 
-    /**
-     * @return array|false
-     */
     #[ArrayShape( [ 'fileName' => 'string', 'className' => 'string' ] )]
-    public function getCachedTemplateClass( string $className ): array|bool
+    public function getCachedTemplateClass( string $className ): array|false
     {
         $newNamespace = 'PHP_SF\CachedTemplates';
         if ( TEMPLATES_CACHE_ENABLED === false || str_contains( $className, $newNamespace ) )
@@ -79,20 +74,20 @@ final class TemplatesCache
 
 
         foreach ( $this->getTemplatesDefinition() as $directory => $namespace ) {
-            if ( !str_contains( $className, $namespace ) )
+            if ( str_contains( $className, $namespace ) === false )
                 continue;
 
 
             $arr = ( explode( '\\', $className ) );
             array_pop( $arr );
             $currentNamespace = implode( '\\', $arr );
-            $newClassName     = str_replace( $namespace, $newNamespace, $className );
+            $newClassName = str_replace( $namespace, $newNamespace, $className );
 
             $newFileDirectory = sprintf(
                 '/tmp/%s/%s.php', env( 'SERVER_PREFIX' ), str_replace( '\\', '/', $newClassName )
             );
-            $arr              = explode( '/', $newFileDirectory );
-            $fileName         = array_pop( $arr );
+            $arr = explode( '/', $newFileDirectory );
+            $fileName = array_pop( $arr );
             $newFileDirectory = implode( '/', $arr );
 
             $currentClassDirectory = sprintf(
@@ -135,45 +130,55 @@ final class TemplatesCache
         }
 
         //remove redundant characters
-        $replace     = [
-            '/<!--(.|\s)*?-->/'                                               => '',
+        $replace = [
+            '/<!--(.|\s)*?-->/' => '',
             //remove HTML comments
-            '/\s+/'                                                           => ' ',
+            '/\s+/' => ' ',
             //remove tabs before and after HTML tags
-            '/\>[^\S ]+/s'                                                    => '>',
-            '/[^\S ]+\</s'                                                    => '<',
+            '/\>[^\S ]+/s' => '>',
+            '/[^\S ]+\</s' => '<',
             //shorten multiple whitespace sequences; keep new-line characters because they matter in JS!!!
-            '/([\t ])+/s'                                                     => ' ',
+            '/([\t ])+/s' => ' ',
             //remove leading and trailing spaces
-            '/^([\t ])+/m'                                                    => '',
-            '/([\t ])+$/m'                                                    => '',
+            '/^([\t ])+/m' => '',
+            '/([\t ])+$/m' => '',
             // remove JS line comments (simple only); do NOT remove lines containing URL (e.g. 'src="http://server.com/"')!!!
-            '~//[a-zA-Z0-9 ]+$~m'                                             => '',
+            '~//[a-zA-Z0-9 ]+$~m' => '',
             //remove empty lines (sequence of line-end and white-space characters)
-            '/[\r\n]+([\t ]?[\r\n]+)+/s'                                      => "\n",
+            '/[\r\n]+([\t ]?[\r\n]+)+/s' => "\n",
             //remove empty lines (between HTML tags); cannot remove just any line-end characters because in inline JS they can matter!
-            '/\>[\r\n\t]+\</s'                                                => '><',
+            '/\>[\r\n\t]+\</s' => '><',
             //remove "empty" lines containing only JS's block end character; join with next line (e.g. "}\n}\n</script>" --> "}}</script>"
-            '/}[\r\n\t ]+/s'                                                  => '}',
-            '/}[\r\n\t ]+,[\r\n\t ]+/s'                                       => '},',
+            '/}[\r\n\t ]+,[\r\n\t ]+/s' => '},',
             //remove new-line after JS's function or condition start; join with next line
-            '/\)[\r\n\t ]?{[\r\n\t ]+/s'                                      => '){',
-            '/,[\r\n\t ]?{[\r\n\t ]+/s'                                       => ',{',
+            '/\)[\r\n\t ]?{[\r\n\t ]+/s' => '){',
+            '/,[\r\n\t ]?{[\r\n\t ]+/s' => ',{',
             //remove new-line after JS's line end (only most obvious and safe cases)
-            '/\),[\r\n\t ]+/s'                                                => '),',
+            '/\),[\r\n\t ]+/s' => '),',
             //remove quotes from HTML attributes that does not contain spaces; keep quotes around URLs!
-            '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"([\r\n\t ])?~s' => '$1$2=$3$4',
             //$1 and $4 insert first white-space character found before/after attribute
+            '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"([\r\n\t ])?~s' => '$1$2=$3$4',
         ];
         $fileContent = preg_replace( array_keys( $replace ), array_values( $replace ), $fileContent );
 
-        //remove optional ending tags {@link http://www.w3.org/TR/html5/syntax.html#syntax-tag-omission}
-        $remove      = [
-            '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>',
-        ];
-        $fileContent = str_ireplace( $remove, '', $fileContent );
+        $search = array(
+            '/(\n|^)(\x20+|\t)/', '/(\n|^)\/\/(.*?)(\n|$)/', '/\n/', '/<!--.*?-->/',
+            '/(\x20+|\t)/', # Delete multispace (Without \n)
+            '/>\s+</', # strip whitespaces between tags
+            '/(["\'])\s+>/', # strip whitespaces between quotation ("') and end tags
+            '/=\s+(["\'])/', # strip whitespaces between = "'
+            '/ {2,}/',
+            '/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s',
+            '/>[^\S ]+/', # strip whitespaces after tags, except space
+            '/[^\S ]+</', # strip whitespaces before tags, except space
+            '/(\s)+/', # shorten multiple whitespace sequences
+        );
+        $replace = array( "\n", "\n", " ", "", " ", "><", "$1>", "=$1", ' ', '', '>', '<', '\\1', );
+        $fileContent = preg_replace( $search, $replace, $fileContent );
 
-        $fileContent = trim( $fileContent );
+        // remove optional ending tags {@link http://www.w3.org/TR/html5/syntax.html#syntax-tag-omission}
+        $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
+        $fileContent = trim( str_ireplace( $remove, '', $fileContent ) );
 
         $newFileDirectory = sprintf( '%s/%s', $newFileDirectory, $fileName );
 
@@ -182,7 +187,7 @@ final class TemplatesCache
 
 
         return [
-            'className' => $newClassName, DEV_MODE === true, 'fileName'  => $newFileDirectory,
+            'className' => $newClassName, DEV_MODE === true, 'fileName' => $newFileDirectory,
         ];
     }
 
@@ -193,9 +198,9 @@ final class TemplatesCache
 
     private function removeComments( string $filename ): string
     {
-        $w  = [ ';', '{', '}' ];
+        $w = [ ';', '{', '}' ];
         $ts = token_get_all( php_strip_whitespace( $filename ) );
-        $s  = '';
+        $s = '';
 
         foreach ( $ts as $t ) {
             if ( is_array( $t ) )

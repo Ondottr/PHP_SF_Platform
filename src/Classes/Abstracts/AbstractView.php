@@ -62,11 +62,12 @@ abstract class AbstractView
      */
     final protected function import( string $className, array $data = [] ): void
     {
-        if ( TEMPLATES_CACHE_ENABLED &&
-            is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className ) )
-        ) {
-            require_once( $arr['fileName'] );
-            $className = $arr['className'];
+        if ( TEMPLATES_CACHE_ENABLED ) {
+            $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className );
+            if ( $arr !== false ) {
+                require_once( $arr['fileName'] );
+                $className = $arr['className'];
+            }
         }
 
 

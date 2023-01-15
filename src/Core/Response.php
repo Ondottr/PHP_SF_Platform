@@ -35,19 +35,16 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     #[NoReturn] public function send(): static
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
-            if ( TEMPLATES_CACHE_ENABLED &&
-                is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() ) )
-            ) {
-                require_once( $arr['fileName'] );
-                $viewClassName = $arr['className'];
+            if ( TEMPLATES_CACHE_ENABLED ) {
+                $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() );
 
-                $header = new $viewClassName( $this->getDataFromController() );
-                $header->show();
-            } else {
-                $headerClassName = Kernel::getHeaderTemplateClassName();
+                if ( $arr !== false ) {
+                    require_once( $arr['fileName'] );
+                    $headerClassName = $arr['className'];
+                } else
+                    $headerClassName = Kernel::getHeaderTemplateClassName();
 
-                $header = new $headerClassName( $this->getDataFromController() );
-                $header->show();
+                ( new $headerClassName( $this->getDataFromController() ) )->show();
             }
 
             echo '<div class="content">';
@@ -56,7 +53,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         if ( $this->view instanceof AbstractView ) {
             $array = explode( '\\', $this->view::class ) ?>
 
-            <div class="<?= end( $array ) ?>">
+            <div class="<?= array_pop( $array ) ?>">
                 <?php $this->view->show() ?>
             </div>
 
@@ -64,24 +61,17 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         }
 
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
-            if ( TEMPLATES_CACHE_ENABLED &&
-                is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() ) )
-            ) {
-                /** @noinspection OffsetOperationsInspection */
-                require_once( $arr['fileName'] );
-                /** @noinspection OffsetOperationsInspection */
-                $viewClassName = $arr['className'];
+            if ( TEMPLATES_CACHE_ENABLED ) {
+                $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() );
 
-                $footer = new $viewClassName( $this->getDataFromController() );
-                $footer->show();
-            } else {
-                $footerClassName = Kernel::getFooterTemplateClassName();
+                if ( $arr !== false ) {
+                    require_once( $arr['fileName'] );
+                    $footerClassName = $arr['className'];
+                } else
+                    $footerClassName = Kernel::getFooterTemplateClassName();
 
-                $footer = new $footerClassName( $this->getDataFromController() );
-                $footer->show();
+                ( new $footerClassName( $this->getDataFromController() ) )->show();
             }
-
-            echo '</div>';
         }
 
         ob_end_flush();
