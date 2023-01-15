@@ -158,10 +158,10 @@ function snakeToCamel( string $input ): string
 /**
  * @noinspection GlobalVariableUsageInspection
  */
-function env( string $name ): string|null
+function env( string $name, string|null $default = null ): string|null
 {
-    if ( !array_key_exists( $name, $_ENV ) )
+    if ( array_key_exists( $name, $_ENV ) === false )
         return null;
 
-    return $_ENV[ $name ];
+    return $_ENV[ $name ] ?? $default;
 }
