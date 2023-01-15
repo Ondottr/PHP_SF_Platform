@@ -2,16 +2,12 @@
 
 namespace PHP_SF\System\Core;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
-
 use function function_exists;
-use function in_array;
-use function is_array;
-
-use const PHP_SAPI;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
 {
@@ -19,7 +15,8 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     public static array $activeTemplates = [];
 
     public function __construct(
-        int                                $status = 200,
+        #[ExpectedValues( valuesFromClass: parent::class )]
+        readonly int                       $status = 200,
         array                              $headers = [],
         private readonly AbstractView|null $view = null,
         private readonly array             $dataFromController = []
@@ -84,6 +81,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
 
         exit( die );
 
+        /** @noinspection PhpUnreachableStatementInspection */
         return $this;
     }
 

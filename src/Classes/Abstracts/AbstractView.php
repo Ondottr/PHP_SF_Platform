@@ -14,53 +14,31 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\Header\head;
-
 use function array_key_exists;
-use function is_array;
 
 abstract class AbstractView
 {
 
     public function __construct(
-        protected array $data = []
+        protected readonly array $data = [],
+        protected readonly bool  $viewClassTagEnabled = true,
     )
     {
         Response::$activeTemplates[] = static::class;
     }
 
-    final public function __unset( string $name ): void
+
+    final public function isViewClassTagEnabled(): bool
     {
-        unset( $this->data[ $name ] );
+        return $this->viewClassTagEnabled;
     }
 
-    #[Pure] final public function __isset( string $name ): bool
-    {
-        return array_key_exists( $name, $this->data );
-    }
 
-    final public function __get( string $name ): mixed
-    {
-        if ( array_key_exists( $name, $this->data ) ) {
-            return $this->data[ $name ];
-        }
-
-        trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );
-    }
-
-    final public function __set( string $name, mixed $value ): void
-    {
-        $this->data[ $name ] = $value;
-    }
-
-    /**
-     * @noinspection OffsetOperationsInspection
-     */
-    final protected function import( string $className, array $data = [] ): void
+    final protected function import( string $className, array $data = [], bool $htmlClassTagEnabled = true ): void
     {
         if ( TEMPLATES_CACHE_ENABLED ) {
             $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className );
@@ -71,24 +49,39 @@ abstract class AbstractView
         }
 
 
-        $class = new $className( [ ...$this->getData(), ...$data ] );
+        $class = new $className( array_merge( $this->data, $data ), $htmlClassTagEnabled );
 
         if ( $class instanceof self ) {
-            if ( $class instanceof head || $class instanceof footer ) {
+            if ( $class instanceof head || $class instanceof footer )
                 $class->show();
-            } else {
+
+            else {
                 $array = explode( '\\', $className );
-                echo sprintf( '<div class="%s">', end( $array ) );
+                if ( $class->isViewClassTagEnabled() )
+                    echo sprintf( '<div class="%s">', array_pop( $array ) );
+
                 $class->show();
-                echo '</div>';
+
+                if ( $class->isViewClassTagEnabled() )
+                    echo '</div>';
+
             }
         }
     }
 
-    final protected function getData(): array
+    abstract public function show(): void;
+
+
+    /**
+     * @noinspection MagicMethodsValidityInspection
+     */
+    final public function __get( string $name ): mixed
     {
-        return $this->data;
+        if ( array_key_exists( $name, $this->data ) ) {
+            return $this->data[ $name ];
+        }
+
+        trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );
     }
 
-    abstract public function show(): void;
 }

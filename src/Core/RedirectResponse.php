@@ -1,6 +1,4 @@
-<?php
-declare( strict_types=1 );
-
+<?php declare( strict_types=1 );
 
 namespace PHP_SF\System\Core;
 
@@ -10,12 +8,7 @@ use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-
 use function function_exists;
-use function in_array;
-
-use const PHP_SAPI;
-
 
 final class RedirectResponse extends Response
 {
@@ -71,10 +64,12 @@ final class RedirectResponse extends Response
         $this->setQuery($get);
         $this->setParams($post);
 
-        ?>
+        $replacedUrl = $this->getTargetUrl();
+        if ( empty( $_GET ) === false )
+            $replacedUrl .= '?' . http_build_query( $_GET ) ?>
 
         <script>
-            history.replaceState( {}, '', '<?= $this->getTargetUrl() ?><?= !empty( $_GET ) ? '?' : '' ?><?php foreach ( $_GET as $key => $value ) { echo "$key=$value&"; } ?>' );
+            history.replaceState( {}, '', '<?= $replacedUrl ?>' );
         </script>
 
         <?php
@@ -90,6 +85,7 @@ final class RedirectResponse extends Response
 
         exit( die );
 
+        /** @noinspection PhpUnreachableStatementInspection */
         return $this;
     }
 

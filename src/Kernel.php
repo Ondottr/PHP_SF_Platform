@@ -156,11 +156,6 @@ final class Kernel
     }
 
 
-    public function init(): void
-    {
-        Router::init();
-    }
-
     private function setDefaultLocale(): void
     {
         /** @noinspection GlobalVariableUsageInspection */

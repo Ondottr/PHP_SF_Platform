@@ -116,7 +116,7 @@ final class DoctrineEntityManager extends EntityManager
         try {
             em()->beginTransaction();
 
-            if( !empty( $entities ) ) {
+            if ( empty( $entities ) === false ) {
                 foreach ( $entities as $entity )
                     em()->flush( $entity );
 

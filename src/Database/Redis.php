@@ -17,13 +17,7 @@ final class Redis
         self::$rp = self::$rc->pipeline();
 
         self::$rc
-            ->select(
-                match ( env( 'APP_ENV' ) ) {
-                    'dev'  => 2,
-                    'test' => 1,
-                    'prod' => 0
-                }
-            );
+            ->select( env( 'REDIS_DB' ) );
     }
 
     public static function getRc(): Client
