@@ -78,13 +78,17 @@ final class RedirectResponse extends Response
         </script>
 
         <?php
-
+        restore_error_handler();
+        restore_exception_handler();
         Router::init();
 
         if ( function_exists( 'fastcgi_finish_request' ) )
             fastcgi_finish_request();
-        elseif ( !in_array( PHP_SAPI, [ 'cli', 'phpdbg' ], true ) )
-            Response::closeOutputBuffers( 0, true );
+        if ( function_exists( 'litespeed_finish_request' ) )
+            /** @noinspection PhpUndefinedFunctionInspection */
+            litespeed_finish_request();
+
+        exit( die );
 
         return $this;
     }

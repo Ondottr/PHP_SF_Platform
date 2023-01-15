@@ -84,12 +84,15 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             echo '</div>';
         }
 
+        ob_end_flush();
+
         if ( function_exists( 'fastcgi_finish_request' ) )
             fastcgi_finish_request();
-        elseif ( function_exists( 'litespeed_finish_request' ) )
+        if ( function_exists( 'litespeed_finish_request' ) )
+            /** @noinspection PhpUndefinedFunctionInspection */
             litespeed_finish_request();
-        elseif ( !in_array( PHP_SAPI, [ 'cli', 'phpdbg' ], true ) )
-            self::closeOutputBuffers( 0, true );
+
+        exit( die );
 
         return $this;
     }

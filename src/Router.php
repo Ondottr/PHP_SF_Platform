@@ -10,6 +10,7 @@ use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
+use PHP_SF\System\Classes\Exception\ViewException;
 use PHP_SF\System\Core\MiddlewareEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
@@ -27,6 +28,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Throwable;
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -519,7 +521,21 @@ class Router
     #[NoReturn]
     protected static function sendRouteMethodResponse(): void
     {
-        static::$routeMethodResponse->send();
+        ob_start(
+            static function ( $b ) {
+                if ( TEMPLATES_CACHE_ENABLED )
+                    return preg_replace( [ '/>[^\S ]+/', '/[^\S ]+</', '/(\s)+/' ], [ '>', '<', '\\1' ], $b );
+
+                return $b;
+            }
+        );
+
+        try {
+            static::$routeMethodResponse->send();
+        } catch ( Throwable $e ) {
+            ob_end_clean();
+            throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
+        }
     }
 
     #[Pure]
