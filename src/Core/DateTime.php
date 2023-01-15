@@ -30,4 +30,19 @@ class DateTime extends \DateTime
         parent::__construct( $datetime, $timezone );
     }
 
+    final public function db_date(): string
+    {
+        return $this->format( 'Y-m-d' );
+    }
+
+    final public function db_datetime(): string
+    {
+        return $this->format( 'Y-m-d H:i:s' );
+    }
+
+    final public function db_time(): string
+    {
+        return $this->format( 'H:i:s' );
+    }
+
 }
