@@ -38,11 +38,13 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
                 if ( $arr !== false ) {
                     require_once( $arr['fileName'] );
                     $headerClassName = $arr['className'];
-                } else
-                    $headerClassName = Kernel::getHeaderTemplateClassName();
-
-                ( new $headerClassName( $this->getDataFromController() ) )->show();
+                }
             }
+
+            if ( isset( $headerClassName ) === false )
+                $headerClassName = Kernel::getHeaderTemplateClassName();
+
+            ( new $headerClassName( $this->dataFromController ) )->show();
 
             echo '<div class="content">';
         }
@@ -64,11 +66,13 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
                 if ( $arr !== false ) {
                     require_once( $arr['fileName'] );
                     $footerClassName = $arr['className'];
-                } else
-                    $footerClassName = Kernel::getFooterTemplateClassName();
-
-                ( new $footerClassName( $this->getDataFromController() ) )->show();
+                }
             }
+
+            if ( isset( $footerClassName ) === false )
+                $footerClassName = Kernel::getFooterTemplateClassName();
+
+            ( new $footerClassName( $this->dataFromController ) )->show();
         }
 
         ob_end_flush();
@@ -83,11 +87,6 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
 
         /** @noinspection PhpUnreachableStatementInspection */
         return $this;
-    }
-
-    public function getDataFromController(): array
-    {
-        return $this->dataFromController;
     }
 
 }
