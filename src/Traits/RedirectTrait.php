@@ -54,7 +54,8 @@ trait RedirectTrait
      *
      * @return RedirectResponse
      */
-    final protected function redirectTo( string $linkOrRoute, array|null $withParams = null, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse {
+    final protected function redirectTo( string $linkOrRoute, array|null $withParams = null, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse
+    {
         $withParams ??= [];
         $get        ??= [];
         $post       ??= [];
@@ -79,9 +80,15 @@ trait RedirectTrait
         $messages ??= [];
         $formData ??= [];
 
+        if ( $this->request->headers->get( 'referer' ) === null )
+            $url = '/';
+        else if ( $this->request->headers->get( 'origin' ) !== null )
+            $url = str_replace( $this->request->headers->get( 'origin' ), '', $this->request->headers->get( 'referer' ) );
+        else
+            $url = str_replace( [ $this->request->headers->get( 'host' ), 'https://', 'http://' ], '', $this->request->headers->get( 'referer' ) );
+
         return $this->toUrl(
-            str_replace( $this->request->headers->get( 'origin' ) ?? [ $this->request->headers->get( 'host' ), 'https://', 'http://' ], '', $this->request->headers->get( 'referer' ) ),
-            $get, $post, $errors, $messages, $formData
+            $url, $get, $post, $errors, $messages, $formData
         );
     }
 

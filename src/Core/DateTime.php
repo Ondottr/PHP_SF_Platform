@@ -45,4 +45,9 @@ class DateTime extends \DateTime
         return $this->format( 'H:i:s' );
     }
 
+    final public static function now(): self
+    {
+        return new self();
+    }
+
 }

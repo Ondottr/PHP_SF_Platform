@@ -60,9 +60,7 @@ class Router
 
     private static Kernel $kernel;
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function init( Kernel|null $kernel = null ): void
     {
@@ -271,12 +269,21 @@ class Router
         static::$currentRoute = null;
         static::$routeParams = [];
 
+        /**
+         * Values from {@see Router::ALLOWED_HTTP_METHODS} constant }
+         */
+        $httpMethod = $_SERVER['REQUEST_METHOD'];
+
+        if ( array_key_exists( $httpMethod, self::$routesByUrl ) === false )
+            throw new RuntimeException( 'Looks like something went wrong with parsing routes from controllers.' .
+                ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
+
         $currentUrl = static::getCurrentRequestUrl();
         $urlHash = hash( 'sha256', $currentUrl );
 
-        if ( ra()->get( 'parsed_url:' . $urlHash ) ) {
-            static::$currentRoute = j_decode( ra()->get( 'parsed_url:route:' . $urlHash ) );
-            static::$routeParams = j_decode( ra()->get( 'parsed_url:route_params:' . $urlHash ), true );
+        if ( ra()->get( sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) ) ) {
+            static::$currentRoute = j_decode( ra()->get( sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) ) );
+            static::$routeParams = j_decode( ra()->get( sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) ), true );
 
             return true;
         }
@@ -291,25 +298,15 @@ class Router
         if ( end( $currentUrlArray ) === '' )
             array_pop( $currentUrlArray );
 
-
-        /**
-         * Values from {@see Router::ALLOWED_HTTP_METHODS} constant }
-         */
-        $httpMethod = $_SERVER['REQUEST_METHOD'];
-
-        if ( array_key_exists( $httpMethod, self::$routesByUrl ) === false )
-            throw new RuntimeException( 'Looks like something went wrong with parsing routes from controllers.' .
-                ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
-
         # Looking for a route with the same url (without parameters)
         foreach ( static::$routesByUrl[ $httpMethod ] as $routeUrl => $route ) {
             if ( $currentUrl === $routeUrl ) {
                 static::$currentRoute = (object)static::$routesByUrl[ $httpMethod ][ $currentUrl ];
 
                 ra()->setMultiple( [
-                    'parsed_url:' . $urlHash => $currentUrl,
-                    'parsed_url:route:' . $urlHash => j_encode( static::$currentRoute ),
-                    'parsed_url:route_params:' . $urlHash => j_encode( [] )
+                    sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
+                    sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
+                    sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) => j_encode( [] )
                 ] );
 
                 return true;
@@ -376,9 +373,9 @@ class Router
                     static::$routeParams[ str_replace( [ '{$', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
 
             ra()->setMultiple( [
-                'parsed_url:' . $urlHash => $currentUrl,
-                'parsed_url:route:' . $urlHash => j_encode( static::$currentRoute ),
-                'parsed_url:route_params:' . $urlHash => j_encode( static::$routeParams )
+                sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
+                sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
+                sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) => j_encode( static::$routeParams )
             ] );
         }
 
