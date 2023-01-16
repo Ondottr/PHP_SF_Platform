@@ -191,18 +191,6 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
         return $entity;
     }
 
-    public static function clearRepositoryCache(): void
-    {
-        foreach ( rc()->keys( self::getClearRepositoryCacheKey() ) as $key )
-            rc()->del( $key );
-
-    }
-
-    final protected static function getClearRepositoryCacheKey(): string
-    {
-        return sprintf( '%s:cache:repository:*', self::getClassName() );
-    }
-
     final public static function getClassName( string $className = null ): string
     {
         $className = $className ?: static::class;
@@ -215,15 +203,13 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     public static function clearQueryBuilderCache(): void
     {
         foreach ( rc()->keys( self::getClearQueryBuilderCacheKey() ) as $key )
-            rc()->del( $key );
+            rc()->del( str_replace( sprintf( "%s:%s:", env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
 
     }
 
     final protected static function getClearQueryBuilderCacheKey(): string
     {
-        return sprintf( '%s:cache:queryBuilder:*%s*',
-            env( 'SERVER_PREFIX' ), str_replace( '\\', '\\\\', static::class )
-        );
+        return sprintf( '*doctrine_result_cache:*' );
     }
 
     final public function validate( bool $isUpdated = false ): array|bool

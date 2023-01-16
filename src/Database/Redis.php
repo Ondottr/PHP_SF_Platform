@@ -16,8 +16,7 @@ final class Redis
         self::$rc = new Client( options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ] );
         self::$rp = self::$rc->pipeline();
 
-        self::$rc
-            ->select( env( 'REDIS_DB' ) );
+        self::$rc->select( env( 'REDIS_DB' ) );
     }
 
     public static function getRc(): Client

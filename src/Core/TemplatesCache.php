@@ -83,15 +83,14 @@ final class TemplatesCache
             $currentNamespace = implode( '\\', $arr );
             $newClassName = str_replace( $namespace, $newNamespace, $className );
 
-            $newFileDirectory = sprintf(
-                '/tmp/%s/%s.php', env( 'SERVER_PREFIX' ), str_replace( '\\', '/', $newClassName )
+            $newFileDirectory = sprintf( '/tmp/%s/%s.php',
+                env( 'SERVER_PREFIX' ), str_replace( '\\', '/', $newClassName )
             );
             $arr = explode( '/', $newFileDirectory );
             $fileName = array_pop( $arr );
             $newFileDirectory = implode( '/', $arr );
 
-            $currentClassDirectory = sprintf(
-                '%s/../../../%s/%s.php', __DIR__, $directory,
+            $currentClassDirectory = sprintf( '%s/../../../%s/%s.php', __DIR__, $directory,
                 str_replace( [ $namespace, '\\' ], [ '', '/' ], $className )
             );
         }
@@ -101,8 +100,7 @@ final class TemplatesCache
 
 
         if ( ( file_exists( $newFileDirectory ) === false ) &&
-            mkdir( $newFileDirectory, recursive: true ) === false &&
-            is_dir( $newFileDirectory ) === false
+            mkdir( $newFileDirectory, recursive: true ) === false && is_dir( $newFileDirectory ) === false
         )
             throw new RuntimeException( _t( 'Directory “%s” was not created!', $newFileDirectory ) );
 
@@ -158,23 +156,20 @@ final class TemplatesCache
             //remove quotes from HTML attributes that does not contain spaces; keep quotes around URLs!
             //$1 and $4 insert first white-space character found before/after attribute
             '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"([\r\n\t ])?~s' => '$1$2=$3$4',
+            '/(\n|^)(\x20+|\t)/' => "\n",
+            '/(\n|^)\/\/(.*?)(\n|$)/' => "\n",
+            '/\n/' => ' ',
+            '/<!--.*?-->/' => '',
+            '/(\x20+|\t)/' => ' ', # Delete multispace (Without \n)
+            '/(["\'])\s+>/' => "$1>", # strip whitespaces between quotation ("') and end tags
+            '/=\s+(["\'])/' => "=$1", # strip whitespaces between = "'
+            '/ {2,}/' => ' ', # Shorten multiple whitespace sequences
+            '/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s' => '',
+            '/>[^\S ]+/' => '>', # strip whitespaces after tags, except space
+            '/[^\S ]+</' => '<', # strip whitespaces before tags, except space
+            '/(\s)+/' => '\\1', # shorten multiple whitespace sequences
         ];
         $fileContent = preg_replace( array_keys( $replace ), array_values( $replace ), $fileContent );
-
-        $search = array(
-            '/(\n|^)(\x20+|\t)/', '/(\n|^)\/\/(.*?)(\n|$)/', '/\n/', '/<!--.*?-->/',
-            '/(\x20+|\t)/', # Delete multispace (Without \n)
-            '/>\s+</', # strip whitespaces between tags
-            '/(["\'])\s+>/', # strip whitespaces between quotation ("') and end tags
-            '/=\s+(["\'])/', # strip whitespaces between = "'
-            '/ {2,}/',
-            '/<!--.*?-->|\t|(?:\r?\n[ \t]*)+/s',
-            '/>[^\S ]+/', # strip whitespaces after tags, except space
-            '/[^\S ]+</', # strip whitespaces before tags, except space
-            '/(\s)+/', # shorten multiple whitespace sequences
-        );
-        $replace = array( "\n", "\n", " ", "", " ", "><", "$1>", "=$1", ' ', '', '>', '<', '\\1', );
-        $fileContent = preg_replace( $search, $replace, $fileContent );
 
         // remove optional ending tags {@link http://www.w3.org/TR/html5/syntax.html#syntax-tag-omission}
         $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
@@ -185,10 +180,7 @@ final class TemplatesCache
         if ( DEV_MODE === true || !file_exists( $newFileDirectory ) )
             file_put_contents( $newFileDirectory, $fileContent );
 
-
-        return [
-            'className' => $newClassName, DEV_MODE === true, 'fileName' => $newFileDirectory,
-        ];
+        return [ 'className' => $newClassName, DEV_MODE === true, 'fileName' => $newFileDirectory ];
     }
 
     public function getTemplatesDefinition(): array

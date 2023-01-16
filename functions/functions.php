@@ -17,6 +17,7 @@ use App\Kernel;
 use Doctrine\ORM\QueryBuilder;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
+use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\Translator;
 use PHP_SF\System\Database\DoctrineEntityManager;
@@ -38,6 +39,11 @@ function em(): DoctrineEntityManager
 function qb(): QueryBuilder
 {
     return em()->createQueryBuilder();
+}
+
+function ra(): RedisCacheAdapter
+{
+    return RedisCacheAdapter::getInstance();
 }
 
 

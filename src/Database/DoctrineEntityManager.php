@@ -56,9 +56,6 @@ final class DoctrineEntityManager extends EntityManager
             __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies'
         );
 
-        if ( $config->isSecondLevelCacheEnabled() )
-            $config->setSecondLevelCacheEnabled( false );
-
         $config->setProxyNamespace( 'Proxies' );
 
         if ( $config->getMetadataDriverImpl() === false )
@@ -80,14 +77,12 @@ final class DoctrineEntityManager extends EntityManager
         self::$entityDirectories[] = $entityDirectories;
     }
 
-    public function createQuery( $dql = '' ): Query
+    public function createQuery($dql = '' ): Query
     {
         $query = new Query( $this );
-        $query->enableResultCache();
 
-        if ( !empty( $dql ) ) {
+        if ( empty( $dql ) === false )
             $query->setDQL( $dql );
-        }
 
         return $query;
     }

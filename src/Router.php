@@ -524,7 +524,7 @@ class Router
         ob_start(
             static function ( $b ) {
                 if ( TEMPLATES_CACHE_ENABLED )
-                    return preg_replace( [ '/>[^\S ]+/', '/[^\S ]+</', '/(\s)+/' ], [ '>', '<', '\\1' ], $b );
+                    return preg_replace( [ '/>\s+</' ], [ '><' ], $b );
 
                 return $b;
             }
