@@ -14,43 +14,11 @@
 
 namespace PHP_SF\System\Traits;
 
-use PHP_SF\System\Router;
-use JetBrains\PhpStorm\NoReturn;
-use PHP_SF\System\Core\Response;
-use PHP_SF\System\Core\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 trait ControllerTrait
 {
-
     use RedirectTrait;
 
-
-    public function __construct(protected ?Request $request) { }
-
-    #[NoReturn] protected function getRedirect(
-        string $linkOrRoute,
-        array  $withParams = [],
-        array  $get = [],
-        array  $post = [],
-        array  $errors = [],
-        array  $messages = [],
-        array  $formData = []
-    ): RedirectResponse
-    {
-        $rr = $this->redirectTo($linkOrRoute, $withParams, $get, $post, $errors, $messages, $formData);
-
-        $rr->send();
-    }
-
-    #[NoReturn] protected function getResponse(string $view, array $data = []): Response
-    {
-        Router::$currentRoute = (object)[
-            'name' => $this->request->get('_route'),
-        ];
-
-        $response = new Response(view: new $view($data));
-
-        $response->send();
-    }
+    public function __construct(protected Request|null $request) { }
 }

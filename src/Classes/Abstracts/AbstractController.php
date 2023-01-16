@@ -27,7 +27,6 @@ abstract class AbstractController
 {
     use ControllerTrait;
 
-
     private string $generatedUrl;
 
 

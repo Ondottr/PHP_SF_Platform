@@ -3,7 +3,6 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System;
 
-use ErrorException;
 use JetBrains\PhpStorm\NoReturn;
 use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Attributes\Route;
@@ -23,10 +22,8 @@ use ReflectionMethod;
 use ReflectionUnionType;
 use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\ErrorHandler\Error\UndefinedMethodError;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
 use function apache_request_headers;
@@ -47,8 +44,7 @@ class Router
         'GET' => '', 'POST' => '', 'PUT' => '', 'PATCH' => '', 'DELETE' => '',
     ];
 
-    public static array $links = [];
-    public static object $currentRoute;
+    public static object|null $currentRoute = null;
     private static array $routeParams = [];
     private static Request $requestData;
     /**
@@ -189,13 +185,6 @@ class Router
 
     protected static function setRoute( object $data ): void
     {
-        try {
-            static::checkParams( $data );
-        } catch ( ConflictHttpException ) {
-
-        }
-
-
         $arr1 = ( explode( '{$', $data->url ) );
         unset( $arr1[0] );
 
@@ -206,7 +195,7 @@ class Router
         foreach ( $arr2 as $str )
             $routeParams[] = explode( '}', $str )[0];
 
-        static::$routesList[ $data->name ] = [
+        $data = [
             'url' => $data->url,
             'class' => $data->class,
             'method' => $data->method,
@@ -216,7 +205,9 @@ class Router
             'routeParams' => $routeParams,
         ];
 
-        static::$links[ $data->httpMethod ][ $data->url ] = '';
+        self::checkParams( (object)$data );
+
+        static::$routesList[ $data['name'] ] = $data;
     }
 
     protected static function checkParams( object $data ): void
@@ -239,17 +230,10 @@ class Router
 
         self::checkMethodParameterTypes( $data );
 
-        if ( !isset( static::ALLOWED_HTTP_METHODS[ $data->httpMethod ] ) )
-            throw new UndefinedMethodError(
+        if ( array_key_exists( $data->httpMethod, static::ALLOWED_HTTP_METHODS ) === false )
+            throw new InvalidConfigurationException(
                 "Undefined HTTP method `$data->httpMethod` for route `$data->name` in class `$data->class`",
-                new ErrorException()
             );
-
-        if ( !array_key_exists( $data->name, static::$routesList ) &&
-            array_key_exists( $data->httpMethod, static::$links ) &&
-            array_key_exists( $data->url, static::$links[ $data->httpMethod ] )
-        )
-            throw new ConflictHttpException( "Route for url `$data->url` already exists!" );
 
     }
 
@@ -257,27 +241,19 @@ class Router
     {
         $reflectionMethod = new ReflectionMethod( $data->class, $data->method );
 
-        foreach ( $reflectionMethod->getParameters() as $reflectionNameType ) {
-            if ( ( $reflectionsUnionType = $reflectionNameType->getType() ) instanceof ReflectionUnionType ) {
-                /**
-                 * @noinspection PhpForeachNestedOuterKeyValueVariablesConflictInspection
-                 * @noinspection SuspiciousLoopInspection
-                 */
-                foreach ( $reflectionsUnionType as $reflectionNameType ) {
-                    self::checkMethodParameterType(
-                        $reflectionNameType->getName(),
-                        $reflectionsUnionType->getName(),
-                        $data
-                    );
-                }
-
-            } else
-                self::checkMethodParameterType(
-                    $reflectionNameType->getType()?->getName(),
-                    $reflectionNameType->getName(),
-                    $data
+        foreach ( $reflectionMethod->getParameters() as $reflectionParameter ) {
+            if ( $reflectionParameter->getType() instanceof ReflectionUnionType )
+                throw new RouteParameterException(
+                    sprintf( 'Method parameter "%s" in the %s::%s route cannot be a union type!',
+                        $reflectionParameter->getName(), $data->class, $reflectionMethod->getName()
+                    )
                 );
 
+            self::checkMethodParameterType(
+                $reflectionParameter->getType()?->getName(),
+                $reflectionParameter->getName(),
+                $data
+            );
         }
     }
 
@@ -295,61 +271,102 @@ class Router
 
     protected static function setCurrentRoute(): bool
     {
+        # We need to clear the current route, because it can be set before redirecting to another route
+        static::$currentRoute = null;
         static::$routeParams = [];
 
         $currentUrl = static::getCurrentRequestUrl();
+
+        # Array looks like this: [ '', 'controller', 'method', 'param1', 'param2', ... ]
         $currentUrlArray = explode( '/', $currentUrl );
 
+        # Delete first empty element
+        array_shift( $currentUrlArray );
+
+        # Delete last element if it's empty
+        if ( end( $currentUrlArray ) === '' )
+            array_pop( $currentUrlArray );
+
+
+        /**
+         * Values from {@see Router::ALLOWED_HTTP_METHODS} constant }
+         */
         $httpMethod = $_SERVER['REQUEST_METHOD'];
 
-        if ( !isset( static::$routesByUrl[ $httpMethod ] ) )
-            return false;
+        if ( array_key_exists( $httpMethod, self::$routesByUrl ) === false )
+            throw new RuntimeException( 'Looks like something went wrong with parsing routes from controllers.' .
+                ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
 
-        foreach ( static::$routesByUrl[ $httpMethod ] as $url => $route )
-            if ( $currentUrl === $url ) {
+        # Looking for a route with the same url (without parameters)
+        foreach ( static::$routesByUrl[ $httpMethod ] as $routeUrl => $route )
+            if ( $currentUrl === $routeUrl ) {
                 static::$currentRoute = (object)static::$routesByUrl[ $httpMethod ][ $currentUrl ];
 
                 return true;
             }
 
+        $arr = static::$routesByUrl[ $httpMethod ];
 
-        foreach ( static::$routesByUrl[ $httpMethod ] as $routeUrl => $route ) {
-            $routeUrlArray = explode( '/', $routeUrl );
+        # Loop through all routes to remove routes with different number of parameters
+        foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
+            # Array looks like this: [ '', 'controller', 'method', 'param1', 'param2', ... ]
+            $routeUrlArray = explode( '/', $possibleRouteUrl );
+            # Delete first empty element
+            array_shift( $routeUrlArray );
 
-            if ( count( $currentUrlArray ) === count( $routeUrlArray ) ) {
-                static::$routeParams = [];
+            if ( count( $currentUrlArray ) !== count( $routeUrlArray ) )
+                unset( $arr[ $possibleRouteUrl ] );
 
-                for ( $i = 0, $iMax = count( $currentUrlArray ); $i < $iMax; $i++ ) {
-                    if ( str_starts_with( $routeUrlArray[ $i ], '{$' ) ) {
-                        static::$currentRoute = (object)$route;
-
-                        while ( $i < $iMax ) {
-                            if ( str_starts_with( $routeUrlArray[ $i ], '{$' ) ) {
-                                static::$routeParams[ str_replace(
-                                    [ '{$', '}' ],
-                                    '',
-                                    $routeUrlArray[ $i ]
-                                ) ] = $currentUrlArray[ $i ];
-
-                            } elseif ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] )
-                                goto continueLoop;
-
-                            $i++;
-                        }
-
-                        return true;
-                    }
-
-                    if ( $routeUrlArray[ $i ] !== $currentUrlArray[ $i ] ) {
-                        continueLoop:
-
-                        break;
-                    }
-                }
-            }
         }
 
-        return false;
+        # Loop through all routes to remove routes with different parameters name
+        foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
+            $routeUrlArray = explode( '/', $possibleRouteUrl );
+            array_shift( $routeUrlArray );
+
+            foreach ( $routeUrlArray as $key => $value )
+                if ( str_starts_with( $value, '{$' ) === false && $value !== $currentUrlArray[ $key ] )
+                    unset( $arr[ $possibleRouteUrl ] );
+
+        }
+
+        $possibleRoutes = [];
+
+        # Loop through all routes to create new array with possible routes with url as a key
+        foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
+            $routeUrlArray = explode( '/', $possibleRouteUrl );
+            array_shift( $routeUrlArray ); # Delete first empty element
+
+            $possibleRoutes[ $possibleRouteUrl ] = 0;
+            foreach ( $routeUrlArray as $value )
+                if ( str_starts_with( $value, '{$' ) )
+                    $possibleRoutes[ $possibleRouteUrl ]++;
+
+        }
+
+        /**
+         * Sort all possible routes by number of parameters and save route with the least number of parameters
+         *
+         * So, if we have two routes: <b>/product/edit/{$id}</b> and <b>/product/{$category}/{$id}</b>,
+         * router will select <b>/product/edit/{$id}</b>
+         *
+         * Save route parameters to {@see static::$routeParams}
+         */
+        if ( empty( $possibleRoutes ) === false ) {
+            # Sort and save route
+            arsort( $possibleRoutes, SORT_DESC );
+            static::$currentRoute = (object)$arr[ array_key_last( $possibleRoutes ) ];
+
+            $routeUrlArray = explode( '/', static::$currentRoute->url );
+            array_shift( $routeUrlArray );
+
+            # Save parameters
+            foreach ( $routeUrlArray as $key => $str )
+                if ( str_starts_with( $str, '{$' ) )
+                    static::$routeParams[ str_replace( [ '{$', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
+        }
+
+        return static::$currentRoute !== null;
     }
 
     protected static function getCurrentRequestUrl(): string
@@ -419,20 +436,19 @@ class Router
             $reflectionMethod = new ReflectionMethod( static::$currentRoute->class, static::$currentRoute->method );
 
             foreach ( $reflectionMethod->getParameters() as $reflectionParameter ) {
-                if ( $reflectionParameter->getType() instanceof ReflectionUnionType === false ) {
-                    if ( array_key_exists( $reflectionParameter->getName(), static::$routeParams ) === false )
-                        throw new RouteParameterException(
-                            sprintf( 'Method parameter "%s" in the %s::%s route does not match the variables from route URL!',
-                                $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
-                            )
-                        );
+                if ( array_key_exists( $reflectionParameter->getName(), static::$routeParams ) === false )
+                    throw new RouteParameterException(
+                        sprintf( 'Method parameter "%s" in the %s::%s route does not match the variables from route URL!',
+                            $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
+                        )
+                    );
 
-                    $parameterValue = static::$routeParams[ $reflectionParameter->getName() ];
+                $parameterValue = static::$routeParams[ $reflectionParameter->getName() ];
 
-                    settype( $parameterValue, $reflectionParameter->getType()->getName() );
+                settype( $parameterValue, $reflectionParameter->getType()?->getName() );
 
-                    static::$routeParams[ $reflectionParameter->getName() ] = $parameterValue;
-                }
+                static::$routeParams[ $reflectionParameter->getName() ] = $parameterValue;
+
             }
         }
     }
@@ -482,13 +498,6 @@ class Router
 
         $methodParametersValues = [];
         foreach ( $methodParameters as $reflectionParameter ) {
-            if ( $reflectionParameter->getType() instanceof ReflectionUnionType )
-                throw new RouteParameterException(
-                    sprintf( 'Method parameter "%s" in the %s::%s route cannot be a union type!',
-                        $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
-                    )
-                );
-
             if ( array_key_exists( $reflectionParameter->getName(), static::$routeParams ) === false )
                 throw new RouteParameterException(
                     sprintf( 'Route url does not contain the "%s" parameter in the %s::%s route!',
@@ -521,21 +530,25 @@ class Router
     #[NoReturn]
     protected static function sendRouteMethodResponse(): void
     {
-        ob_start(
-            static function ( $b ) {
-                if ( TEMPLATES_CACHE_ENABLED )
-                    return preg_replace( [ '/>\s+</' ], [ '><' ], $b );
+        if ( self::$routeMethodResponse instanceof Response ) {
+            ob_start(
+                static function ( $b ) {
+                    if ( TEMPLATES_CACHE_ENABLED )
+                        return preg_replace( [ '/>\s+</' ], [ '><' ], $b );
 
-                return $b;
+                    return $b;
+                }
+            );
+
+            try {
+                static::$routeMethodResponse->send();
+            } catch ( Throwable $e ) {
+                ob_end_clean();
+                throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
             }
-        );
-
-        try {
-            static::$routeMethodResponse->send();
-        } catch ( Throwable $e ) {
-            ob_end_clean();
-            throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
         }
+
+        self::$routeMethodResponse->send();
     }
 
     #[Pure]
@@ -568,6 +581,8 @@ class Router
         return static::$routesList;
     }
 
-    private function __clone() {}
+    private function __clone()
+    {
+    }
 
 }
