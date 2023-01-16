@@ -34,13 +34,10 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
 
     public function get( string $key, mixed $default = null ): mixed
     {
-        if ( $this->has( $key ) )
-            return rc()->get( $key );
-
-        return $default;
+        return rc()->get( $key ) ?? $default;
     }
 
-    public function set( string $key, mixed $value, DateInterval|int|null $ttl = null ): bool
+    public function set( string $key, mixed $value, DateInterval|int|null $ttl = 86400 ): bool
     {
         if ( is_scalar( $value ) === false )
             throw new CacheValueExceptionCache;
@@ -49,7 +46,10 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
             $ttl = $ttl->s + $ttl->i * 60 + $ttl->h * 3600 + $ttl->days * 86400;
 
         try {
-            rc()->set( $key, $value, expireTTL: $ttl );
+            if ( $ttl !== null )
+                rc()->setex( $key, $ttl, $value );
+            else
+                rc()->set( $key, $value );
         } catch ( ServerException $e ) {
             throw new InvalidCacheArgumentException( $e->getMessage(), $e->getCode(), $e );
         }
@@ -85,7 +85,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
         return $result;
     }
 
-    public function setMultiple( iterable $values, DateInterval|int|null $ttl = null ): bool
+    public function setMultiple( iterable $values, DateInterval|int|null $ttl = 86400 ): bool
     {
         $result = true;
 
