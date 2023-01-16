@@ -60,7 +60,9 @@ class Router
 
     private static Kernel $kernel;
 
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     public static function init( Kernel|null $kernel = null ): void
     {
@@ -74,7 +76,8 @@ class Router
 
         static::parseRoutes();
 
-        if ( static::setCurrentRoute() === true )
+        $currentRoute = static::setCurrentRoute();
+        if ( $currentRoute === true )
             static::route();
 
     }
@@ -82,32 +85,25 @@ class Router
     protected static function parseRoutes(): void
     {
         if ( empty( static::$routesList ) ) {
-            if ( ( $routesList = rc()->get( 'cache:routes_list' ) ) === null ) {
+            if ( ( $routesList = ra()->get( 'cache:routes_list' ) ) === null ) {
                 foreach ( static::getControllersDirectories() as $controllersDirectory )
                     static::controllersFromDir( $controllersDirectory );
 
-                if ( DEV_MODE === false ) {
-                    rp()->set(
-                        'cache:routes_list',
-                        j_encode( static::$routesList )
-                    );
-                }
+                if ( DEV_MODE === false )
+                    ra()->set( 'cache:routes_list', j_encode( static::$routesList ), null );
+
             } else
                 static::$routesList = j_decode( $routesList, true );
 
 
             if ( empty( static::$routesByUrl ) ) {
-                if ( ( $routesByUrl = rc()->get( 'cache:routes_by_url_list' ) ) === null ) {
-                    foreach ( static::$routesList as $route ) {
+                if ( ( $routesByUrl = ra()->get( 'cache:routes_by_url_list' ) ) === null ) {
+                    foreach ( static::$routesList as $route )
                         static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
-                    }
 
-                    if ( DEV_MODE === false ) {
-                        rp()->set(
-                            'cache:routes_by_url_list',
-                            j_encode( static::$routesByUrl )
-                        );
-                    }
+                    if ( DEV_MODE === false )
+                        ra()->set( 'cache:routes_by_url_list', j_encode( static::$routesByUrl ), null );
+
                 } else
                     static::$routesByUrl = j_decode( $routesByUrl, true );
 
@@ -276,6 +272,14 @@ class Router
         static::$routeParams = [];
 
         $currentUrl = static::getCurrentRequestUrl();
+        $urlHash = hash( 'sha256', $currentUrl );
+
+        if ( ra()->get( 'parsed_url:' . $urlHash ) ) {
+            static::$currentRoute = j_decode( ra()->get( 'parsed_url:route:' . $urlHash ) );
+            static::$routeParams = j_decode( ra()->get( 'parsed_url:route_params:' . $urlHash ), true );
+
+            return true;
+        }
 
         # Array looks like this: [ '', 'controller', 'method', 'param1', 'param2', ... ]
         $currentUrlArray = explode( '/', $currentUrl );
@@ -298,12 +302,19 @@ class Router
                 ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
 
         # Looking for a route with the same url (without parameters)
-        foreach ( static::$routesByUrl[ $httpMethod ] as $routeUrl => $route )
+        foreach ( static::$routesByUrl[ $httpMethod ] as $routeUrl => $route ) {
             if ( $currentUrl === $routeUrl ) {
                 static::$currentRoute = (object)static::$routesByUrl[ $httpMethod ][ $currentUrl ];
 
+                ra()->setMultiple( [
+                    'parsed_url:' . $urlHash => $currentUrl,
+                    'parsed_url:route:' . $urlHash => j_encode( static::$currentRoute ),
+                    'parsed_url:route_params:' . $urlHash => j_encode( [] )
+                ] );
+
                 return true;
             }
+        }
 
         $arr = static::$routesByUrl[ $httpMethod ];
 
@@ -331,7 +342,6 @@ class Router
         }
 
         $possibleRoutes = [];
-
         # Loop through all routes to create new array with possible routes with url as a key
         foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
             $routeUrlArray = explode( '/', $possibleRouteUrl );
@@ -364,6 +374,12 @@ class Router
             foreach ( $routeUrlArray as $key => $str )
                 if ( str_starts_with( $str, '{$' ) )
                     static::$routeParams[ str_replace( [ '{$', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
+
+            ra()->setMultiple( [
+                'parsed_url:' . $urlHash => $currentUrl,
+                'parsed_url:route:' . $urlHash => j_encode( static::$currentRoute ),
+                'parsed_url:route_params:' . $urlHash => j_encode( static::$routeParams )
+            ] );
         }
 
         return static::$currentRoute !== null;
