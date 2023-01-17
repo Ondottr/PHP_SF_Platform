@@ -25,9 +25,11 @@ final class LengthValidator extends AbstractConstraintValidator
 {
     public function validate(): bool
     {
-        if ( $this->isDefaultValue() ) {
+        if ( $this->isDefaultValue() )
             return true;
-        }
+
+        if ( $this->constraint->allowNull === true && $this->getValue() === null )
+            return true;
 
         $length = strlen( $this->getValue() );
 

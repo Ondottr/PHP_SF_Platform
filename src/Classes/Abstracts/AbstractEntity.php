@@ -243,7 +243,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
 
                     $this->validationErrors[ $propertyName ] =
-                        _t( sprintf( '%s_cannot_be_null', $this->getTranslatablePropertyName( $propertyName ) ) );
+                        _t('field_cannot_be_null_validation_error', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
 
                     return $this->getValidationErrors();
                 }
@@ -257,11 +257,8 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
                     if ( $entity instanceof ( static::class ) ) {
                         $this->validationErrors[ $propertyName ] = _t(
-                            sprintf(
-                                '%s_with_this_value_already_exists',
-                                $this->getTranslatablePropertyName( $propertyName )
-                            ),
-                            $propertyValue
+                                'field_with_this_value_already_exists_validation_error',
+                                _t( $this->getTranslatablePropertyName( $propertyName ) ), $propertyValue
                         );
 
                         return $this->getValidationErrors();
@@ -315,13 +312,11 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                     if ( array_key_exists( 'nullable', $annotationProperty->getArguments() ) ) {
                         if ( $annotationProperty->getArguments()['nullable'] === false )
                             $this->validationErrors[ $propertyName ] =
-                                _t( sprintf( '%s_cannot_be_null', $this->getTranslatablePropertyName( $propertyName ) ) );
+                                _t('field_cannot_be_null_validation_error', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
 
-                    } else {
+                    } else
                         $this->validationErrors[ $propertyName ] =
-                            _t( sprintf( '%s_cannot_be_null', $this->getTranslatablePropertyName( $propertyName ) ) );
-
-                    }
+                            _t('field_cannot_be_null_validation_error', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
 
                     return $this->getValidationErrors();
                 }

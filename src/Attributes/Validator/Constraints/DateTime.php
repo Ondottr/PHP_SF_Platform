@@ -21,4 +21,10 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraint;
 #[Attribute( Attribute::TARGET_PROPERTY )]
 final class DateTime extends AbstractConstraint
 {
+
+    public function __construct( public bool|null $allowNull = null )
+    {
+        $this->allowNull = $this->allowNull ?? false;
+    }
+
 }

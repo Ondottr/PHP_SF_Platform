@@ -22,7 +22,10 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraint;
 final class Length extends AbstractConstraint
 {
     public function __construct(
-        public int $min,
-        public int $max,
-    ) {}
+        public int                $min,
+        public int                $max,
+        public readonly bool|null $allowNull = null,
+    ) {
+        $allowNull ??= false;
+    }
 }
