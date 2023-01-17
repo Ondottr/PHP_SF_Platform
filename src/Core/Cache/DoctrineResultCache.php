@@ -36,10 +36,14 @@ final class DoctrineResultCache implements DriverResult
 
     private function setAll(): void
     {
-        $cachedValue = j_decode( ra()->get( $this->cacheKey ), true );
+        if ( ( $result = ra()->get( $this->cacheKey ) ) === null )
+            $result = "[]";
+
+        $cachedValue = j_decode( $result, true );
 
         $this->associativeResult = new ArrayCollection( $cachedValue );
 
+        $res = [];
         foreach ( $cachedValue as $values )
             $res[] = array_values( $values );
 

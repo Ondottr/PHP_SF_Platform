@@ -24,7 +24,6 @@ use function array_values;
 use function count;
 use function in_array;
 use function ksort;
-use function sha1;
 use function stripos;
 
 /**
@@ -51,6 +50,10 @@ final class Query extends AbstractQuery
      * any local changes in entities are overridden with the fetched values.
      */
     public const HINT_REFRESH = 'doctrine.refresh';
+
+    public const HINT_CACHE_ENABLED = 'doctrine.cache.enabled';
+
+    public const HINT_CACHE_EVICT = 'doctrine.cache.evict';
 
     /**
      * Internal hint: is set to the proxy entity that is currently triggered for loading
@@ -85,6 +88,14 @@ final class Query extends AbstractQuery
      */
     public const HINT_CUSTOM_OUTPUT_WALKER = 'doctrine.customOutputWalker';
 
+    /**
+     * Marks queries as creating only read only objects.
+     *
+     * If the object retrieved from the query is already in the identity map
+     * then it does not get marked as read only if it wasn't already.
+     */
+    public const HINT_READ_ONLY = 'doctrine.readOnly';
+
     public const HINT_INTERNAL_ITERATION = 'doctrine.internal.iteration';
 
     public const HINT_LOCK_MODE = 'doctrine.lockMode';
@@ -109,7 +120,7 @@ final class Query extends AbstractQuery
      *
      * @var string|null
      */
-    private ?string $dql = null;
+    private string|null $dql = null;
 
     /**
      * The parser result that holds DQL => SQL information.
@@ -128,7 +139,7 @@ final class Query extends AbstractQuery
      *
      * @var int|null
      */
-    private ?int $maxResults = null;
+    private int|null $maxResults = null;
 
     /**
      * Gets the SQL query/queries that correspond to this DQL query.
@@ -431,7 +442,7 @@ final class Query extends AbstractQuery
     /**
      * {@inheritdoc}
      */
-    public function setHint( $name, $value ): self
+    public function setHint( $name, $value ): static
     {
         $this->_state = self::STATE_DIRTY;
 
@@ -441,7 +452,7 @@ final class Query extends AbstractQuery
     /**
      * {@inheritdoc}
      */
-    public function setHydrationMode( $hydrationMode ): self
+    public function setHydrationMode( $hydrationMode ): static
     {
         $this->_state = self::STATE_DIRTY;
 
@@ -482,11 +493,6 @@ final class Query extends AbstractQuery
         }
 
         return $lockMode;
-    }
-
-    protected function getHash(): string
-    {
-        return sha1( parent::getHash() . '-' . $this->firstResult . '-' . $this->maxResults );
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System;
 
+use PHP_SF\Framework\Command\ClearRedundantClassesCommand;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\Translator;
@@ -48,6 +49,8 @@ final class Kernel
         register_shutdown_function( static function () {
             rp()->execute();
         } );
+
+        ClearRedundantClassesCommand::clear();
     }
 
     public function addControllers(string $path): self

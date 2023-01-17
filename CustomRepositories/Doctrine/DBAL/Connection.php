@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpInternalEntityUsedInspection */
+<?php /** @noinspection PhpDeprecationInspection */
 declare( strict_types=1 );
 
 namespace Doctrine\DBAL;
@@ -7,7 +7,6 @@ use Closure;
 use Doctrine\Common\EventManager;
 use Doctrine\DBAL\Driver\API\ExceptionConverter;
 use Doctrine\DBAL\Driver\Connection as DriverConnection;
-use Doctrine\DBAL\Driver\Exception;
 use Doctrine\DBAL\Driver\ServerInfoAwareConnection;
 use Doctrine\DBAL\Driver\Statement as DriverStatement;
 use Doctrine\DBAL\Exception\ConnectionLost;
@@ -18,11 +17,9 @@ use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\SQL\Parser;
-use Doctrine\DBAL\Types\ConversionException;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\Deprecations\Deprecation;
 use JetBrains\PhpStorm\ExpectedValues;
-use LogicException;
 use PHP_SF\System\Core\Cache\DoctrineResultCache;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Throwable;
@@ -30,13 +27,10 @@ use Traversable;
 use function array_key_exists;
 use function assert;
 use function count;
-use function get_class;
 use function implode;
 use function is_int;
 use function is_string;
 use function key;
-use function method_exists;
-use function sprintf;
 
 /**
  * A database abstraction-level connection that implements features like events, transaction isolation levels,
@@ -74,7 +68,7 @@ final class Connection
      *
      * @var DriverConnection|null
      */
-    private DriverConnection|null $_conn;
+    private DriverConnection|null $_conn = null;
 
     private Configuration $_config;
 
@@ -152,10 +146,6 @@ final class Connection
      * @param Configuration|null $config The configuration, optional.
      * @param EventManager|null $eventManager The event manager, optional.
      * @psalm-param Params $params
-     *
-     * @throws Exception
-     * @internal The connection can be only instantiated by the driver manager.
-     *
      */
     public function __construct( array $params, Driver $driver, Configuration|null $config = null, EventManager|null $eventManager = null )
     {
@@ -176,6 +166,8 @@ final class Connection
             $this->platform = $params['platform'];
             $this->platform->setEventManager( $this->_eventManager );
         }
+
+        $this->_expr = $this->createExpressionBuilder();
 
         $this->autoCommit = $config->getAutoCommit();
     }
@@ -271,11 +263,6 @@ final class Connection
      *
      * @return bool TRUE if the connection was successfully established, FALSE if
      *              the connection is already open.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @internal This method will be made protected in DBAL 4.0.
-     *
      */
     public function connect(): bool
     {
@@ -453,10 +440,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return array<string, mixed>|false False is returned if no rows are found.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchAssociative( string $query, array $params = [], array $types = [] ): array|false
     {
@@ -472,12 +455,8 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return list<mixed>|false False is returned if no rows are found.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
-    public function fetchNumeric( string $query, array $params = [], array $types = [] ): array|false
+    public function fetchNumeric( string $query, array $params = [], array $types = [] )
     {
         return $this->executeQuery( $query, $params, $types )->fetchNumeric();
     }
@@ -491,10 +470,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return mixed|false False is returned if no rows are found.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchOne( string $query, array $params = [], array $types = [] ): mixed
     {
@@ -528,9 +503,6 @@ final class Connection
      * @param string[] $columns Column names
      * @param mixed[] $values Column values
      * @param string[] $conditions Key conditions
-     *
-     * @throws Exception
-     * @throws Exception
      */
     private function addCriteriaCondition( array $criteria, array &$columns, array &$values, array &$conditions ): void
     {
@@ -558,11 +530,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return int|string The number of affected rows.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
-     * @throws InvalidArgumentException
      */
     public function delete( string $table, array $criteria, array $types = [] ): int|string
     {
@@ -597,11 +564,6 @@ final class Connection
      * @param TransactionIsolationLevel::* $level The level to set.
      *
      * @return int|string
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function setTransactionIsolation( #[ExpectedValues( valuesFromClass: TransactionIsolationLevel::class )] int $level ): int|string
     {
@@ -614,9 +576,6 @@ final class Connection
      * Gets the currently active transaction isolation level.
      *
      * @return TransactionIsolationLevel::* The current transaction isolation level.
-     *
-     * @throws Exception
-     * @throws Exception
      */
     public function getTransactionIsolation(): int
     {
@@ -634,10 +593,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return int|string The number of affected rows.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function update( string $table, array $data, array $criteria, array $types = [] ): int|string
     {
@@ -670,10 +625,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return int|string The number of affected rows.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function insert( string $table, array $data, array $types = [] ): int|string
     {
@@ -744,7 +695,6 @@ final class Connection
      * @param int|string|Type|null $type
      *
      * @return mixed
-     * @throws Exception
      */
     public function quote( mixed $value, int|string|Type|null $type = ParameterType::STRING ): mixed
     {
@@ -763,10 +713,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return list<list<mixed>>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchAllNumeric( string $query, array $params = [], array $types = [] ): array
     {
@@ -781,10 +727,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return list<array<string,mixed>>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchAllAssociative( string $query, array $params = [], array $types = [] ): array
     {
@@ -800,10 +742,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return array<mixed,mixed>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchAllKeyValue( string $query, array $params = [], array $types = [] ): array
     {
@@ -820,10 +758,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return array<mixed,array<string,mixed>>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchAllAssociativeIndexed( string $query, array $params = [], array $types = [] ): array
     {
@@ -838,10 +772,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return list<mixed>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function fetchFirstColumn( string $query, array $params = [], array $types = [] ): array
     {
@@ -856,10 +786,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return Traversable<int,list<mixed>>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function iterateNumeric( string $query, array $params = [], array $types = [] ): Traversable
     {
@@ -873,12 +799,6 @@ final class Connection
      * @param string $query SQL query
      * @param list<mixed>|array<string, mixed> $params Query parameters
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
-     *
-     * @return Traversable<int,array<string,mixed>>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function iterateAssociative( string $query, array $params = [], array $types = [] ): Traversable
     {
@@ -894,10 +814,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return Traversable<mixed,mixed>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function iterateKeyValue( string $query, array $params = [], array $types = [] ): Traversable
     {
@@ -914,10 +830,6 @@ final class Connection
      * @param array<int, int|string>|array<string, int|string> $types Parameter types
      *
      * @return Traversable<mixed,array<string,mixed>>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function iterateAssociativeIndexed( string $query, array $params = [], array $types = [] ): Traversable
     {
@@ -932,10 +844,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return Traversable<int,mixed>
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     public function iterateColumn( string $query, array $params = [], array $types = [] ): Traversable
     {
@@ -946,9 +854,6 @@ final class Connection
      * Prepares an SQL statement.
      *
      * @param string $sql The SQL statement to prepare.
-     *
-     * @throws Exception
-     * @throws Exception
      */
     public function prepare( string $sql ): Statement
     {
@@ -972,13 +877,6 @@ final class Connection
      * @param string $sql SQL query
      * @param list<mixed>|array<string, mixed> $params Query parameters
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
-     *
-     * @throws Exception
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     * @throws \Psr\SimpleCache\InvalidArgumentException
-     * @throws Exception
      */
     public function executeQuery( string $sql, array $params = [], array $types = [] ): Result
     {
@@ -997,10 +895,10 @@ final class Connection
 
                 $this->bindParameters( $stmt, $params, $types );
 
-                if ( ra()->has( $key ) === null )
+                if ( ra()->has( $key ) === false )
                     ra()->set( $key, j_encode( $stmt->execute()->fetchAllAssociative() ) );
 
-            } elseif ( ra()->has( $key ) === null )
+            } elseif ( ra()->has( $key ) === false )
                 ra()->set( $key, j_encode( $connection->query( $sql )->fetchAllAssociative() ) );
 
             $result = new DoctrineResultCache( $key, $unHashedKey );
@@ -1010,7 +908,6 @@ final class Connection
             throw $this->convertExceptionDuringQuery( $e, $sql, $params, $types );
         }
     }
-
 
     /**
      * Executes an SQL statement with the given parameters and returns the number of affected rows.
@@ -1029,9 +926,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
      *
      * @return int|string The number of affected rows.
-     *
-     * @throws Exception
-     * @throws Exception
      */
     public function executeStatement( string $sql, array $params = [], array $types = [] ): int|string
     {
@@ -1165,9 +1059,6 @@ final class Connection
 
     /**
      * @return bool
-     *
-     * @throws Exception
-     * @throws Exception
      */
     public function beginTransaction(): bool
     {
@@ -1186,13 +1077,6 @@ final class Connection
 
     /**
      * @return bool
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
-     * @throws ConnectionException
-     * @throws ConnectionException
      */
     public function commit(): bool
     {
@@ -1237,10 +1121,6 @@ final class Connection
 
     /**
      * Commits all current nesting transactions.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     private function commitAll(): void
     {
@@ -1261,11 +1141,6 @@ final class Connection
      * Cancels any database changes done during the current transaction.
      *
      * @return bool
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
-     * @throws ConnectionException
      */
     public function rollBack(): bool
     {
@@ -1319,11 +1194,6 @@ final class Connection
      * @param string $savepoint The name of the savepoint to release.
      *
      * @return void
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws ConnectionException
-     * @throws Exception
      */
     public function releaseSavepoint( string $savepoint ): void
     {
@@ -1344,11 +1214,6 @@ final class Connection
      * @param string $savepoint The name of the savepoint to rollback to.
      *
      * @return void
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws ConnectionException
-     * @throws Exception
      */
     public function rollbackSavepoint( string $savepoint ): void
     {
@@ -1360,27 +1225,18 @@ final class Connection
         $this->executeStatement( $platform->rollbackSavePoint( $savepoint ) );
     }
 
-    public function getNativeConnection(): object
+    public function getNativeConnection(): DriverConnection
     {
         $this->connect();
 
         assert( $this->_conn !== null );
-        if ( !method_exists( $this->_conn, 'getNativeConnection' ) ) {
-            throw new LogicException( sprintf(
-                'The driver connection %s does not support accessing the native connection.',
-                get_class( $this->_conn ),
-            ) );
-        }
 
-        return $this->_conn->getNativeConnection();
+        return $this->_conn;
     }
 
     /**
      * Creates a SchemaManager that can be used to inspect or change the
      * database schema through the connection.
-     *
-     * @throws Exception
-     * @throws Exception
      */
     public function createSchemaManager(): AbstractSchemaManager
     {
@@ -1429,11 +1285,6 @@ final class Connection
      * @param string $type The name of the DBAL mapping type.
      *
      * @return mixed The converted value.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws ConversionException
-     * @throws Exception
      */
     public function convertToDatabaseValue( mixed $value, string $type ): mixed
     {
@@ -1448,11 +1299,6 @@ final class Connection
      * @param string $type The name of the DBAL mapping type.
      *
      * @return mixed The converted type.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws ConversionException
-     * @throws Exception
      */
     public function convertToPHPValue( mixed $value, string $type ): mixed
     {
@@ -1466,10 +1312,6 @@ final class Connection
      * @param DriverStatement $stmt Prepared statement
      * @param list<mixed>|array<string, mixed> $params Statement parameters
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types Parameter types
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws Exception
      */
     private function bindParameters( DriverStatement $stmt, array $params, array $types ): void
     {
@@ -1529,11 +1371,6 @@ final class Connection
      * @param int|string|Type|null $type The type to bind (PDO or DBAL).
      *
      * @return array{mixed, int} [0] => the (escaped) value, [1] => the binding type.
-     *
-     * @throws Exception
-     * @throws Exception
-     * @throws ConversionException
-     * @throws Exception
      */
     private function getBindingInfo( mixed $value, int|string|Type|null $type ): array
     {
@@ -1580,7 +1417,6 @@ final class Connection
      * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types
      *
      * @return array{string, list<mixed>, array<int,Type|int|string|null>}
-     * @throws Parser\Exception
      */
     private function expandArrayParameters( string $sql, array $params, array $types ): array
     {
