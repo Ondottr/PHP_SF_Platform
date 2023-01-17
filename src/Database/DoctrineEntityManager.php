@@ -26,6 +26,7 @@ use Doctrine\ORM\Query;
 use Exception;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Kernel;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 final class DoctrineEntityManager extends EntityManager
 {
@@ -51,12 +52,17 @@ final class DoctrineEntityManager extends EntityManager
 
     private static function setEntityManager(): void
     {
+        $ra = new RedisAdapter( rc() );
         $config = ORMSetup::createAttributeMetadataConfiguration(
             self::getEntityDirectories(), DEV_MODE,
-            __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies'
+            __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
+            $ra
         );
 
         $config->setProxyNamespace( 'Proxies' );
+
+        $config->setMetadataCache( $ra );
+        $config->setHydrationCache( $ra );
 
         if ( $config->getMetadataDriverImpl() === false )
             throw MissingMappingDriverImplementation::create();
