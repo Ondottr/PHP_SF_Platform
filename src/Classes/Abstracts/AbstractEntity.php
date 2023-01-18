@@ -243,7 +243,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
 
                     $this->validationErrors[ $propertyName ] =
-                        _t('field_cannot_be_null_validation_error', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
+                        _t('Field `%s` cannot be null.', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
 
                     return $this->getValidationErrors();
                 }
@@ -312,11 +312,11 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                     if ( array_key_exists( 'nullable', $annotationProperty->getArguments() ) ) {
                         if ( $annotationProperty->getArguments()['nullable'] === false )
                             $this->validationErrors[ $propertyName ] =
-                                _t('field_cannot_be_null_validation_error', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
+                                _t('Field `%s` cannot be null.', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
 
                     } else
                         $this->validationErrors[ $propertyName ] =
-                            _t('field_cannot_be_null_validation_error', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
+                            _t('Field `%s` cannot be null.', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
 
                     return $this->getValidationErrors();
                 }

@@ -33,7 +33,7 @@ final class OneOfTheNumbersValidator extends AbstractConstraintValidator
 
         if ( !in_array( $val, $this->constraint->numbers, true ) ) {
             $this->setError(
-                'one_of_the_numbers_validation_error',
+                'Field `%s` must be one of these numbers: (%s)',
                 _t( $this->getTranslatablePropertyName() ),
                 implode( ', ', $this->constraint->numbers )
             );

@@ -35,7 +35,7 @@ final class LengthValidator extends AbstractConstraintValidator
 
         if ( $length < $this->constraint->min ) {
             $this->setError(
-                'to_short_length_validation_error',
+                'Field %s is too short. It should have %s character or more.',
                 _t( $this->getTranslatablePropertyName() ),
                 $this->constraint->min
             );
@@ -45,7 +45,7 @@ final class LengthValidator extends AbstractConstraintValidator
 
         if ( $length > $this->constraint->max ) {
             $this->setError(
-                'to_long_length_validation_error',
+                'Field %s is too long. It should have %s character or less.',
                 _t( $this->getTranslatablePropertyName() ),
                 $this->constraint->max
             );

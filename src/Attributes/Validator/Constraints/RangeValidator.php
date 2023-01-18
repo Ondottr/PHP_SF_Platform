@@ -32,7 +32,7 @@ final class RangeValidator extends AbstractConstraintValidator
 
         if ( $this->getValue() < $this->constraint->min || $this->getValue() > $this->constraint->max ) {
             $this->setError(
-                'range_validation_error',
+                'Field `%s` should be between `%s` and `%s`!',
                 _t( $this->getTranslatablePropertyName() ),
                 $this->constraint->min,
                 $this->constraint->max

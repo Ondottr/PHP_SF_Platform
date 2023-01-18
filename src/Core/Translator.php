@@ -7,7 +7,6 @@ use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
 use PHP_SF\System\Classes\Helpers\Locale;
 use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-
 use function array_key_exists;
 
 final class Translator
@@ -38,9 +37,7 @@ final class Translator
                 if ( ( $translations = rc()->get( $redisKey ) ) === null ) {
                     if ( file_exists( ( $path = sprintf( '%s/%s.php', $translationDirectory, $locale ) ) ) === false )
                         // @formatter::off
-                        file_put_contents(
-                            $path,
-                            <<<'EOF'
+                        file_put_contents( $path, <<<'EOF'
 <?php /** @noinspection ALL @formatter::off */ return [
 /**
 * This file was automatically generated
@@ -49,8 +46,7 @@ final class Translator
 * All provided strings in {@see _t()} function will be automatically added to this and another locale translation files
 */
 ];
-EOF
-                        ); // @formatter::on
+EOF ); // @formatter::on
 
                     elseif ( isset( $this->$locale ) && !empty( $this->$locale ) )
                         /** @noinspection SlowArrayOperationsInLoopInspection */
@@ -75,7 +71,7 @@ EOF
         return self::$translationDirectories;
     }
 
-    public static function getInstance(): Translator
+    public static function getInstance(): self
     {
         if ( !isset( self::$translator ) )
             return self::setInstance();
@@ -84,7 +80,7 @@ EOF
         return self::$translator;
     }
 
-    private static function setInstance(): Translator
+    private static function setInstance(): self
     {
         return self::$translator = new self();
     }
@@ -118,7 +114,7 @@ EOF
     /**
      * Returns translation from provided object or array and for current or provided locale
      *
-     * Select localeKey from {@see \PHP_SF\System\Classes\Helpers\Locale}
+     * Select localeKey from {@see Locale}
      * using methods {@see Locale::getLocaleKey()} and {@see Locale::getLocaleName()}
      *
      * Array or object must be in format:
@@ -255,7 +251,10 @@ EOF
                         }
 
                         $translation = str_replace( "'", "\'", $translation );
-                        fwrite( $file, "    '$translateString' => '$translation'," . PHP_EOL );
+                        if ( 13 + mb_strlen( $translateString, 'UTF-8' ) + mb_strlen( $translation, 'UTF-8' ) > 120)
+                            fwrite( $file, "    '$translateString' " . PHP_EOL ."    => '$translation'," . PHP_EOL );
+                        else
+                            fwrite( $file, "    '$translateString' => '$translation'," . PHP_EOL );
                     }
 
                     fwrite( $file, '//' . PHP_EOL . '];' );

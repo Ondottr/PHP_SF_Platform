@@ -1,5 +1,5 @@
-<?php declare( strict_types=1 );
-
+<?php /** @noinspection MethodShouldBeFinalInspection */
+declare( strict_types=1 );
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -27,7 +27,6 @@ use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 use Symfony\Component\HttpFoundation\Request;
-
 use function strlen;
 
 
@@ -73,7 +72,7 @@ class AuthController extends AbstractController
 
         if ( ( $user = $this->userRepository->findOneBy( [ 'email' => $email ] ) ) === null )
             if ( ( $user = $this->userRepository->findOneBy( [ 'login' => $email ] ) ) === null )
-                $errors[] = _t( 'user_with_this_email_not_found' );
+                $errors[] = _t( 'User with this email not found.' );
 
 
         if ( $user !== null )
@@ -117,7 +116,7 @@ class AuthController extends AbstractController
             $errors[] = _t( 'email_and_password_cannot_be_empty' );
 
         if ( ( $passwordLength = strlen( $password ) ) < 6 || $passwordLength > 50 )
-            $errors[] = _t( 'range_validation_error', 'password', 6, 50 );
+            $errors[] = _t( 'Field `%s` should be between `%s` and `%s`!', 'password', 6, 50 );
 
         if ( $accept !== 'on' )
             $errors[] = _t( 'accept_checkbox_error' );

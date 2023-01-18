@@ -15,32 +15,16 @@
 return [
     //
     //
-    'accept_checkbox_description' => 'I hereby certify that I am over the age of 13 or other minimum age of consent as required by the laws of my country. Please ask your legal representative to consent for you by ticking the appropriate box if you are below the minimum age of consent under the laws of your country.',
+    'Field `%s` is not a valid email address.' => 'Field `%s` is not a valid email address.',
     //
     //
-    'email_field_description' => 'Enter your email address',
-    'email_validation_error' => 'Field `%s` is not a valid email address.',
+    'Field `%s` must be one of these numbers: (%s)' => 'Field `%s` must be one of these numbers: (%s)',
     //
     //
-    'forgot_password' => 'Forgot password?',
+    'Field `%s` should be between `%s` and `%s`!' => 'Field `%s` should be between `%s` and `%s`.',
     //
     //
-    'login' => 'Login',
-    //
-    //
-    'ok' => 'Ok',
-    'one_of_the_numbers_validation_error' => 'Field `%s` must be one of these numbers: (%s)',
-    //
-    //
-    'password' => 'Password',
-    'password_field_description' => 'Enter your password',
-    //
-    //
-    'range_validation_error' => 'Field `%s` should be between `%s` and `%s`.',
-    'register' => 'Register',
-    //
-    //
-    'to_long_length_validation_error' => 'Field %s is too long. It should have %s character or less.',
-    'to_short_length_validation_error' => 'Field %s is too short. It should have %s character or more.',
+    'Field %s is too long. It should have %s character or less.' => 'Field %s is too long. It should have %s character or less.',
+    'Field %s is too short. It should have %s character or more.' => 'Field %s is too short. It should have %s character or more.',
     //
 ];

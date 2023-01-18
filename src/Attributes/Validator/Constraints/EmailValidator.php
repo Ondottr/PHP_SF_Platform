@@ -26,7 +26,7 @@ final class EmailValidator extends AbstractConstraintValidator
     {
         if ( !filter_var( $this->getValue(), FILTER_VALIDATE_EMAIL ) ) {
             $this->setError(
-                'email_validation_error',
+                'Field `%s` is not a valid email address.',
                 _t( $this->getTranslatablePropertyName() )
             );
 
