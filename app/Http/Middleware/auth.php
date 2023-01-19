@@ -31,9 +31,7 @@ class auth extends Middleware
     final public static function user(): bool|UserInterface
     {
         if ( self::$user !== false )
-            return em()
-                ->getRepository( User::class )
-                ->find( self::$user->getId() );
+            return User::find( self::$user->getId() );
 
         return self::$user;
     }

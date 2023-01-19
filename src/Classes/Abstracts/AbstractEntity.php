@@ -25,6 +25,7 @@ use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
+use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
 use ReflectionProperty;
@@ -40,6 +41,7 @@ use function is_object;
 abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSerializable
 {
     use ModelPropertyIdTrait;
+    use EntityRepositoriesTrait;
 
 
     private static bool $__force_serialise__;
@@ -51,6 +53,12 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     public function __construct()
     {
         $this->setDefaultValues();
+    }
+
+
+    final public static function new(): static
+    {
+        return new static;
     }
 
 

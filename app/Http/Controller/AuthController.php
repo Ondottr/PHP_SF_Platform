@@ -107,6 +107,7 @@ class AuthController extends AbstractController
         if ( auth::isAuthenticated() )
             return $this->redirectTo( routeLink( 'home_page' ) );
 
+
         $login    = trim( htmlspecialchars( $this->request->request->get( 'login' ) ) );
         $password = trim( htmlspecialchars( $this->request->request->get( 'password' ) ) );
         $email    = trim( htmlspecialchars( $this->request->request->get( 'email' ) ) );
@@ -136,11 +137,7 @@ class AuthController extends AbstractController
         $user->setLogin( $login );
         $user->setEmail( $email );
         $user->setPassword( $password );
-        $user->setUserGroup(
-            em()
-                ->getRepository(UserGroup::class)
-                ->find( UserGroup::USER )
-        );
+        $user->setUserGroup( UserGroup::find( UserGroup::USER ) );
 
         if ( $user->validate() !== true )
             return $this->redirectBack( errors: $user->getValidationErrors() );
