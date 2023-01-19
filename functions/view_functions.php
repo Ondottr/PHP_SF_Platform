@@ -117,7 +117,7 @@ function formInput(
     bool       $isRequired = true,
     #[ArrayShape( [ 'min' => 'int', 0 => 'int', 'max' => 'int', 1 => 'int' ] )]
     array      $minMax = [],
-    string|int $defaultValue = null,
+    string|int|float $defaultValue = null,
     string     $placeholder = '',
     string|int $step = null,
     #[ArrayShape( [ 'string' ] )]
@@ -125,7 +125,7 @@ function formInput(
     #[ArrayShape( [ 'string' ] )]
     array      $styles = [],
     string|int $id = '',
-    #[ArrayShape( [ 'string' ] )]
+    #[ExpectedValues( [ 'string' ] )]
     array      $customAttributes = []
 ): void
 {
@@ -296,4 +296,85 @@ function formTextarea(
     $inputStr .= '</textarea>';
 
     echo trim( str_replace( PHP_EOL, '', preg_replace( '/\s+/', ' ', $inputStr ) ) );
+}
+
+function formSelect(
+    string $name,
+    #[ArrayShape( [ 'object' ] )]
+    array  $options,
+    string $value,
+    string|callable $label,
+    string $id = '',
+    string $onChange = '',
+    #[ArrayShape( [ 'value' => 'string', 'label' => 'string' ] )]
+    array  $infoField = [],
+    bool   $isRequired = true,
+    string|int|float $defaultValue = null,
+    #[ArrayShape( [ 'string' ] )]
+    array  $classes = [],
+    #[ArrayShape( [ 'string' ] )]
+    array  $styles = [],
+    #[ArrayShape( [ 'string' ] )]
+    array  $customAttributes = []
+): void
+{
+    if ( $id === '' )
+        $id = $name;
+
+    foreach ( $options as $key => $option ) {
+        if ( method_exists( $option, $value ) === false )
+            throw new InvalidArgumentException( "Invalid value field for '$name' select. The value field must be a public method name of the object." );
+
+        if ( is_string( $label) && method_exists( $option, $label ) === false )
+            throw new InvalidArgumentException( "Invalid label field for '$name' select. The label option must be a callable with option object as the first parameter or a public method name of the object." );
+    }
+
+    $inputStr = '<select ';
+    $inputStr .= $isRequired ? ' required ' : '';
+
+    $inputStr .= sprintf( ' id="%s" ', $id );
+
+    if ( empty( $name ) === false )
+        $inputStr .= sprintf( ' name="%s" ', $name );
+
+    if ( empty( $classes ) === false )
+        $inputStr .= sprintf( ' class="%s" ', implode( ' ', $classes ) );
+
+    if ( empty( $styles ) === false ) {
+        $inputStr .= ' style="';
+        foreach ( $styles as $styleName => $styleValue )
+            $inputStr .= sprintf( '%s: %s; ', $styleName, $styleValue );
+        $inputStr .= '" ';
+    }
+
+    foreach ( $customAttributes as $attr => $attrValue )
+        $inputStr .= sprintf( ' %s="%s" ', $attr, $attrValue );
+
+    if ( empty( $onChange ) === false )
+        $inputStr .= ' onchange="' . $onChange . '" ';
+
+    $inputStr .= '>';
+
+    if ( empty( $infoField ) === false )
+        $inputStr .= sprintf( '<option selected disabled value="%s">%s</option>', $infoField['value'], $infoField['label'] );
+
+    foreach ( $options as $option ) {
+        $inputStr .= sprintf( '<option value="%s" ', $option->$value() );
+
+        if ( $defaultValue !== null && $defaultValue === $option->$value() )
+            $inputStr .= ' selected ';
+
+        if ( is_string( $label ) )
+            $inputStr .= sprintf( '>%s</option>', $option->$label() );
+        else
+            $inputStr .= sprintf( '>%s</option>', $label( $option ) );
+
+        $inputStr .= '</option>';
+    }
+
+    $inputStr .= '</select>';
+
+    echo trim( str_replace( PHP_EOL, '', preg_replace( '/\s+/', ' ', $inputStr ) ) );
+
+
 }
