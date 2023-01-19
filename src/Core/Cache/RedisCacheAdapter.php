@@ -64,6 +64,19 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
         return $this->has( $key );
     }
 
+    public function deleteByKeyPattern( string $keyPattern ): bool
+    {
+        $keys = rc()->keys( $keyPattern );
+
+        if ( empty( $keys ) )
+            return false;
+
+        foreach ( $keys as $key )
+            rc()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+
+        return count( rc()->keys( $keyPattern ) ) === 0;
+    }
+
     public function clear(): bool
     {
         rc()->flushdb();
