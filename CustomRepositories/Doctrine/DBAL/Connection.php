@@ -456,7 +456,7 @@ final class Connection
      *
      * @return list<mixed>|false False is returned if no rows are found.
      */
-    public function fetchNumeric( string $query, array $params = [], array $types = [] )
+    public function fetchNumeric( string $query, array $params = [], array $types = [] ): array|false
     {
         return $this->executeQuery( $query, $params, $types )->fetchNumeric();
     }
@@ -883,8 +883,15 @@ final class Connection
         $connection = $this->getNativeConnection();
 
         try {
-            $unHashedKey = $sql . ':params=' . serialize( $params ) . ':types=' . serialize( $types );
-            $key = 'doctrine_result_cache:' . hash( 'sha256', $unHashedKey );
+            $unHashedKey = sprintf( "%s:params=%s:types=%s", $sql, serialize( $params ), serialize( $types ) );
+            $key = 'doctrine_result_cache:';
+
+            if ( str_contains( $sql, 'NEXTVAL' ) ) {
+                $sequenceName = explode( "'", $sql )[1];
+                $key  = sprintf( "nextval:%s:", $sequenceName );
+            }
+
+            $key .= hash( 'sha256', $unHashedKey );
 
             if ( count( $params ) > 0 ) {
                 if ( $this->needsArrayParameterConversion( $params, $types ) ) {
@@ -1091,7 +1098,6 @@ final class Connection
         $connection = $this->getNativeConnection();
 
         if ( $this->transactionNestingLevel === 1 )
-            /** @noinspection PhpParamsInspection */
             $result = $this->doCommit( $connection );
 
         elseif ( $this->nestTransactionsWithSavepoints )

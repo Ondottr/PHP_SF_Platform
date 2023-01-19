@@ -5,6 +5,7 @@ namespace PHP_SF\Framework\Command;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MySQL80Platform;
 use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\Id\SequenceGenerator;
 use Doctrine\ORM\Query;
 use ReflectionClass;
 use RuntimeException;
@@ -15,7 +16,8 @@ class ClearRedundantClassesCommand
         Query::class,
         Connection::class,
         AbstractQuery::class,
-        MySQL80Platform::class
+        MySQL80Platform::class,
+        SequenceGenerator::class,
     ];
 
     public static function clear(): bool
