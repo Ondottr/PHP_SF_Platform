@@ -3,13 +3,14 @@
 namespace PHP_SF\System\Traits;
 
 use InvalidArgumentException;
+use JetBrains\PhpStorm\ExpectedValues;
 use PHP_SF\System\Core\RedirectResponse;
 
 trait RedirectTrait
 {
 
     /**
-     * @param string     $linkOrRoute
+     * @param string $linkOrRoute
      * If you want to redirect to a route, you can use the routeLink() function.
      * Works with Symfony routes too.
      *  <br />
@@ -54,14 +55,27 @@ trait RedirectTrait
      *
      * @return RedirectResponse
      */
-    final protected function redirectTo( string $linkOrRoute, array|null $withParams = null, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse
+    final protected function redirectTo(
+        string     $linkOrRoute,
+        array|null $withParams = null,
+        #[ExpectedValues( 'string' )]
+        array|null $get = null,
+        #[ExpectedValues( 'string' )]
+        array|null $post = null,
+        #[ExpectedValues( 'string' )]
+        array|null $errors = null,
+        #[ExpectedValues( 'string' )]
+        array|null $messages = null,
+        #[ExpectedValues( 'string' )]
+        array|null $formData = null
+    ): RedirectResponse
     {
         $withParams ??= [];
-        $get        ??= [];
-        $post       ??= [];
-        $errors     ??= [];
-        $messages   ??= [];
-        $formData   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
+        $messages ??= [];
+        $formData ??= [];
 
         if ( str_contains( $linkOrRoute, '/' ) ) {
             $rr = $this->toUrl( $linkOrRoute, $get, $post, $errors, $messages, $formData );
@@ -74,9 +88,9 @@ trait RedirectTrait
 
     final protected function redirectBack( array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse
     {
-        $get      ??= [];
-        $post     ??= [];
-        $errors   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
         $messages ??= [];
         $formData ??= [];
 
@@ -95,19 +109,19 @@ trait RedirectTrait
 
     private function toUrl( string $url, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse
     {
-        $get      ??= [];
-        $post     ??= [];
-        $errors   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
         $messages ??= [];
         $formData ??= [];
 
         return new RedirectResponse(
             $url,
             $this->generateData(
-                url:      $url,
-                get:      $get,
-                post:     $post,
-                errors:   $errors,
+                url: $url,
+                get: $get,
+                post: $post,
+                errors: $errors,
                 messages: $messages,
                 formData: array_merge( $formData, isset( $this->request ) ? $this->request->request->all() : [] )
             )
@@ -116,18 +130,18 @@ trait RedirectTrait
 
     private function toRoute( string $routeName, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null, array|null $with = null ): RedirectResponse
     {
-        $get      ??= [];
-        $post     ??= [];
-        $errors   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
         $messages ??= [];
         $formData ??= [];
-        $with     ??= [];
+        $with ??= [];
 
         return $this->toUrl(
-            url:      routeLink( $routeName, $with ),
-            get:      $get,
-            post:     $post,
-            errors:   $errors,
+            url: routeLink( $routeName, $with ),
+            get: $get,
+            post: $post,
+            errors: $errors,
             messages: $messages,
             formData: array_merge( $formData, isset( $this->request ) ? $this->request->request->all() : [] )
         );
@@ -136,19 +150,20 @@ trait RedirectTrait
 
     private function generateData( string $url, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): float
     {
-        $get        ??= [];
-        $post       ??= [];
-        $errors     ??= [];
-        $messages   ??= [];
-        $formData   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
+        $messages ??= [];
+        $formData ??= [];
         $redirectId = mt_rand() * mt_rand() / mt_rand();
 
+        $this->validateParams( $get, $post );
         $this->validateErrors( $errors );
         $this->validateMessages( $messages );
 
-        $getKey      = "_GET:$url:$redirectId";
-        $postKey     = "_POST:$url:$redirectId";
-        $errorsKey   = "_ERRORS:$url:$redirectId";
+        $getKey = "_GET:$url:$redirectId";
+        $postKey = "_POST:$url:$redirectId";
+        $errorsKey = "_ERRORS:$url:$redirectId";
         $messagesKey = "_MESSAGES:$url:$redirectId";
         $formDataKey = "_FORM_DATA:$url:$redirectId";
 
@@ -159,6 +174,17 @@ trait RedirectTrait
         rc()->setex( $formDataKey, 5, json_encode( $formData, JSON_THROW_ON_ERROR ) );
 
         return $redirectId;
+    }
+
+    private function validateParams( array $get, array $post ): void
+    {
+        foreach ( $get as $param )
+            if ( is_string( $param ) === false )
+                throw new InvalidArgumentException( 'All GET parameters must be strings' );
+
+        foreach ( $post as $param )
+            if ( is_string( $param ) === false )
+                throw new InvalidArgumentException( 'All POST parameters must be strings' );
     }
 
     private function validateErrors( array $errors ): void

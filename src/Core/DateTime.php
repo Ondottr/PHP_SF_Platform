@@ -24,9 +24,10 @@ class DateTime extends \DateTime
 {
 
     public function __construct(
-        string        $datetime = 'now',
+        string            $datetime = 'now',
         DateTimeZone|null $timezone = new DateTimeZone( DEFAULT_TIMEZONE['name'] )
-    ) {
+    )
+    {
         parent::__construct( $datetime, $timezone );
     }
 
@@ -44,6 +45,7 @@ class DateTime extends \DateTime
     {
         return $this->format( 'H:i:s' );
     }
+
 
     final public static function now(): self
     {

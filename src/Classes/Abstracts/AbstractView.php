@@ -77,7 +77,7 @@ abstract class AbstractView
      */
     final public function __get( string $name ): mixed
     {
-        if ( isset( $this->data ) )
+        if ( array_key_exists( $name, $this->data ) )
             return $this->data[ $name ];
 
         trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );

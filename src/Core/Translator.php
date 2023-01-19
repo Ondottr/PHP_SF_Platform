@@ -250,6 +250,7 @@ EOF ); // @formatter::on
                             $previousLetter = $translateString[0];
                         }
 
+                        $translateString = str_replace( "'", "\'", $translateString );
                         $translation = str_replace( "'", "\'", $translation );
                         if ( 13 + mb_strlen( $translateString, 'UTF-8' ) + mb_strlen( $translation, 'UTF-8' ) > 120)
                             fwrite( $file, "    '$translateString' " . PHP_EOL ."    => '$translation'," . PHP_EOL );
