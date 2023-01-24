@@ -178,7 +178,7 @@ final class Kernel
             }
 
         if ( defined( 'DEFAULT_LOCALE' ) === false )
-            define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
+            define( 'DEFAULT_LOCALE', array_values( LANGUAGES_LIST )[0] );
 
     }
 
