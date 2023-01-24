@@ -7,6 +7,7 @@ use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
+
 use function function_exists;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
@@ -76,6 +77,15 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         }
 
         ob_end_flush();
+        /**
+         * By default uopz disables the exit opcode, so exit() calls are
+         * practically ignored. uopz_allow_exit() allows to control this behavior.
+         *
+         * @url https://www.php.net/manual/en/function.uopz-allow-exit
+         */
+        if ( function_exists( 'uopz_allow_exit' ) )
+          /** @noinspection PhpUndefinedFunctionInspection */
+          uopz_allow_exit( /* Whether to allow the execution of exit opcodes or not.  */ true );
 
         if ( function_exists( 'fastcgi_finish_request' ) )
             fastcgi_finish_request();

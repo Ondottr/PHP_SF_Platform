@@ -8,6 +8,7 @@ use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+
 use function function_exists;
 
 final class RedirectResponse extends Response
@@ -77,7 +78,17 @@ final class RedirectResponse extends Response
         restore_exception_handler();
         Router::init();
 
-        if ( function_exists( 'fastcgi_finish_request' ) )
+      /**
+       * By default uopz disables the exit opcode, so exit() calls are
+       * practically ignored. uopz_allow_exit() allows to control this behavior.
+       *
+       * @url https://www.php.net/manual/en/function.uopz-allow-exit
+       */
+      if ( function_exists( 'uopz_allow_exit' ) )
+        /** @noinspection PhpUndefinedFunctionInspection */
+        uopz_allow_exit( /* Whether to allow the execution of exit opcodes or not.  */ true);
+
+      if ( function_exists( 'fastcgi_finish_request' ) )
             fastcgi_finish_request();
         if ( function_exists( 'litespeed_finish_request' ) )
             /** @noinspection PhpUndefinedFunctionInspection */
