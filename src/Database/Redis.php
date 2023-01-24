@@ -16,7 +16,8 @@ final class Redis
         self::$rc = new Client( options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ] );
         self::$rp = self::$rc->pipeline();
 
-        self::$rc->select( env( 'REDIS_DB' ) );
+        $arr = array_values( explode( '/', env( 'REDIS_CACHE_URL', 'redis://localhost:6379/0' ) ) );
+        self::$rc->select( end( $arr ) );
     }
 
     public static function getRc(): Client
