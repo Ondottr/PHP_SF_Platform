@@ -1,6 +1,5 @@
 <?php /** @noinspection SpellCheckingInspection @noinspection PhpUnused */
 declare( strict_types=1 );
-
 /**
  *  Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -20,6 +19,7 @@ use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
 use ReflectionClass;
 use ReflectionProperty;
+
 use function array_flip;
 use function array_key_exists;
 

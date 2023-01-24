@@ -2,7 +2,6 @@
 
 namespace PHP_SF\System;
 
-use PHP_SF\Framework\Command\ClearRedundantClassesCommand;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\Translator;
@@ -13,6 +12,7 @@ use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+
 use function array_key_exists;
 use function define;
 use function defined;
@@ -49,8 +49,6 @@ final class Kernel
         register_shutdown_function( static function () {
             rp()->execute();
         } );
-
-        ClearRedundantClassesCommand::clear();
     }
 
     public function addControllers(string $path): self
@@ -162,15 +160,15 @@ final class Kernel
     private function setDefaultLocale(): void
     {
         /** @noinspection GlobalVariableUsageInspection */
-        if ( !array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER) || s()->has( 'locale' ) ) {
+        if ( array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER ) === false || s()->has( 'locale' ) ) {
             define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
 
             return;
         }
 
-        $rc                              = new ReflectionClass( Locale::class );
+        $rc = new ReflectionClass( Locale::class );
         /** @noinspection GlobalVariableUsageInspection */
-        $userAcceptLanguages             = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
+        $userAcceptLanguages = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
 
         foreach ( $userAcceptLanguages as $langCode )
             if ( $rc->hasConstant( $langCode ) && in_array( $langCode, LANGUAGES_LIST, true ) ) {

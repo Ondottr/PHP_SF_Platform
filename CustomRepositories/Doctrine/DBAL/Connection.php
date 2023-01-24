@@ -24,6 +24,7 @@ use PHP_SF\System\Core\Cache\DoctrineResultCache;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Throwable;
 use Traversable;
+
 use function array_key_exists;
 use function assert;
 use function count;
@@ -908,7 +909,7 @@ final class Connection
             } elseif ( ra()->has( $key ) === false )
                 ra()->set( $key, j_encode( $connection->query( $sql )->fetchAllAssociative() ) );
 
-            $result = new DoctrineResultCache( $key, $unHashedKey );
+            $result = new DoctrineResultCache( $key, /** $unHashedKey  */);
 
             return new Result( $result, $this );
         } catch ( Driver\Exception $e ) {

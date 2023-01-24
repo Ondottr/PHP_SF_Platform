@@ -6,27 +6,32 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Driver\Exception;
 use Doctrine\DBAL\Driver\Result as DriverResult;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
 
 final class DoctrineResultCache implements DriverResult
 {
 
     /**
-     * @var Collection<array>
+     * @var Collection<AbstractEntity[]>
      */
     private Collection $numericResult;
     /**
-     * @var Collection<array>
+     * @var Collection<AbstractEntity[]>
      */
     private Collection $associativeResult;
     /**
-     * @var Collection<array>
+     * @var Collection<AbstractEntity[]>
      */
     private Collection $fetchOneResult;
 
 
-    public function __construct( private readonly string $cacheKey, private readonly string $unhashedKey )
+    public function __construct( private readonly string $cacheKey )
     {
+        $this->numericResult     = new ArrayCollection;
+        $this->associativeResult = new ArrayCollection;
+        $this->fetchOneResult    = new ArrayCollection;
+
         if ( ra()->has( $this->cacheKey ) === null )
             throw new InvalidCacheArgumentException( 'Cache key does not exist!' );
 
@@ -51,7 +56,8 @@ final class DoctrineResultCache implements DriverResult
 
         $res = [];
         foreach ( $cachedValue as $values )
-            $res[] = $values[ array_key_first( $values ) ];
+            if ( empty( $values ) === false )
+                $res[] = $values[ array_key_first( $values ) ];
 
         $this->fetchOneResult = new ArrayCollection( $res );
     }
