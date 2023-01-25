@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -15,27 +14,26 @@
 
 namespace PHP_SF\Framework\Http\Controller\Defaults;
 
-use PHP_SF\System\Core\Lang;
-use PHP_SF\System\Core\Response;
 use PHP_SF\System\Attributes\Route;
-use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\Framework\Http\Middleware\auth;
-use PHP_SF\Templates\SettingsPage\change_language_page;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Core\Lang;
+use PHP_SF\System\Core\RedirectResponse;
+use PHP_SF\System\Core\Response;
+use PHP_SF\Templates\SettingsPage\change_language_page;
 
 use function in_array;
 
 final class SettingsController extends AbstractController
 {
 
-    #[Route( url: 'settings/change_language', httpMethod: 'GET', middleware: auth::class )]
+    #[Route( url: 'settings/change_language', httpMethod: 'GET' )]
     public function change_language_page(): Response
     {
         return $this->render( change_language_page::class );
     }
 
 
-    #[Route( url: 'settings/change_language', httpMethod: 'POST', middleware: auth::class )]
+    #[Route( url: 'settings/change_language', httpMethod: 'POST' )]
     public function change_language_post_handler(): RedirectResponse
     {
         $lang = $this->request->request->get( 'lang', false );

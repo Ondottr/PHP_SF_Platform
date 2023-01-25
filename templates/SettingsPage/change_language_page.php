@@ -1,4 +1,4 @@
-<?php
+<?php declare( strict_types=1 );
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -12,42 +12,33 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-declare(strict_types=1);
-
 namespace PHP_SF\Templates\SettingsPage;
 
-use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
-use function _t;
-use function routeLink;
-use function showErrors;
-use function showMessages;
-use const LANGUAGES_LIST;
+use PHP_SF\System\Classes\Helpers\Locale;
 
-final class change_language_page extends AbstractView
-{
-    public function show(): void
-    { ?>
+// @formatter:off
+final class change_language_page extends AbstractView { public function show(): void { ?>
+  <!--@formatter:on-->
 
-        <?php showMessages() ?>
-        <?php showErrors() ?>
+  <?php showErrors() ?>
+  <?php showMessages() ?>
 
-      <form action="<?= routeLink('change_language_handler') ?>" method="POST">
+  <form method="POST">
 
-        <label for="language"> <?= _t('select_language') ?> <br /><br />
-          <select name="lang" id="language">
-              <?php foreach (LANGUAGES_LIST as $lang) : ?>
-                <option value="<?= $lang ?>"><?= Locale::getLocaleName($lang) ?></option>
-              <?php endforeach; ?>
-          </select>
-        </label>
+    <label for="language"> <?= _t( 'Select Language' ) ?> <br /><br />
+      <select name="lang" id="language">
+        <?php foreach ( LANGUAGES_LIST as $lang ) : ?>
+          <option value="<?= $lang ?>"><?= Locale::getLocaleName( $lang ) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </label>
 
-        <br /><br />
+    <br /><br />
 
-        <input type="submit" value="<?= _t('change') ?>">
+    <input type="submit" value="<?= _t( 'Change' ) ?>">
 
-      </form>
+  </form>
 
-    <?php }
-
-}
+  <!--@formatter:off-->
+<?php } }

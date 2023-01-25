@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -16,16 +15,16 @@
 namespace PHP_SF\Framework\Http\Controller\Defaults;
 
 use App\Kernel;
+use JetBrains\PhpStorm\NoReturn;
+use PHP_SF\Framework\Http\Middleware\auth;
+use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
 use PHP_SF\Templates\base;
-use PHP_SF\System\Core\Response;
-use JetBrains\PhpStorm\NoReturn;
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\Framework\Http\Middleware\auth;
-use PHP_SF\System\Classes\Abstracts\AbstractController;
 
 
-class DefaultController extends AbstractController
+final class DefaultController extends AbstractController
 {
 
     /**
@@ -47,10 +46,10 @@ class DefaultController extends AbstractController
             array_merge(
                 Router::getRoutesList(),
                 Kernel::getInstance()
-                      ->getContainer()
-                      ->get( 'router' )
-                      ?->getRouteCollection()
-                      ?->all()
+                    ->getContainer()
+                    ->get( 'router' )
+                    ?->getRouteCollection()
+                    ?->all() ?? []
             )
         );
     }
