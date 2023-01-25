@@ -29,6 +29,7 @@ use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
 use ReflectionProperty;
+
 use function array_key_exists;
 use function assert;
 use function count;
@@ -336,17 +337,18 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final public function getTranslatablePropertyName( string $propertyName ): string
     {
-        if ( empty( $translatablePropertyName = ( new ReflectionProperty( static::class, $propertyName ) )
-            ->getAttributes( TranslatablePropertyName::class )
-        ) )
+        $rp = new ReflectionProperty( static::class, $propertyName );
+        $tpn = $rp->getAttributes( TranslatablePropertyName::class );
+
+        if ( empty( $tpn ) )
             throw new InvalidEntityConfigurationException(
                 sprintf(
                     'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
-                    $propertyName, static::class
+                    $rp->getName(), static::class
                 )
             );
 
-        return $translatablePropertyName[0]->getArguments()[0];
+        return $tpn[0]->getArguments()[0];
     }
 
 

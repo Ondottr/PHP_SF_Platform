@@ -26,7 +26,7 @@ trait ModelPropertyUpdatedAtTrait
 {
 
     #[Validate\DateTime]
-    #[TranslatablePropertyName( 'updated_at_property' )]
+    #[TranslatablePropertyName( 'Updated At' )]
     #[ORM\Column( name: 'updated_at', type: 'datetime', nullable: true, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
     protected string|DateTimeInterface|null $updatedAt = null;
 

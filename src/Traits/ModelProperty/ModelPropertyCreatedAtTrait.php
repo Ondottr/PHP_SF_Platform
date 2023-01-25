@@ -26,7 +26,7 @@ trait ModelPropertyCreatedAtTrait
 {
 
     #[Validate\DateTime]
-    #[TranslatablePropertyName( 'created_at_property' )]
+    #[TranslatablePropertyName( 'Created At' )]
     #[ORM\Column( name: 'created_at', type: 'datetime', nullable: false, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
     protected string|DateTimeInterface|null $createdAt;
 

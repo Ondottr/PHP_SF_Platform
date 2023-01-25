@@ -18,6 +18,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\ORM\Mapping\Column;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
+use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -58,11 +59,18 @@ abstract class AbstractConstraintValidator
 
     final protected function getTranslatablePropertyName(): string
     {
-        $translatablePropertyName =
-            ( new ReflectionProperty( $this->getValidatedClass()::class, $this->constraint->getPropertyName() ) )
-                ->getAttributes( TranslatablePropertyName::class )[0];
+        $rp = new ReflectionProperty( $this->getValidatedClass()::class, $this->constraint->getPropertyName() );
+        $tpn = $rp->getAttributes( TranslatablePropertyName::class );
 
-        return $translatablePropertyName->getArguments()[0];
+        if ( empty( $tpn ) )
+            throw new InvalidEntityConfigurationException(
+                sprintf(
+                    'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
+                    $rp->getName(), $this->getValidatedClass()::class
+                )
+            );
+
+        return $tpn[0]->getArguments()[0];
     }
 
     final public function getValidatedClass(): AbstractEntity
