@@ -2,11 +2,18 @@
 
 namespace PHP_SF\System\Core;
 
+use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
+use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
 use PHP_SF\System\Classes\Helpers\Locale;
+use PHP_SF\System\Database\DoctrineEntityManager;
+use ReflectionClass;
+use ReflectionProperty;
+use ReflectionUnionType;
 use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+
 use function array_key_exists;
 
 final class Translator
@@ -40,16 +47,16 @@ final class Translator
                         file_put_contents( $path, <<<'EOF'
 <?php /** @noinspection ALL @formatter::off */ return [
 /**
-* This file was automatically generated
-* You can add new translated strings in format below or use {@see _t()} function.
-* "string_for_translation" string => "Translation for string with arguments: %s, %s"
-* All provided strings in {@see _t()} function will be automatically added to this and another locale translation files
+* This file was automatically generated after adding new translation language to your project.
+* You can add new translated strings in format below or use {@link _t()} function.
+* "string_for_translation" => "Translation for string with arguments: %s, %s"
+* All provided strings in {@link _t()} function will be automatically added to this and another locale translation files
 */
 ];
-EOF ); // @formatter::on
+EOF
+                        ); // @formatter::on
 
                     elseif ( isset( $this->$locale ) && !empty( $this->$locale ) )
-                        /** @noinspection SlowArrayOperationsInLoopInspection */
                         $this->$locale = array_merge( $this->$locale, ( require $path ) );
 
                     else
@@ -64,6 +71,9 @@ EOF ); // @formatter::on
 
             }
         }
+
+        if ( DEV_MODE )
+            $this->saveTranslatablePropertyNames();
     }
 
     private static function getTranslationDirectories(): array
@@ -73,7 +83,7 @@ EOF ); // @formatter::on
 
     public static function getInstance(): self
     {
-        if ( !isset( self::$translator ) )
+        if ( isset( self::$translator ) === false )
             return self::setInstance();
 
 
@@ -82,7 +92,7 @@ EOF ); // @formatter::on
 
     private static function setInstance(): self
     {
-        return self::$translator = new self();
+        return self::$translator = new self;
     }
 
     public static function addTranslationDirectory( string $translationDirectory ): void
@@ -102,33 +112,32 @@ EOF ); // @formatter::on
 
     public function translate( string $string, ...$values ): string
     {
-        $locale = Lang::getCurrentLocale();
-
-        if ( !array_key_exists( $string, $this->$locale ) && self::isSaveEnabled() )
+        if ( self::isSaveEnabled() &&
+            array_key_exists( $string, $this->{Lang::getCurrentLocale()} ) === false
+        )
             $this->addTranslateStringToLocaleFile( $string );
 
 
-        return sprintf( ( $this->$locale )[ $string ] ?? $string, ...$values );
+        return sprintf( ( $this->{Lang::getCurrentLocale()} )[ $string ] ?? $string, ...$values );
     }
 
     /**
      * Returns translation from provided object or array and for current or provided locale
      *
-     * Select localeKey from {@see Locale}
-     * using methods {@see Locale::getLocaleKey()} and {@see Locale::getLocaleName()}
+     * Select localeKey from {@link Locale}
+     * using methods {@link Locale::getLocaleKey()} and {@link Locale::getLocaleName()}
      *
      * Array or object must be in format:
      *
-     * [ "en" => "English translation", "bg" => "Bulgarian translation" ]
+     * <code>[ "en" => "English translation", "bg" => "Bulgarian translation" ]</code>
      *
-     * { "en": "English translation", "bg": "Bulgarian translation" }
+     * <code>{ "en": "English translation", "bg": "Bulgarian translation" }</code>
      *
      * @throws UndefinedLocaleKeyException|UndefinedLocaleNameException
-     * @throws InvalidConfigurationException if provided locale is not supported ( {@see LANGUAGES_LIST} )
+     * @throws InvalidConfigurationException if provided locale is not supported ( {@link LANGUAGES_LIST} )
      * @throws RuntimeException if provided object or array is not in correct format or empty
      */
-    public function translateFromArray( array|object $object, string|null $localeName = null, string|null $localeKey = null ): string|array|object
-    {
+    public function translateFromArray( array|object $object, string|null $localeName = null, string|null $localeKey = null ): string|array|object {
         if ( is_object( $object ) )
             $object = (array)$object;
 
@@ -150,7 +159,9 @@ EOF ); // @formatter::on
 
         // Check if locale is available for translation
         if ( in_array( $translateTo, LANGUAGES_LIST, true ) === false )
-            throw new InvalidConfigurationException( sprintf( 'Locale "%s" is not supported!', Locale::getLocaleName( $translateTo ) ) );
+            throw new InvalidConfigurationException(
+                sprintf( 'Locale "%s" is not supported!', Locale::getLocaleName( $translateTo ) )
+            );
 
         if ( count( $object ) === 0 )
             throw new RuntimeException( 'Empty translation object!' );
@@ -162,7 +173,6 @@ EOF ); // @formatter::on
 
         // Return translation for default locale if exists
         if ( array_key_exists( DEFAULT_LOCALE, $object ) ) {
-
             // Return translation for default locale if exists (DEV & TEST ENV ONLY)
             if ( env( 'app_env' ) !== env( 'PROD_ENV' ) ) {
 //                TODO:: Create log
@@ -220,9 +230,6 @@ EOF ); // @formatter::on
             $this->addTranslateStringToLocaleFile( $string, false );
     }
 
-    /**
-     * @noinspection PhpVariableVariableInspection
-     */
     private function saveLocalesToFiles(): void
     {
         foreach ( self::getTranslationDirectories() as $translationDirectory ) {
@@ -251,9 +258,9 @@ EOF ); // @formatter::on
                         }
 
                         $translateString = str_replace( "'", "\'", $translateString );
-                        $translation = str_replace( "'", "\'", $translation );
-                        if ( 13 + mb_strlen( $translateString, 'UTF-8' ) + mb_strlen( $translation, 'UTF-8' ) > 120)
-                            fwrite( $file, "    '$translateString' " . PHP_EOL ."    => '$translation'," . PHP_EOL );
+                        $translation     = str_replace( "'", "\'", $translation );
+                        if ( 13 + mb_strlen( $translateString, 'UTF-8' ) + mb_strlen( $translation, 'UTF-8' ) > 120 )
+                            fwrite( $file, "    '$translateString' " . PHP_EOL . "    => '$translation'," . PHP_EOL );
                         else
                             fwrite( $file, "    '$translateString' => '$translation'," . PHP_EOL );
                     }
@@ -277,6 +284,112 @@ EOF ); // @formatter::on
         $this->saveLocalesToFiles();
 
         return $previousValue;
+    }
+
+    /**
+     * Gets all translatable properties from all entities and saves them to locale files
+     */
+    private function saveTranslatablePropertyNames(): void
+    {
+        $entities          = [];
+        $entityDirectories = DoctrineEntityManager::getEntityDirectories();
+
+        // Get all entities from entity directories
+        foreach ( $entityDirectories as $dir ) {
+            // Get all files in entity directory
+            $entitiesFromDirectory = array_diff( scandir( $dir ), [ '.', '..' ] );
+
+            foreach ( $entitiesFromDirectory as $file ) {
+                // Get full path to file
+                $path = "$dir/$file";
+
+                // Throw exception if directory found
+                if ( is_dir( $path ) )
+                    throw new RuntimeException( 'You can\'t have directories in entity directory!' );
+
+                // Get file name without extension
+                $array1   = explode( '/', $path );
+                $fileName = str_replace( '.php', '', ( end( $array1 ) ) );
+                // Get namespace
+                $var       = explode( 'namespace ', file_get_contents( $path ) );
+                $namespace = explode( ';', $var[1], 2 )[0];
+
+                // Add entity to array
+                $entities[] = "$namespace\\$fileName";
+            }
+        }
+
+        // Get all translatable properties from entities and save them to locale files
+        foreach ( $entities as $entity ) {
+            $rc = new ReflectionClass( $entity );
+            /**
+             * Get all protected properties
+             *
+             * Because we don't want to translate private properties
+             *
+             * Private properties are used for OneToMany and ManyToOne relations
+             */
+            $properties = $rc->getProperties( ReflectionProperty::IS_PROTECTED );
+
+            foreach ( $properties as $property ) {
+                // Id property is not translatable
+                if ( $property->getName() === 'id' )
+                    continue;
+                // Boolean properties translation are optional
+                if ( $property->getType() instanceof ReflectionUnionType === false && $property->getType()->getName() === 'bool' )
+                    continue;
+
+                $attributes = $property->getAttributes( TranslatablePropertyName::class );
+                $ac         = count( $attributes );
+
+                // Throw exception if attribute is missing
+                if ( $ac === 0 )
+                    throw new InvalidEntityConfigurationException(
+                        sprintf(
+                            'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
+                            $property->getName(), $entity
+                        )
+                    );
+
+                // Throw exception if attribute is defined multiple times
+                if ( $ac > 1 )
+                    throw new InvalidEntityConfigurationException(
+                        sprintf(
+                            'The attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is defined multiple times in the property "%s" of the entity "%s".',
+                            $property->getName(), $entity
+                        )
+                    );
+
+                $args = $attributes[0]->getArguments();
+
+                // Throw exception if attribute is defined without arguments
+                if ( empty( $args ) )
+                    throw new InvalidEntityConfigurationException(
+                        sprintf(
+                            'The attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is defined without arguments in the property "%s" of the entity "%s".',
+                            $property->getName(), $entity
+                        )
+                    );
+
+                if ( array_key_exists( 'name', $args ) )
+                    $string = $args['name'];
+                elseif ( array_key_exists( 0, $args ) )
+                    $string = $args[0];
+                else
+                    // Throw exception if attribute is defined without correct arguments
+                    throw new InvalidEntityConfigurationException(
+                        sprintf(
+                            'The attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is defined without correct arguments in the property "%s" of the entity "%s".',
+                            $property->getName(), $entity
+                        )
+                    );
+
+                // Add string to array if it doesn't exist
+                if ( array_key_exists( $string, $this->{Lang::getCurrentLocale()} ) === false )
+                    $this->addTranslateStringToLocaleFile( $string );
+
+            }
+        }
     }
 
 }
