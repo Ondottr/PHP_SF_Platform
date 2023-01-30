@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -15,11 +14,11 @@
 
 namespace PHP_SF\Framework\Http\Controller\Defaults;
 
-use PHP_SF\System\Core\Response;
 use PHP_SF\System\Attributes\Route;
-use PHP_SF\Templates\ErrorPage\not_found_page;
-use PHP_SF\Templates\ErrorPage\access_denied_page;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Core\Response;
+use PHP_SF\Templates\ErrorPage\access_denied_page;
+use PHP_SF\Templates\ErrorPage\not_found_page;
 
 class ErrorPageController extends AbstractController
 {

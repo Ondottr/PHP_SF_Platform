@@ -31,7 +31,7 @@ final class login_page extends AbstractView { public function show(): void { ?>
 
         <tr>
           <td><?= _t( 'E-mail' ) ?>:</td>
-          <td><?php formInput( 'E-mail', [ 6, 50 ], _t( 'email' ) ) ?></td>
+          <td><?php formInput( 'E-mail', [ 6, 50 ], _t( 'E-mail' ) ) ?></td>
         </tr>
 
         <tr>
