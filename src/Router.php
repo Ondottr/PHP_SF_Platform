@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
+
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -62,51 +63,55 @@ class Router
 
     private function __construct() {}
 
-    public static function init( Kernel|null $kernel = null ): void
+    public static function init( Kernel $kernel = null ): void
     {
-        if ( $kernel !== null )
-            self::$kernel = $kernel;
-
-        elseif ( isset( self::$kernel ) === false )
-            throw new InvalidConfigurationException( 'Kernel must be set before calling Router::init() without passing it as a parameter!' );
+        self::$kernel = $kernel
+            ?? self::$kernel
+            ?? throw new InvalidConfigurationException(
+                'Kernel must be set before calling Router::init() without passing it as a parameter!'
+            );
 
         DoctrineEntityManager::invalidateEntityManager( self::$kernel );
 
         static::parseRoutes();
 
-        $currentRoute = static::setCurrentRoute();
-        if ( $currentRoute === true )
+        if ( static::setCurrentRoute() )
             static::route();
 
     }
 
     protected static function parseRoutes(): void
     {
-        if ( empty( static::$routesList ) ) {
-            if ( ( $routesList = ra()->get( 'cache:routes_list' ) ) === null ) {
-                foreach ( static::getControllersDirectories() as $controllersDirectory )
-                    static::controllersFromDir( $controllersDirectory );
+        if ( empty( static::$routesList ) === false )
+            return;
 
-                if ( DEV_MODE === false )
-                    ra()->set( 'cache:routes_list', j_encode( static::$routesList ), null );
+        $routesList = ra()->get( 'cache:routes_list' );
+        if ( $routesList === null ) {
+            foreach ( static::getControllersDirectories() as $controllersDirectory )
+                static::controllersFromDir( $controllersDirectory );
 
-            } else
-                static::$routesList = j_decode( $routesList, true );
+            if ( DEV_MODE === false )
+                ra()->set( 'cache:routes_list', j_encode( static::$routesList ), null );
 
+        } else
+            static::$routesList = j_decode( $routesList, true );
 
-            if ( empty( static::$routesByUrl ) ) {
-                if ( ( $routesByUrl = ra()->get( 'cache:routes_by_url_list' ) ) === null ) {
-                    foreach ( static::$routesList as $route )
-                        static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
+        if ( empty( static::$routesByUrl ) === false )
+            return;
 
-                    if ( DEV_MODE === false )
-                        ra()->set( 'cache:routes_by_url_list', j_encode( static::$routesByUrl ), null );
+        $routesByUrl = ra()->get( 'cache:routes_by_url_list' );
+        if ( $routesByUrl !== null ) {
+            static::$routesByUrl = j_decode( $routesByUrl, true );
 
-                } else
-                    static::$routesByUrl = j_decode( $routesByUrl, true );
-
-            }
+            return;
         }
+
+        foreach ( static::$routesList as $route )
+            static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
+
+        if ( DEV_MODE === false )
+            ra()->set( 'cache:routes_by_url_list', j_encode( static::$routesByUrl ), null );
+
     }
 
     protected static function getControllersDirectories(): array
@@ -116,79 +121,84 @@ class Router
 
     protected static function controllersFromDir( string $dir ): void
     {
-        $filesAndDirectories = array_diff( scandir( $dir ), [ '.', '..' ] );
+        $files = array_filter( scandir( $dir ), function ( $file ) {
+            return in_array( $file, [ '.', '..' ] ) === false;
+        } );
 
-        foreach ( $filesAndDirectories as $fileOrDirectory ) {
-            $path = "$dir/$fileOrDirectory";
+        foreach ( $files as $file ) {
+            $path = "$dir/$file";
 
-            if ( is_dir( $path ) )
+            if ( is_dir( $path ) ) {
                 static::controllersFromDir( $path );
-
-            else {
-                $array1 = explode( '/', $path );
-                $fileName = str_replace( '.php', '', ( end( $array1 ) ) );
-                $array2 = explode( '../', "$dir/$fileName" );
-
-                if ( is_dir( sprintf( '../%s', end( $array2 ) ) ) )
-                    static::controllersFromDir( end( $array2 ) );
-
-                else {
-                    $var = explode( 'namespace ', file_get_contents( $path ) );
-                    $namespace = explode( ';', $var[1], 2 )[0];
-                    static::routesFromController( $namespace, $fileName );
-                }
+                continue;
             }
+
+            if ( preg_match( '/\.php$/', $file ) === false )
+                continue;
+
+            $fileName  = str_replace( '.php', '', $file );
+            $namespace = self::extractNamespace( $path );
+
+            if ( $namespace === null )
+                continue;
+
+            static::routesFromController( $namespace, $fileName );
         }
+    }
+
+    protected static function extractNamespace( string $path ): string|null
+    {
+        $contents = file_get_contents( $path );
+        if ( preg_match( '/namespace (.+);/', $contents, $matches ) )
+            return $matches[1];
+
+        return null;
     }
 
     protected static function routesFromController( string $namespace, string $fileName ): void
     {
         $reflectionClass = new ReflectionClass( "$namespace\\$fileName" );
+        $routeMethods    = [];
 
-        foreach ( $reflectionClass->getMethods() as $reflectionMethod ) {
+        foreach ( $reflectionClass->getMethods( ReflectionMethod::IS_PUBLIC ) as $reflectionMethod ) {
             $routeAttributes = $reflectionMethod->getAttributes( Route::class );
 
-            if ( !empty( $routeAttributes ) ) {
-                $attribute = end( $routeAttributes );
-                $arguments = $attribute->getArguments();
+            if ( !empty( $routeAttributes ) )
+                $routeMethods[] = $reflectionMethod;
 
-                $url = $arguments['url'] ?? $arguments[0];
+        }
 
-                if ( $url !== '/' ) {
-                    if ( $url[0] !== '/' )
-                        $url = "/$url";
+        foreach ( $routeMethods as $routeMethod ) {
+            $routeAttributes = $routeMethod->getAttributes( Route::class );
+            $attribute       = end( $routeAttributes );
+            $arguments       = $attribute->getArguments();
 
-                    if ( $url[ -1 ] === '/' )
-                        $url = substr( $url, 0, -1 );
+            $url = $arguments['url'] ?? $arguments[0];
 
-                }
+            if ( $url !== '/' ) {
+                $url = rtrim( $url, '/' );
+                if ( $url[0] !== '/' )
+                    $url = "/$url";
 
-                static::setRoute(
-                    (object)[
-                        'url' => $url,
-                        'httpMethod' => $arguments['httpMethod'],
-                        'class' => $reflectionClass->getName(),
-                        'name' => $arguments['name'] ?? $reflectionMethod->getName(),
-                        'method' => $reflectionMethod->getName(),
-                        'middleware' => $arguments['middleware'] ?? null,
-                    ]
-                );
             }
+
+            static::setRoute(
+                (object)[
+                    'url'        => $url,
+                    'httpMethod' => $arguments['httpMethod'],
+                    'class'      => $reflectionClass->getName(),
+                    'name'       => $arguments['name'] ?? $routeMethod->getName(),
+                    'method'     => $routeMethod->getName(),
+                    'middleware' => $arguments['middleware'] ?? null,
+                ]
+            );
         }
     }
 
     protected static function setRoute( object $data ): void
     {
-        $arr1 = ( explode( '{$', $data->url ) );
-        unset( $arr1[0] );
-
-        $arr2 = [];
-        $routeParams = [];
-        foreach ( $arr1 as $str )
-            $arr2[] = explode( '/', $str )[0];
-        foreach ( $arr2 as $str )
-            $routeParams[] = explode( '}', $str )[0];
-
+        preg_match_all( '/{([^{$}]+)}/', $data->url, $matches );
+        $routeParams = $matches[1];
         $data = [
             'url' => $data->url,
             'class' => $data->class,
@@ -206,27 +216,24 @@ class Router
 
     protected static function checkParams( object $data ): void
     {
-        if ( $data->middleware !== null ) {
-            if ( is_countable( $data->middleware ) === false )
-                $data->middleware = [ $data->middleware ];
-
-            foreach ( $data->middleware as $middleware ) {
-                $middlewareReflectionClass = new ReflectionClass( $middleware );
-
-                if ( $middlewareReflectionClass->implementsInterface( MiddlewareInterface::class ) === false )
+        # Check if middleware exists and implements the required interface
+        if ( $data->middleware ) {
+            $middleware = is_array( $data->middleware ) ? $data->middleware : [ $data->middleware ];
+            foreach ( $middleware as $m ) {
+                if ( is_subclass_of( $m, MiddlewareInterface::class ) === false ) {
                     throw new RuntimeException(
-                        "Middleware for route `$data->name` in class `$data->class` must implements " .
-                        MiddlewareInterface::class
+                        "Middleware for route $data->name in class $data->class must implement " . MiddlewareInterface::class
                     );
-
+                }
             }
         }
 
         self::checkMethodParameterTypes( $data );
 
+        # Check if HTTP method is allowed
         if ( array_key_exists( $data->httpMethod, static::ALLOWED_HTTP_METHODS ) === false )
             throw new InvalidConfigurationException(
-                "Undefined HTTP method `$data->httpMethod` for route `$data->name` in class `$data->class`",
+                "Undefined HTTP method `$data->httpMethod` for route `$data->name` in class `$data->class`"
             );
 
     }
@@ -276,7 +283,7 @@ class Router
 
         if ( array_key_exists( $httpMethod, self::$routesByUrl ) === false )
             throw new RuntimeException( 'Looks like something went wrong with parsing routes from controllers.' .
-                ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
+                                        ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
 
         $currentUrl = static::getCurrentRequestUrl();
         $urlHash = hash( 'sha256', $currentUrl );
@@ -314,41 +321,36 @@ class Router
         }
 
         $arr = static::$routesByUrl[ $httpMethod ];
-
-        # Loop through all routes to remove routes with different number of parameters
-        foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
-            # Array looks like this: [ '', 'controller', 'method', 'param1', 'param2', ... ]
-            $routeUrlArray = explode( '/', $possibleRouteUrl );
-            # Delete first empty element
-            array_shift( $routeUrlArray );
-
-            if ( count( $currentUrlArray ) !== count( $routeUrlArray ) )
-                unset( $arr[ $possibleRouteUrl ] );
-
-        }
-
-        # Loop through all routes to remove routes with different parameters name
-        foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
-            $routeUrlArray = explode( '/', $possibleRouteUrl );
-            array_shift( $routeUrlArray );
-
-            foreach ( $routeUrlArray as $key => $value )
-                if ( str_starts_with( $value, '{$' ) === false && $value !== $currentUrlArray[ $key ] )
-                    unset( $arr[ $possibleRouteUrl ] );
-
-        }
-
         $possibleRoutes = [];
-        # Loop through all routes to create new array with possible routes with url as a key
+
+        # Looking for a route with the same url (with parameters)
         foreach ( $arr as $possibleRouteUrl => $possibleRoute ) {
+            # Splits the possible route URL into an array of individual components using "/" as a delimiter
             $routeUrlArray = explode( '/', $possibleRouteUrl );
-            array_shift( $routeUrlArray ); # Delete first empty element
+            # Removes the first item from the array as it will always be an empty string
+            array_shift( $routeUrlArray );
 
-            $possibleRoutes[ $possibleRouteUrl ] = 0;
-            foreach ( $routeUrlArray as $value )
-                if ( str_starts_with( $value, '{$' ) )
-                    $possibleRoutes[ $possibleRouteUrl ]++;
+            # Check if the length of the current URL and the possible route URL match
+            if ( count( $currentUrlArray ) === count( $routeUrlArray ) ) {
+                $match = true;
+                # Check if each component in the possible route URL matches the corresponding component in the current URL
+                foreach ( $routeUrlArray as $key => $value ) {
+                    if ( str_starts_with( $value, '{$' ) === false && $value !== $currentUrlArray[ $key ] ) {
+                        $match = false;
+                        # If a mismatch is found, break out of the loop
+                        break;
+                    }
+                }
 
+                # If a match is found, store the possible route URL in an array with a count of the number of dynamic components in the URL
+                if ( $match ) {
+                    $possibleRoutes[ $possibleRouteUrl ] = 0;
+                    foreach ( $routeUrlArray as $value )
+                        if ( str_starts_with( $value, '{$' ) )
+                            $possibleRoutes[ $possibleRouteUrl ]++;
+
+                }
+            }
         }
 
         /**
@@ -360,18 +362,20 @@ class Router
          * Save route parameters to {@see static::$routeParams}
          */
         if ( empty( $possibleRoutes ) === false ) {
-            # Sort and save route
+            # Sort and save route with the least number of parameters
             arsort( $possibleRoutes, SORT_DESC );
             static::$currentRoute = (object)$arr[ array_key_last( $possibleRoutes ) ];
 
+            # Split the URL of the selected route into an array of components
             $routeUrlArray = explode( '/', static::$currentRoute->url );
             array_shift( $routeUrlArray );
 
-            # Save parameters
+            # Save the parameters of the route
             foreach ( $routeUrlArray as $key => $str )
                 if ( str_starts_with( $str, '{$' ) )
                     static::$routeParams[ str_replace( [ '{$', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
 
+            # Store the selected URL, route and its parameters in a cache
             ra()->setMultiple( [
                 sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
                 sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
