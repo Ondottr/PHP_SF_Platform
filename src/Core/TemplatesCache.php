@@ -6,6 +6,7 @@ use http\Exception\RuntimeException;
 use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Immutable;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+
 use function chr;
 use function in_array;
 use function is_array;
@@ -129,6 +130,9 @@ final class TemplatesCache
 
         //remove redundant characters
         $replace = [
+            // Remove JS inline comments
+            '/\/\/.*$/m' => '',
+            //remove HTML comments
             '/<!--(.|\s)*?-->/' => '',
             //remove HTML comments
             '/\s+/' => ' ',
