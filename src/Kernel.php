@@ -15,7 +15,6 @@ use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
 
 use function array_key_exists;
 use function define;
-use function defined;
 use function in_array;
 
 final class Kernel
@@ -53,9 +52,8 @@ final class Kernel
 
     public function addControllers(string $path): self
     {
-        if (!file_exists($path)) {
-            throw new DirectoryNotFoundException(sprintf('Controllers directory "%s" could not be found.', $path));
-        }
+        if ( file_exists($path) === false )
+            throw new DirectoryNotFoundException("Controllers directory '$path' not found.");
 
         Router::addControllersDirectory($path);
 
@@ -64,8 +62,8 @@ final class Kernel
 
     public function addEntities(string $path): self
     {
-        if (!file_exists($path)) {
-            throw new DirectoryNotFoundException(sprintf('Entities directory "%s" could not be found.', $path));
+        if (file_exists($path) === false ) {
+            throw new DirectoryNotFoundException( "Entities directory '$path' could not be found." );
         }
 
         DoctrineEntityManager::addEntityDirectory($path);
@@ -75,9 +73,8 @@ final class Kernel
 
     public function addTranslationFiles(string $path): self
     {
-        if (!file_exists($path)) {
-            throw new DirectoryNotFoundException(sprintf('Translation directory "%s" could not be found.', $path));
-        }
+        if (file_exists($path) === false)
+            throw new DirectoryNotFoundException( "Translation directory '$path' could not be found." );
 
         Translator::addTranslationDirectory($path);
 
@@ -116,8 +113,8 @@ final class Kernel
 
     public function setApplicationUserClassName(string $className): self
     {
-        if (!class_exists($className))
-            throw new InvalidConfigurationException(sprintf('User Class "%s" does not exist', $className));
+        if (class_exists($className) === false)
+            throw new InvalidConfigurationException(sprintf( "User Class '%s' does not exist", $className));
 
         self::$applicationUserClassName = $className;
 
@@ -128,10 +125,7 @@ final class Kernel
     {
         if ( class_exists( $headerTemplateClassName ) === false ) {
             throw new InvalidConfigurationException(
-                sprintf(
-                    'Header template class "%s" does not exist',
-                    $headerTemplateClassName
-                )
+                "Header template class '$headerTemplateClassName' does not exist"
             );
         }
 
@@ -144,10 +138,7 @@ final class Kernel
     {
         if ( class_exists( $footerTemplateClassName ) === false ) {
             throw new InvalidConfigurationException(
-                sprintf(
-                    'Footer template class "%s" does not exist',
-                    $footerTemplateClassName
-                )
+                "Footer template class '$footerTemplateClassName' does not exist"
             );
         }
 
@@ -168,18 +159,16 @@ final class Kernel
 
         $rc = new ReflectionClass( Locale::class );
         /** @noinspection GlobalVariableUsageInspection */
-        $userAcceptLanguages = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
+        $acceptLanguages = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
 
-        foreach ( $userAcceptLanguages as $langCode )
+        foreach ( $acceptLanguages as $langCode )
             if ( $rc->hasConstant( $langCode ) && in_array( $langCode, LANGUAGES_LIST, true ) ) {
                 define( 'DEFAULT_LOCALE', Locale::getLocaleKey( $rc->getConstant( $langCode ) ) );
                 s()->set( 'locale', DEFAULT_LOCALE );
-                break;
+                return;
             }
 
-        if ( defined( 'DEFAULT_LOCALE' ) === false )
-            define( 'DEFAULT_LOCALE', array_values( LANGUAGES_LIST )[0] );
-
+        define( 'DEFAULT_LOCALE', LANGUAGES_LIST[0] );
     }
 
 }
