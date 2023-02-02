@@ -14,156 +14,134 @@
 
 namespace PHP_SF\System\Classes\Helpers;
 
+use App\View\Components\pagination;
+use JetBrains\PhpStorm\ArrayShape;
+
 use function count;
 use function is_array;
 
+/**
+ * Class is used to paginate an iterable object.
+ * You can use it to paginate any array or a collection.
+ * You can also use it to get the total number of pages.
+ *
+ * Usage:
+ * $ph = new PaginationHelper( Users::findAll(), $messagesPerPage, $page );
+ * $users = $ph->paginate();
+ * $pages = $ph->getPages();
+ *
+ * $pages var is used to display the pagination links by the pagination component.
+ *
+ * Just import the the pagination component to the view with the $pages var and onclickFunction as a parameter.
+ *
+ * $this->import( {@link pagination::class}, [ 'onclickFunction' => 'changePage' ] )
+ */
 final class PaginationHelper
 {
 
-    private const MESSAGES_PER_PAGE = 10;
-
-    private int $end;
-    private int $page;
-    private int $start;
+    /**
+     * Store the total number of pages.
+     */
     private int $totalPages;
-    private int $messagesPerPage;
 
 
+    /**
+     * Constructor method.
+     *
+     * @param iterable $arr             The iterable object to be paginated.
+     * @param int      $messagesPerPage The number of items per page.
+     * @param int      $page            The current page number.
+     */
     public function __construct(
         private readonly iterable $arr,
-        int|null $messagesPerPage = null,
-        int                 $page = 1
+        public readonly int $messagesPerPage = 10,
+        public int $page = 1
     ) {
-        $messagesPerPage ??= self::MESSAGES_PER_PAGE;
-
-        $this->setTotalPages( $messagesPerPage );
-
-        $this->setPage( $page );
-
-        if ( $this->getPage() > $this->getTotalPages() )
-            $this->setPage( $this->getTotalPages() );
-
-    }
-
-
-    private function setTotalPages( int $messagesPerPage ): void
-    {
-        $this->setMessagesPerPage( $messagesPerPage );
-
-        $totalMessages = ( is_array( $this->arr ) ) ? count( $this->arr ) : $this->arr->count();
-
-
-        $this->totalPages = (int)ceil( $totalMessages / $this->getMessagesPerPage() );
-    }
-
-    private function setMessagesPerPage( int $messagesPerPage ): void
-    {
-        $this->messagesPerPage = $messagesPerPage;
-    }
-
-    private function getMessagesPerPage(): int
-    {
-        return $this->messagesPerPage;
-    }
-
-    private function setPage( int $page ): void
-    {
-        $this->page = $page;
-
+        // Set the current page to the total pages if the current page number is larger than the total number of pages.
         if ( $this->page > $this->getTotalPages() )
             $this->page = $this->getTotalPages();
 
     }
 
 
-    private function getTotalPages(): int
+    /**
+     * Get the total number of pages.
+     *
+     * @return int The total number of pages.
+     */
+    public function getTotalPages(): int
     {
+        // Calculate the total pages if it has not been set yet.
+        if ( isset( $this->totalPages ) === false )
+            $this->totalPages = (int)ceil(
+                ( is_array( $this->arr ) ? count( $this->arr ) : $this->arr->count() ) / $this->messagesPerPage
+            );
+
         return $this->totalPages;
     }
 
-    private function getPage(): int
-    {
-        return $this->page;
-    }
-
+    /**
+     * Get the items of the current page.
+     *
+     * @return array The items of the current page.
+     */
     public function paginate(): array
     {
+        // Calculate the start and end indices of the current page.
+        $start = ( $this->page - 1 ) * $this->messagesPerPage;
+        $end = $start + $this->messagesPerPage;
+        $returnArr = [];
         $i = 1;
+
+        // Iterate through the iterable object and only add the items between the start and end indices to the return array.
         foreach ( $this->arr as $key => $item ) {
-            if ( $i <= $this->getStart() ) {
-                $i++;
-                continue;
-            }
-            if ( $i > $this->getEnd() )
+            if ( $i > $end )
                 break;
 
-
-            $returnArr[ $key ] = $item;
+            if ( $i > $start )
+                $returnArr[ $key ] = $item;
 
             $i++;
         }
 
-        return $returnArr ?? [];
+        return $returnArr;
     }
 
-    private function getStart(): int
-    {
-        if ( !isset( $this->start ) )
-            $this->setStart();
-
-        return $this->start;
-    }
-
-    private function setStart(): void
-    {
-        $this->start = $this->getPage() * $this->getMessagesPerPage() - $this->getMessagesPerPage();
-    }
-
-    private function getEnd(): int
-    {
-        if ( !isset( $this->end ) )
-            $this->setEnd();
-
-        return $this->end;
-    }
-
-    private function setEnd(): void
-    {
-        if ( !isset( $this->start ) )
-            $this->setStart();
-
-        $this->end = $this->getStart() + $this->getMessagesPerPage();
-    }
-
+    /**
+     * Get the page numbers surrounding the current page.
+     *
+     * @return array The page numbers surrounding the current page.
+     */
+    #[ArrayShape( ['first' => 'int', 'page2left' => 'int', 'page1left' => 'int', 'current' => 'int', 'page1right' => 'int', 'page2right' => 'int', 'last' => 'int'] )]
     public function getPages(): array
     {
-        if ( $this->getPage() > 3 )
+        // Add the first page number if the current page is greater than 3.
+        if ( $this->page > 3 )
             $pages['first'] = 1;
 
-
+        // If there is more than one page, add the page numbers surrounding the current page.
         if ( $this->getTotalPages() > 1 ) {
-
-            if ( $this->getPage() - 2 > 0 )
-                $pages['page2left'] = $this->getPage() - 2;
-
-
-            if ( $this->getPage() - 1 > 0 )
-                $pages['page1left'] = $this->getPage() - 1;
+            if ( $this->page - 2 > 0 )
+                $pages['page2left'] = $this->page - 2;
 
 
-            $pages['current'] = $this->getPage();
+            if ( $this->page - 1 > 0 )
+                $pages['page1left'] = $this->page - 1;
 
 
-            if ( $this->getPage() + 1 <= $this->getTotalPages() )
-                $pages['page1right'] = $this->getPage() + 1;
+            $pages['current'] = $this->page;
 
 
-            if ( $this->getPage() + 2 <= $this->getTotalPages() )
-                $pages['page2right'] = $this->getPage() + 2;
+            if ( $this->page + 1 <= $this->getTotalPages() )
+                $pages['page1right'] = $this->page + 1;
 
+
+            if ( $this->page + 2 <= $this->getTotalPages() )
+                $pages['page2right'] = $this->page + 2;
         }
 
-        if ( $this->getPage() !== ( $tp = $this->getTotalPages() ) && $this->getPage() + 2 < $tp )
+        // Add the last page number if the current page is less than the total number of pages minus 2.
+        if ( $this->page !== ( $tp = $this->getTotalPages() ) && $this->page + 2 < $tp )
             $pages['last'] = $this->getTotalPages();
 
 
