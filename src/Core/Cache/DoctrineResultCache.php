@@ -4,7 +4,6 @@ namespace PHP_SF\System\Core\Cache;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Driver\Exception;
 use Doctrine\DBAL\Driver\Result as DriverResult;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
@@ -77,8 +76,6 @@ final class DoctrineResultCache implements DriverResult
      * Returns the next row of the result as a numeric array or FALSE if there are no more rows.
      *
      * @return list<mixed>|false
-     *
-     * @throws Exception
      */
     public function fetchNumeric(): array|false
     {
@@ -93,8 +90,6 @@ final class DoctrineResultCache implements DriverResult
      * Returns the next row of the result as an associative array or FALSE if there are no more rows.
      *
      * @return array<string,mixed>|false
-     *
-     * @throws Exception
      */
     public function fetchAssociative(): array|false
     {
@@ -109,8 +104,6 @@ final class DoctrineResultCache implements DriverResult
      * Returns the first value of the next row of the result or FALSE if there are no more rows.
      *
      * @return mixed|false
-     *
-     * @throws Exception
      */
     public function fetchOne(): mixed
     {
@@ -125,8 +118,6 @@ final class DoctrineResultCache implements DriverResult
      * Returns an array containing all of the result rows represented as numeric arrays.
      *
      * @return list<list<mixed>>
-     *
-     * @throws Exception
      */
     public function fetchAllNumeric(): array
     {
@@ -144,8 +135,6 @@ final class DoctrineResultCache implements DriverResult
      * Returns an array containing all of the result rows represented as associative arrays.
      *
      * @return list<array<string,mixed>>
-     *
-     * @throws Exception
      */
     public function fetchAllAssociative(): array
     {
@@ -163,8 +152,6 @@ final class DoctrineResultCache implements DriverResult
      * Returns an array containing the values of the first column of the result.
      *
      * @return list<mixed>
-     *
-     * @throws Exception
      */
     public function fetchFirstColumn(): array
     {
@@ -186,8 +173,6 @@ final class DoctrineResultCache implements DriverResult
      * is not guaranteed for all drivers and should not be relied on in portable applications.
      *
      * @return int The number of rows.
-     *
-     * @throws Exception
      */
     public function rowCount(): int
     {
@@ -199,8 +184,6 @@ final class DoctrineResultCache implements DriverResult
      *
      * @return int The number of columns in the result. If the columns cannot be counted,
      *             this method must return 0.
-     *
-     * @throws Exception
      */
     public function columnCount(): int
     {

@@ -1,4 +1,4 @@
-<?php /** @noinspection SpellCheckingInspection @noinspection PhpConstantNamingConventionInspection */
+<?php /** @noinspection PhpUnused @noinspection SpellCheckingInspection @noinspection PhpConstantNamingConventionInspection */
 declare( strict_types=1 );
 /*
  * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
@@ -17,6 +17,8 @@ namespace PHP_SF\System\Classes\Helpers;
 
 class TimeZone
 {
+
+    # region Timezone constants
     public const CI            = [ 'name' => 'Africa/Abidjan', 'offset' => '+00:00' ];
     public const GH            = [ 'name' => 'Africa/Accra', 'offset' => '+00:00' ];
     public const GM            = [ 'name' => 'Africa/Banjul', 'offset' => '+00:00' ];
@@ -365,32 +367,32 @@ class TimeZone
     ];
     public const JO            = [ 'name' => 'Asia/Amman', 'offset' => '+02:00' ];
     public const RU            = [
-        'anadyr'        => [ 'name' => 'Asia/Anadyr', 'offset' => '+12:00' ],
-        'barnaul'       => [ 'name' => 'Asia/Barnaul', 'offset' => '+07:00' ],
-        'chita'         => [ 'name' => 'Asia/Chita', 'offset' => '+09:00' ],
-        'irkutsk'       => [ 'name' => 'Asia/Irkutsk', 'offset' => '+08:00' ],
-        'kamchatka'     => [ 'name' => 'Asia/Kamchatka', 'offset' => '+12:00' ],
-        'khanyga'       => [ 'name' => 'Asia/Khandyga', 'offset' => '+09:00' ],
-        'krasnoyarsk'   => [ 'name' => 'Asia/Krasnoyarsk', 'offset' => '+07:00' ],
-        'magadan'       => [ 'name' => 'Asia/Magadan', 'offset' => '+11:00' ],
-        'novokuznetsk'  => [ 'name' => 'Asia/Novokuznetsk', 'offset' => '+07:00' ],
-        'novosibirsk'   => [ 'name' => 'Asia/Novosibirsk', 'offset' => '+07:00' ],
-        'omsk'          => [ 'name' => 'Asia/Omsk', 'offset' => '+06:00' ],
-        'sakhalin'      => [ 'name' => 'Asia/Sakhalin', 'offset' => '+11:00' ],
-        'srednekolymsk' => [ 'name' => 'Asia/Srednekolymsk', 'offset' => '+11:00' ],
-        'tomsk'         => [ 'name' => 'Asia/Tomsk', 'offset' => '+07:00' ],
-        'ust-nera'      => [ 'name' => 'Asia/Ust-Nera', 'offset' => '+10:00' ],
-        'vladivostok'   => [ 'name' => 'Asia/Vladivostok', 'offset' => '+10:00' ],
-        'yakutsk'       => [ 'name' => 'Asia/Yakutsk', 'offset' => '+09:00' ],
-        'yekaterinburd' => [ 'name' => 'Asia/Yekaterinburg', 'offset' => '+05:00' ],
-        'astrakhan'     => [ 'name' => 'Europe/Astrakhan', 'offset' => '+04:00' ],
-        'kaliningrad'   => [ 'name' => 'Europe/Kaliningrad', 'offset' => '+03:00' ],
-        'kirov'         => [ 'name' => 'Europe/Kirov', 'offset' => '+03:00' ],
-        'moscow'        => [ 'name' => 'Europe/Moscow', 'offset' => '+03:00' ],
-        'samara'        => [ 'name' => 'Europe/Samara', 'offset' => '+04:00' ],
-        'saratov'       => [ 'name' => 'Europe/Saratov', 'offset' => '+03:00' ],
-        'ulyanovsk'     => [ 'name' => 'Europe/Ulyanovsk', 'offset' => '+04:00' ],
-        'volgograd'     => [ 'name' => 'Europe/Volgograd', 'offset' => '+03:00' ],
+        'anadyr'        => [ 'name' => 'Asia/anadyr', 'offset' => '+12:00' ],
+        'barnaul'       => [ 'name' => 'Asia/barnaul', 'offset' => '+07:00' ],
+        'chita'         => [ 'name' => 'Asia/chita', 'offset' => '+09:00' ],
+        'irkutsk'       => [ 'name' => 'Asia/irkutsk', 'offset' => '+08:00' ],
+        'kamchatka'     => [ 'name' => 'Asia/kamchatka', 'offset' => '+12:00' ],
+        'khanyga'       => [ 'name' => 'Asia/khandyga', 'offset' => '+09:00' ],
+        'krasnoyarsk'   => [ 'name' => 'Asia/krasnoyarsk', 'offset' => '+07:00' ],
+        'magadan'       => [ 'name' => 'Asia/magadan', 'offset' => '+11:00' ],
+        'novokuznetsk'  => [ 'name' => 'Asia/novokuznetsk', 'offset' => '+07:00' ],
+        'novosibirsk'   => [ 'name' => 'Asia/novosibirsk', 'offset' => '+07:00' ],
+        'omsk'          => [ 'name' => 'Asia/omsk', 'offset' => '+06:00' ],
+        'sakhalin'      => [ 'name' => 'Asia/sakhalin', 'offset' => '+11:00' ],
+        'srednekolymsk' => [ 'name' => 'Asia/srednekolymsk', 'offset' => '+11:00' ],
+        'tomsk'         => [ 'name' => 'Asia/tomsk', 'offset' => '+07:00' ],
+        'ust-nera'      => [ 'name' => 'Asia/ust-Nera', 'offset' => '+10:00' ],
+        'vladivostok'   => [ 'name' => 'Asia/vladivostok', 'offset' => '+10:00' ],
+        'yakutsk'       => [ 'name' => 'Asia/yakutsk', 'offset' => '+09:00' ],
+        'yekaterinburd' => [ 'name' => 'Asia/yekaterinburg', 'offset' => '+05:00' ],
+        'astrakhan'     => [ 'name' => 'Europe/astrakhan', 'offset' => '+04:00' ],
+        'kaliningrad'   => [ 'name' => 'Europe/kaliningrad', 'offset' => '+03:00' ],
+        'kirov'         => [ 'name' => 'Europe/kirov', 'offset' => '+03:00' ],
+        'moscow'        => [ 'name' => 'Europe/moscow', 'offset' => '+03:00' ],
+        'samara'        => [ 'name' => 'Europe/samara', 'offset' => '+04:00' ],
+        'saratov'       => [ 'name' => 'Europe/saratov', 'offset' => '+03:00' ],
+        'ulyanovsk'     => [ 'name' => 'Europe/ulyanovsk', 'offset' => '+04:00' ],
+        'volgograd'     => [ 'name' => 'Europe/volgograd', 'offset' => '+03:00' ],
     ];
     public const TM            = [ 'name' => 'Asia/Ashgabat', 'offset' => '+05:00' ];
     public const IQ            = [ 'name' => 'Asia/Baghdad', 'offset' => '+03:00' ];
@@ -720,5 +722,6 @@ class TimeZone
     public const UNIVERSAL     = [ 'name' => 'Universal', 'offset' => '+00:00' ];
     public const WET           = [ 'name' => 'WET', 'offset' => '+00:00' ];
     public const ZULU          = [ 'name' => 'Zulu', 'offset' => '+00:00' ];
+    # endregion
 
 }

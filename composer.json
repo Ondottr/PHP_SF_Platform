@@ -10,7 +10,8 @@
     "psr-4": {
       "PHP_SF\\System\\": "src/",
       "PHP_SF\\Framework\\": "app/",
-      "PHP_SF\\Templates\\": "templates/"
+      "PHP_SF\\Templates\\": "templates/",
+      "PHP_SF\\Tests\\": "tests/"
     }
   },
   "license": "ISC",

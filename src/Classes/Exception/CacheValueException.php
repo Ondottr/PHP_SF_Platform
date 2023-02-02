@@ -4,7 +4,7 @@ namespace PHP_SF\System\Classes\Exception;
 
 use Throwable;
 
-class CacheValueExceptionCache extends InvalidCacheArgumentException
+class CacheValueException extends InvalidCacheArgumentException
 {
 
     public function __construct( string $message = '', int $code = 0, Throwable|null $previous = null )
