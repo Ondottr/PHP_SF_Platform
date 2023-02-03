@@ -321,7 +321,7 @@ function formSelect(
     if ( $id === '' )
         $id = $name;
 
-    foreach ( $options as $key => $option ) {
+    foreach ( $options as $option ) {
         if ( method_exists( $option, $value ) === false )
             throw new InvalidArgumentException( "Invalid value field for '$name' select. The value field must be a public method name of the object." );
 
