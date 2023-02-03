@@ -109,6 +109,12 @@ abstract class AbstractQuery
     protected int $lifetime = 0;
 
     /**
+     * Have no fucking clue what is this for.
+     * But {@link \Doctrine\ORM\NativeQuery} uses it.
+     */
+    protected $_queryCacheProfile;
+
+    /**
      * Initializes a new instance of a class derived from <tt>AbstractQuery</tt>.
      */
     public function __construct( EntityManagerInterface $em )
@@ -727,7 +733,7 @@ abstract class AbstractQuery
      *                    the results, or an integer indicating how
      *                    many rows were affected.
      */
-    abstract protected function _doExecute(): int|Result;
+    abstract protected function _doExecute();
 
     /**
      * Cleanup Query resource when clone is called.
