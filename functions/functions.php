@@ -16,6 +16,7 @@ use App\Entity\User;
 use App\Kernel;
 use Doctrine\ORM\QueryBuilder;
 use PHP_SF\Framework\Http\Middleware\auth;
+use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
 use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
@@ -64,55 +65,112 @@ function s(): Session
 }
 
 
+/**
+ * @param string      $routeName Route name, first parameter from {@link Route} attribute
+ * @param array       $with      Route parameters to replace in route link
+ *                               Example: routeLink('user_profile', ['id' => 1])
+ *                               Route link: /user/{id}
+ *                               Result: /user/1
+ * @param array       $query     Query parameters to add to route link
+ *                               Example: routeLink('user_profile', ['id' => 1], ['page' => 2])
+ *                               Route link: /user/{id}
+ *                               Result: /user/1?page=2
+ * @param string|null $siteUrl   Site url to add to route link
+ *                               Example: routeLink('user_profile', ['id' => 1], ['page' => 2], 'https://example.com')
+ *                               Route link: /user/{id}
+ *                               Result: https://example.com/user/1?page=2
+ *
+ * @throws InvalidArgumentException If $siteUrl is not valid url
+ * @throws RouteNotFoundException If route not exists in symfony routes and in routes from {@link Route} attribute
+ * @throws RouteParameterExpectedException If route parameter is not provided in $with array and is required
+ *
+ * @return string
+ */
 function routeLink( string $routeName, array $with = [], array $query = [], string $siteUrl = null ): string
 {
+    $cacheKey = sprintf(
+        'route_link_%s_%s_%s_%s',
+        $routeName,
+        md5( serialize( $with ) ),
+        md5( serialize( $query ) ),
+        md5( serialize( $siteUrl ) )
+    );
+
+    // Check if route link is cached
+    if ( ra()->has( $cacheKey ) )
+        // Return cached route link
+        return ra()->get( $cacheKey );
+
+    if ( $siteUrl !== null && filter_var( $siteUrl, FILTER_VALIDATE_URL ) === false )
+        throw new InvalidArgumentException( 'Invalid site url' );
+
+    /**
+     * First check if route exists
+     * If not then try to generate link from symfony routes
+     * If symfony route not exists too, then throw an exception
+     */
     try {
-        if ( Router::isRouteExists( $routeName ) === false )
-            return Kernel::getInstance()->getContainer()->get( 'router' )?->generate( $routeName, $with );
+        if ( Router::isRouteExists( $routeName ) === false ) {
+            $link = Kernel::getInstance()->getContainer()->get( 'router' )?->generate( $routeName, $with );
 
+            // If link is not null then cache it and return
+            if ( $link !== null ) {
+                ra()->set( $cacheKey, $link );
+
+                return $link;
+            }
+        }
+
+        // If route not exists in symfony routes and in routes from {@link Route} attribute
         throw new RouteNotFoundException;
-
     } catch ( RouteNotFoundException ) {
-        if($siteUrl !== null)
-            $link = $siteUrl . Router::getRouteLink( $routeName );
-        else
-            $link = Router::getRouteLink( $routeName );
 
-        if ( !empty( $with ) ) {
+        // Get route link
+        $link = ( $siteUrl !== null )
+            ? $siteUrl . Router::getRouteLink( $routeName )
+            : Router::getRouteLink( $routeName );
+
+        // Check if parameters are provided
+        if ( empty( $with ) === false ) {
             $link = str_replace( [ '{', '}' ], '', $link );
 
+            // Replace parameters in route link
             foreach ( $with as $propertyName => $propertyValue )
                 $link = str_replace( sprintf( '$%s', $propertyName ), (string)$propertyValue, $link );
 
         }
 
+        // Check if route exists in routes from {@link Route} attribute
         if ( Router::isRouteExists( $routeName ) ) {
+            // Get route info
             $routeInfo = Router::getRouteInfo( $routeName );
 
+            // Check if route contains parameters
             if ( empty( $routeInfo['routeParams'] ) === false )
+                // Loop through route parameters
                 foreach ( $routeInfo['routeParams'] as $param )
+                    // Check if parameter is provided to replace in route link
                     if ( array_key_exists( $param, $with ) === false )
-                        throw new RouteParameterExpectedException(
-                            $routeName, $param
-                        );
+                        // If parameter is required then throw an exception
+                        throw new RouteParameterExpectedException( $routeName, $param );
+
         }
 
-        if ( str_contains( $link, '{$' ) )
+        // Check if route link contains not replaces parameters
+        // This means that route with this name not exists in routes from {@link Route} attribute
+        if ( strpos( $link, '{$' ) )
+            // Return route name
             return "#$routeName";
 
-        if ( !empty( $query ) ) {
-            $link .= '?';
-            $i = 0;
-            $arrCount = count( $query );
-            foreach ( $query as $key => $value ) {
-                $i++;
-                $link .= "$key=$value";
+        // Check if query parameters are provided
+        if ( empty( $query ) === false )
+            // Add query parameters to route link
+            $link .= http_build_query( $query );
 
-                if ( $i < $arrCount )
-                    $link .= '&';
-            }
-        }
+        // Cache route link
+        ra()->set( $cacheKey, $link );
 
+        // Return route link
         return $link;
     }
 }
