@@ -6,12 +6,11 @@
  * Time: 6:16 PM
  */
 
-namespace PHP_SF\Tests\System\Core\Cache;
+namespace PHP_SF\System\Core\Cache;
 
 use DateInterval;
 use PHP_SF\System\Classes\Exception\CacheValueException;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
-use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHPUnit\Framework\TestCase;
 
 final class RedisCacheAdapterTest extends TestCase

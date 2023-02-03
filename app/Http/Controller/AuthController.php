@@ -27,6 +27,7 @@ use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 use Symfony\Component\HttpFoundation\Request;
+
 use function strlen;
 
 
@@ -48,9 +49,7 @@ class AuthController extends AbstractController
     public function login_page(): Response|RedirectResponse
     {
         if ( auth::isAuthenticated() )
-            return $this->redirectTo(
-                routeLink( 'home_page' )
-            );
+            return $this->redirectTo( routeLink( 'home_page' ) );
 
         return $this->render( login_page::class );
     }
@@ -59,9 +58,7 @@ class AuthController extends AbstractController
     public function login_handler(): RedirectResponse
     {
         if ( auth::isAuthenticated() )
-            return $this->redirectTo(
-                routeLink( 'home_page' )
-            );
+            return $this->redirectTo( routeLink( 'home_page' ) );
 
         $email    = trim( htmlspecialchars( $this->request->request->get( 'email' ) ) );
         $password = trim( htmlspecialchars( $this->request->request->get( 'password' ) ) );
@@ -94,9 +91,7 @@ class AuthController extends AbstractController
     public function register_page(): Response|RedirectResponse
     {
         if ( auth::isAuthenticated() )
-            return $this->redirectTo(
-                routeLink( 'home_page' )
-            );
+            return $this->redirectTo( routeLink( 'home_page' ) );
 
         return $this->render( register_page::class );
     }
@@ -140,7 +135,7 @@ class AuthController extends AbstractController
         $user->setUserGroup( UserGroup::find( UserGroup::USER ) );
 
         if ( $user->validate() !== true )
-            return $this->redirectBack( errors: $user->getValidationErrors() );
+            return $this->redirectBack( errors: array_values( $user->getValidationErrors() ) );
 
 
         em()
