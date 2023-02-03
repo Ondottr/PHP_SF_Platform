@@ -197,8 +197,11 @@ class Router
 
     protected static function setRoute( object $data ): void
     {
-        preg_match_all( '/{([^{$}]+)}/', $data->url, $matches );
-        $routeParams = $matches[1];
+        preg_match_all( '/\{\$(.*?)}/', $data->url, $matches );
+        $routeParams = [];
+        foreach ( $matches[1] as $match )
+            $routeParams[] = $match;
+
         $data = [
             'url' => $data->url,
             'class' => $data->class,
