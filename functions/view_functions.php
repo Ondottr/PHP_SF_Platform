@@ -109,23 +109,134 @@ function formValue( string $name ): string
 //}
 
 
+/**
+ * Creates an HTML input element.
+ *
+ * @param string $name Name of the input element
+ * @param array $length An array of two integers specifying the minimum and maximum length of the input.
+ * @param string $type Type of the input element, defaults to "text".
+ * @param bool $isRequired Indicates whether the input is required, defaults to true.
+ * @param array $minMax An array of two integers or an empty array specifying the minimum and maximum value of the input, applies only to type "number".
+ * @param string|int|float $defaultValue Default value of the input.
+ * @param string $placeholder Placeholder text for the input.
+ * @param int|float $step Step for the input of type "number".
+ * @param array $classes Classes for the input element, must be unique.
+ * @param array $styles Styles for the input element, given as key-value pairs.
+ * @param string $id ID for the input element.
+ * @param array $customAttributes Custom attributes for the input element, given as key-value pairs.
+ *
+ * @return string The HTML code for the input element.
+ */
+function input(
+    string $name,
+    array $length = [ 1, 255 ],
+    string $type = 'text',
+    bool $isRequired = true,
+    array $minMax = [],
+    string|int|float $defaultValue = null,
+    string $placeholder = null,
+    int|float $step = null,
+    array $classes = [],
+    array $styles = [],
+    string $id = null,
+    array $customAttributes = []
+): string
+{
+    if ( count( $length ) !== 2 ||
+        is_int( $length[0] ) === false || is_int( $length[1] ) === false
+    )
+        throw new InvalidArgumentException( 'Length must be an array of two integers' );
+
+    if ( empty( $minMax ) === false )
+        if ( count( $minMax ) !== 2 ||
+            ( is_int( $minMax[0] ) === false && is_float( $minMax[0] ) === false ) ||
+            ( is_int( $minMax[1] ) === false && is_float( $minMax[1] ) === false )
+        )
+            throw new InvalidArgumentException( 'MinMax must be an array of two integers or floats or an empty array' );
+
+    if ( count( $classes ) !== count( array_unique( $classes ) ) )
+        throw new InvalidArgumentException( 'Classes must be unique' );
+
+    if ( empty( $classes ) === false )
+        foreach ( $classes as $class )
+            if ( is_string( $class ) === false )
+                throw new InvalidArgumentException( 'Classes must be an array of strings' );
+
+    if ( empty( $styles ) === false )
+        foreach ( $styles as $key => $value )
+            if ( is_string( $key ) === false || is_string( $value ) === false )
+                throw new InvalidArgumentException( 'Key and value in styles must be strings' );
+
+    if ( empty( $customAttributes ) === false )
+        foreach ( $customAttributes as $key => $value )
+            if ( is_string( $key ) === false || is_string( $value ) === false )
+                throw new InvalidArgumentException( 'Key and value in customAttributes must be strings' );
+
+    if ( $type === 'number' && $step === null )
+        throw new InvalidArgumentException( 'Step must be set for number input' );
+
+    $inputStr = "<input type='$type'";
+
+    if ( $isRequired )
+        $inputStr .= " required";
+
+    $inputStr .= $id ? " id='$id'" : " id='$name'";
+    $inputStr .= " name='$name'";
+
+    if ( $type === 'number' ) {
+        $inputStr .= $step !== null ? " step='$step'" : '';
+
+        if ( empty( $minMax ) === false )
+            $inputStr .= sprintf( " min='%s' max='%s'", $minMax[0], $minMax[1] );
+
+    }
+
+    $inputStr .= $placeholder ? " placeholder='$placeholder'" : '';
+
+    if ( $defaultValue !== null )
+        $inputStr .= sprintf( " value='%s'", $defaultValue );
+
+    elseif ( empty( formValue( $name ) ) === false )
+        $inputStr .= sprintf( " value='%s'", formValue( $name ) );
+
+    if ( empty( $length ) === false )
+        $inputStr .= sprintf( " minlength='%d' maxlength='%d'", $length[0], $length[1] );
+
+
+    $inputStr .= empty( $classes ) === false ? " class='" . implode( ' ', $classes ) . "'" : '';
+    $inputStr .= empty( $styles ) === false ?
+        sprintf( " style='%s;'",
+                 implode( '; ',
+                          array_map(
+                              static function ( $v, $k ) { return "$k: $v"; }, $styles, array_keys( $styles )
+                          )
+                 )
+        ) : '';
+
+    foreach ( $customAttributes as $attr => $value )
+        $inputStr .= " $attr='$value'";
+
+    $inputStr .= ">";
+
+    return $inputStr;
+}
+
+
+/**
+ * @deprecated Use {@link input()} instead
+ */
 function formInput(
     string     $name,
-    #[ArrayShape( [ 'min' => 'int', 0 => 'int', 'max' => 'int', 1 => 'int' ] )]
     array      $length = [ 1, 255 ],
     string     $type = 'text',
     bool       $isRequired = true,
-    #[ArrayShape( [ 'min' => 'int', 0 => 'int', 'max' => 'int', 1 => 'int' ] )]
     array      $minMax = [],
     string|int|float $defaultValue = null,
     string     $placeholder = '',
     string|int $step = null,
-    #[ArrayShape( [ 'string' ] )]
     array      $classes = [],
-    #[ArrayShape( [ 'string' ] )]
     array      $styles = [],
     string|int $id = '',
-    #[ExpectedValues( [ 'string' ] )]
     array      $customAttributes = []
 ): void
 {
@@ -152,6 +263,7 @@ function formInput(
 
     if ( $defaultValue !== null )
         $inputStr .= sprintf( ' value="%s" ', $defaultValue );
+
     elseif ( empty( formValue( $name ) ) === false )
         $inputStr .= sprintf( ' value="%s" ', formValue( $name ) );
 
@@ -169,6 +281,7 @@ function formInput(
         $inputStr .= ' style="';
         foreach ( $styles as $styleName => $styleValue )
             $inputStr .= sprintf( '%s: %s; ', $styleName, $styleValue );
+
         $inputStr .= '" ';
     }
 
