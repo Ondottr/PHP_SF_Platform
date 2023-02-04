@@ -21,7 +21,6 @@ use PHP_SF\System\Traits\ControllerTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Form\FormFactory;
 use Symfony\Component\Form\FormInterface;
-use function is_array;
 
 abstract class AbstractController
 {
@@ -34,11 +33,12 @@ abstract class AbstractController
     {
         s()->set( 'page_title', $pageTitle ?? APPLICATION_NAME );
 
-        if ( TEMPLATES_CACHE_ENABLED &&
-            is_array( $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $view ) )
-        ) {
-            require_once( $arr['fileName'] );
-            $view = $arr['className'];
+        if ( TEMPLATES_CACHE_ENABLED ) {
+            $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
+            if ( $result !== false ) {
+                eval( $result['fileContent'] );
+                $view = $result['className'];
+            }
         }
 
         $view = new $view( $data );

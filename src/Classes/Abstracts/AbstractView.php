@@ -18,6 +18,7 @@ use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\Header\head;
+
 use function array_key_exists;
 
 abstract class AbstractView
@@ -41,10 +42,10 @@ abstract class AbstractView
     final protected function import( string $view, array $data = [], bool $htmlClassTagEnabled = true ): void
     {
         if ( TEMPLATES_CACHE_ENABLED ) {
-            $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className );
-            if ( $arr !== false ) {
-                require_once( $arr['fileName'] );
-                $className = $arr['className'];
+            $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
+            if ( $result !== false ) {
+                eval( $result['fileContent'] );
+                $view = $result['className'];
             }
         }
 

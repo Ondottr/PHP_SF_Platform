@@ -2,7 +2,7 @@
 
 namespace PHP_SF\System\Core;
 
-use http\Exception\RuntimeException;
+use App\Command\AppCacheClearCommand;
 use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Immutable;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -11,8 +11,27 @@ use function chr;
 use function in_array;
 use function is_array;
 
+/**
+ * TemplatesCache is a class that provides caching functionality for HTML templates.
+ * It's designed to reduce the time spent loading and parsing template files, which
+ * can improve the overall performance of your application.
+ * The class uses a file-based caching mechanism to store the compiled HTML templates.
+ * Each time a template is requested, the cache is checked for a saved version of the
+ * compiled template. If a cached version is found, it is returned immediately.
+ * Otherwise, the original template file is loaded, compiled and saved to the cache
+ * for future use.
+ * The cache is not invalidated automatically. If you make changes to a template file,
+ * you will need to delete the cached version of the file using the {@link AppCacheClearCommand}(a:c:c).
+ * To use the class, simply pass the path to the template file to the getTemplate method.
+ * The method will return the compiled HTML, which can then be used in your application.
+ *
+ * @author Dmytro Dyvulskyi
+ * @copyright 2022 Nations Original sp. z o.o.
+ */
 final class TemplatesCache
 {
+
+    private const TEMPLATES_NAMESPACE = 'PHP_SF\\CachedTemplates';
 
     private static self $instance;
 
@@ -23,6 +42,12 @@ final class TemplatesCache
     private static array $templatesDirectories = [];
 
 
+    /**
+     * Constructor for TemplatesCache class.
+     * This sets up the cache directory and other necessary parameters.
+     *
+     * @throws InvalidConfigurationException If a template directory does not exist
+     */
     private function __construct()
     {
         foreach ( $this->getTemplatesDirectories() as $dir )
@@ -33,26 +58,57 @@ final class TemplatesCache
         self::$templatesDefinition = array_combine( $this->getTemplatesDirectories(), $this->getTemplatesNamespaces() );
     }
 
+    /**
+     * Get the list of templates directories.
+     *
+     * @return string[]
+     */
     private function getTemplatesDirectories(): array
     {
         return self::$templatesDirectories;
     }
 
+    /**
+     * Get the list of templates namespaces.
+     *
+     * @return string[]
+     */
     private function getTemplatesNamespaces(): array
     {
         return self::$templatesNamespaces;
     }
 
+    /**
+     * Add the templates namespaces to the list of templates namespaces.
+     *
+     * @param string ...$templateNamespaces
+     */
     public static function addTemplatesNamespace( string ...$templateNamespaces ): void
     {
-        self::$templatesNamespaces = array_merge( self::$templatesNamespaces, $templateNamespaces );
+        self::$templatesNamespaces = [
+            ...self::$templatesNamespaces,
+            ...$templateNamespaces
+        ];
     }
 
+    /**
+     * Add the templates directories to the list of templates directories.
+     *
+     * @param string ...$templateDirectories
+     */
     public static function addTemplatesDirectory( string ...$templateDirectories ): void
     {
-        self::$templatesDirectories = array_merge( self::$templatesDirectories, $templateDirectories );
+        self::$templatesDirectories = [
+            ...self::$templatesDirectories,
+            ...$templateDirectories
+        ];
     }
 
+    /**
+     * Get the instance of the TemplatesCache class.
+     *
+     * @return self
+     */
     public static function getInstance(): self
     {
         if ( isset( self::$instance ) === false )
@@ -61,37 +117,46 @@ final class TemplatesCache
         return self::$instance;
     }
 
+    /**
+     * Set the instance of the TemplatesCache class.
+     */
     private static function setInstance(): void
     {
         self::$instance = new self;
     }
 
-    #[ArrayShape( [ 'fileName' => 'string', 'className' => 'string' ] )]
+    /**
+     * Get the cached template class if it exists.
+     *
+     * @param string $className
+     * @return string[]|false
+     */
+    #[ArrayShape( ['className' => 'string', 'fileContent' => 'string'] )]
     public function getCachedTemplateClass( string $className ): array|false
     {
-        $newNamespace = 'PHP_SF\CachedTemplates';
-        if ( TEMPLATES_CACHE_ENABLED === false || str_contains( $className, $newNamespace ) )
+        if ( TEMPLATES_CACHE_ENABLED === false || strpos( $className, self::TEMPLATES_NAMESPACE ) )
             return false;
+
+        $cacheKey = sprintf( 'cached_template_class_%s', $className );
+
+        if ( ca()->has( $cacheKey ) )
+            return j_decode( ca()->get( $cacheKey ), true );
 
 
         foreach ( $this->getTemplatesDefinition() as $directory => $namespace ) {
-            if ( str_contains( $className, $namespace ) === false )
+            if ( strpos( $className, $namespace ) === false )
                 continue;
 
 
             $arr = ( explode( '\\', $className ) );
             array_pop( $arr );
             $currentNamespace = implode( '\\', $arr );
-            $newClassName = str_replace( $namespace, $newNamespace, $className );
+            $newClassName = str_replace( $namespace, self::TEMPLATES_NAMESPACE, $className );
 
-            $newFileDirectory = sprintf( '/tmp/%s/%s.php',
-                env( 'SERVER_PREFIX' ), str_replace( '\\', '/', $newClassName )
-            );
-            $arr = explode( '/', $newFileDirectory );
-            $fileName = array_pop( $arr );
-            $newFileDirectory = implode( '/', $arr );
-
-            $currentClassDirectory = sprintf( '%s/../../../%s/%s.php', __DIR__, $directory,
+            $currentClassDirectory = sprintf(
+                '%s/../../../%s/%s.php',
+                __DIR__,
+                $directory,
                 str_replace( [ $namespace, '\\' ], [ '', '/' ], $className )
             );
         }
@@ -100,24 +165,18 @@ final class TemplatesCache
             return false;
 
 
-        if ( ( file_exists( $newFileDirectory ) === false ) &&
-            mkdir( $newFileDirectory, recursive: true ) === false && is_dir( $newFileDirectory ) === false
-        )
-            throw new RuntimeException( _t( 'Directory “%s” was not created!', $newFileDirectory ) );
-
-
         $fileContent = $this->removeComments( $currentClassDirectory );
 
         foreach ( $this->getTemplatesNamespaces() as $oldNamespace ) {
-            $fileContent = str_replace( "namespace $oldNamespace", "namespace $newNamespace", $fileContent );
+            $fileContent = str_replace( "namespace $oldNamespace", 'namespace ' . self::TEMPLATES_NAMESPACE, $fileContent );
 
             $imports = explode( '$this->import(', $fileContent );
             unset( $imports[0] );
             foreach ( $imports as $str ) {
                 $importedView = trim( explode( '::class', $str )[0] );
 
-                if ( str_contains( $importedView, '\\' ) === false &&
-                    str_contains( $fileContent, sprintf( '\%s;', $importedView ) ) === false
+                if ( strpos( $importedView, '\\' ) === false &&
+                    strpos( $fileContent, sprintf( '\%s;', $importedView ) ) === false
                 ) {
                     $fileContent = str_replace(
                         [ sprintf( '$this->import(%s', $importedView ), sprintf( '$this->import( %s', $importedView ) ],
@@ -179,19 +238,35 @@ final class TemplatesCache
         $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
         $fileContent = trim( str_ireplace( $remove, '', $fileContent ) );
 
-        $newFileDirectory = sprintf( '%s/%s', $newFileDirectory, $fileName );
+        if ( DEV_MODE === true || ca()->has( $cacheKey ) === false ) {
+            $result = [
+                'className' => $newClassName,
+                'fileContent' => substr( $fileContent, 5 ),
+            ];
 
-        if ( DEV_MODE === true || !file_exists( $newFileDirectory ) )
-            file_put_contents( $newFileDirectory, $fileContent );
+            ca()->set( $cacheKey, j_encode( $result ) );
+        }
 
-        return [ 'className' => $newClassName, DEV_MODE === true, 'fileName' => $newFileDirectory ];
+        return j_decode( ca()->get( $cacheKey ), true );
     }
 
+    /**
+     * Get templates definition
+     *
+     * @return string[]
+     */
     public function getTemplatesDefinition(): array
     {
         return self::$templatesDefinition;
     }
 
+    /**
+     * Remove PHP comments from file
+     *
+     * @param string $filename
+     *
+     * @return string
+     */
     private function removeComments( string $filename ): string
     {
         $w = [ ';', '{', '}' ];

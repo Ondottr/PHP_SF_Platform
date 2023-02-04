@@ -35,11 +35,10 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             if ( TEMPLATES_CACHE_ENABLED ) {
-                $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() );
-
-                if ( $arr !== false ) {
-                    require_once( $arr['fileName'] );
-                    $headerClassName = $arr['className'];
+                $result = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() );
+                if ( $result !== false ) {
+                    eval( $result['fileContent'] );
+                    $headerClassName = $result['className'];
                 }
             }
 
@@ -63,11 +62,10 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
 
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             if ( TEMPLATES_CACHE_ENABLED ) {
-                $arr = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() );
-
-                if ( $arr !== false ) {
-                    require_once( $arr['fileName'] );
-                    $footerClassName = $arr['className'];
+                $result = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() );
+                if ( $result !== false ) {
+                    eval( $result['fileContent'] );
+                    $footerClassName = $result['className'];
                 }
             }
 
