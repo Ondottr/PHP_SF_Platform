@@ -6,24 +6,21 @@
  * Time: 6:16 PM
  */
 
-namespace PHP_SF\System\Core\Cache;
+namespace PHP_SF\Tests\System\Core\Cache;
 
 use DateInterval;
 use PHP_SF\System\Classes\Exception\CacheValueException;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
+use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHPUnit\Framework\TestCase;
 
 final class RedisCacheAdapterTest extends TestCase
 {
 
-    protected function setUp(): void
-    {
-        $this->adapter = RedisCacheAdapter::getInstance();
-    }
 
     protected function tearDown(): void
     {
-        $this->adapter->clear();
+        rca()->clear();
     }
 
 
@@ -53,10 +50,10 @@ final class RedisCacheAdapterTest extends TestCase
         ];
 
         // Set multiple values in the cache
-        $this->adapter->setMultiple( $values );
+        rca()->setMultiple( $values );
 
         // Retrieve the values from the cache
-        $result = $this->adapter->getMultiple( $keys );
+        $result = rca()->getMultiple( $keys );
 
         // Ensure that the values are returned as expected
         $this->assertSame( $values, $result );
@@ -70,18 +67,18 @@ final class RedisCacheAdapterTest extends TestCase
         $data = array_combine( $keys, $values );
 
         // Store data in cache
-        $this->adapter->setMultiple( $data );
+        rca()->setMultiple( $data );
 
         // Verify data was successfully stored
         foreach ( $keys as $key )
-            $this->assertTrue( $this->adapter->has( $key ) );
+            $this->assertTrue( rca()->has( $key ) );
 
         // Clear cache
-        $this->adapter->clear();
+        rca()->clear();
 
         // Verify data was successfully cleared
         foreach ( $keys as $key )
-            $this->assertFalse( $this->adapter->has( $key ) );
+            $this->assertFalse( rca()->has( $key ) );
 
     }
 
@@ -91,25 +88,25 @@ final class RedisCacheAdapterTest extends TestCase
         $value = 'value';
 
         // Test success
-        $result = $this->adapter->set($key, $value);
+        $result = rca()->set($key, $value);
         $this->assertTrue($result);
-        $this->assertEquals($value, rc()->get($key));
+        $this->assertEquals($value, rca()->get($key));
 
         // Test scalar value requirement
         $this->expectException(CacheValueException::class);
-        $result = $this->adapter->set($key, []);
+        rca()->set($key, []);
 
         // Test invalid argument
         $this->expectException(InvalidCacheArgumentException::class);
-        $result = $this->adapter->set('', $value);
+        rca()->set('', $value);
 
         // Test with ttl
         $ttl = new DateInterval('PT1S');
-        $result = $this->adapter->set($key, $value, $ttl);
+        $result = rca()->set($key, $value, $ttl);
         $this->assertTrue($result);
-        $this->assertEquals($value, rc()->get($key));
+        $this->assertEquals($value, rca()->get($key));
         sleep(2);
-        $this->assertFalse(rc()->get($key));
+        $this->assertFalse(rca()->get($key));
     }
 
     public function testDeleteMultiple(): void
@@ -120,23 +117,23 @@ final class RedisCacheAdapterTest extends TestCase
 
         // Store sample data
         foreach ( $keys as $i => $key )
-            $this->adapter->set( $key, $values[ $i ] );
+            rca()->set( $key, $values[ $i ] );
 
         // Check if sample data has been stored
-        $this->assertEquals( $values[0], $this->adapter->get( $keys[0] ) );
-        $this->assertEquals( $values[1], $this->adapter->get( $keys[1] ) );
-        $this->assertEquals( $values[2], $this->adapter->get( $keys[2] ) );
+        $this->assertEquals( $values[0], rca()->get( $keys[0] ) );
+        $this->assertEquals( $values[1], rca()->get( $keys[1] ) );
+        $this->assertEquals( $values[2], rca()->get( $keys[2] ) );
 
         // Call deleteMultiple method
-        $result = $this->adapter->deleteMultiple( $keys );
+        $result = rca()->deleteMultiple( $keys );
 
         // Check if deleteMultiple method returned true
         $this->assertTrue( $result );
 
         // Check if sample data has been deleted
-        $this->assertNull( $this->adapter->get( $keys[0] ) );
-        $this->assertNull( $this->adapter->get( $keys[1] ) );
-        $this->assertNull( $this->adapter->get( $keys[2] ) );
+        $this->assertNull( rca()->get( $keys[0] ) );
+        $this->assertNull( rca()->get( $keys[1] ) );
+        $this->assertNull( rca()->get( $keys[2] ) );
     }
 
     public function testDelete(): void
@@ -144,11 +141,11 @@ final class RedisCacheAdapterTest extends TestCase
         $key   = 'test_key';
         $value = 'test_value';
 
-        $this->adapter->set( $key, $value );
-        $this->assertTrue( $this->adapter->has( $key ) );
+        rca()->set( $key, $value );
+        $this->assertTrue( rca()->has( $key ) );
 
-        $this->adapter->delete( $key );
-        $this->assertFalse( $this->adapter->has( $key ) );
+        rca()->delete( $key );
+        $this->assertFalse( rca()->has( $key ) );
     }
 
     public function testGet(): void
@@ -158,14 +155,14 @@ final class RedisCacheAdapterTest extends TestCase
         $value = 'test_value';
 
         // Set value in cache
-        $this->adapter->set( $key, $value );
+        rca()->set( $key, $value );
 
         // Check if the value exists in cache
-        $result = $this->adapter->get( $key );
+        $result = rca()->get( $key );
         $this->assertSame( $value, $result );
 
         // Try to get non-existing key
-        $result = $this->adapter->get( 'non_existing_key' );
+        $result = rca()->get( 'non_existing_key' );
         $this->assertNull( $result );
     }
 
@@ -177,23 +174,55 @@ final class RedisCacheAdapterTest extends TestCase
 
         // Store sample data
         foreach ( $keys as $i => $key )
-            $this->adapter->set( $key, $values[ $i ] );
+            rca()->set( $key, $values[ $i ] );
 
         // Check if sample data has been stored
-        $this->assertEquals( $values[0], $this->adapter->get( $keys[0] ) );
-        $this->assertEquals( $values[1], $this->adapter->get( $keys[1] ) );
-        $this->assertEquals( $values[2], $this->adapter->get( $keys[2] ) );
+        $this->assertEquals( $values[0], rca()->get( $keys[0] ) );
+        $this->assertEquals( $values[1], rca()->get( $keys[1] ) );
+        $this->assertEquals( $values[2], rca()->get( $keys[2] ) );
 
-        // Call deleteMultiple method
-        $result = $this->adapter->deleteByKeyPattern( 'key*' );
+        // Call deleteMultiple method with * wildcard at the end
+        $result = rca()->deleteByKeyPattern( 'key*' );
 
         // Check if deleteMultiple method returned true
         $this->assertTrue( $result );
 
         // Check if sample data has been deleted
-        $this->assertNull( $this->adapter->get( $keys[0] ) );
-        $this->assertNull( $this->adapter->get( $keys[1] ) );
-        $this->assertNull( $this->adapter->get( $keys[2] ) );
+        $this->assertNull( rca()->get( $keys[0] ) );
+        $this->assertNull( rca()->get( $keys[1] ) );
+        $this->assertNull( rca()->get( $keys[2] ) );
+
+        // Store sample data
+        foreach ( $keys as $i => $key )
+            rca()->set( $key, $values[ $i ] );
+
+        // Call deleteMultiple method with * wildcard at the beginning
+        $result = rca()->deleteByKeyPattern( '*y1' );
+        $result = $result && rca()->deleteByKeyPattern( '*y2' );
+        $result = $result && rca()->deleteByKeyPattern( '*y3' );
+
+        // Check if deleteMultiple method returned true
+        $this->assertTrue( $result );
+
+        // Check if sample data has been deleted
+        $this->assertNull( rca()->get( $keys[0] ) );
+        $this->assertNull( rca()->get( $keys[1] ) );
+        $this->assertNull( rca()->get( $keys[2] ) );
+
+        // Store sample data
+        foreach ( $keys as $i => $key )
+            rca()->set( $key, $values[ $i ] );
+
+        // Call deleteMultiple method with * wildcard at the beginning and at the end
+        $result = rca()->deleteByKeyPattern( '*ey*' );
+
+        // Check if deleteMultiple method returned true
+        $this->assertTrue( $result );
+
+        // Check if sample data has been deleted
+        $this->assertNull( rca()->get( $keys[0] ) );
+        $this->assertNull( rca()->get( $keys[1] ) );
+        $this->assertNull( rca()->get( $keys[2] ) );
     }
 
     public function testSetMultiple(): void
@@ -203,9 +232,9 @@ final class RedisCacheAdapterTest extends TestCase
         $ttl = new DateInterval( 'PT10S' );
         $items = array_combine( $keys, $values );
 
-        $this->adapter->setMultiple( $items, $ttl );
+        rca()->setMultiple( $items, $ttl );
 
-        $result = $this->adapter->getMultiple( $keys );
+        $result = rca()->getMultiple( $keys );
 
         $this->assertSame( $items, $result );
     }
@@ -213,11 +242,11 @@ final class RedisCacheAdapterTest extends TestCase
     public function testHas(): void
     {
         // Check non-existing key
-        $this->assertFalse( $this->adapter->has( 'non_existing_key' ) );
+        $this->assertFalse( rca()->has( 'non_existing_key' ) );
 
         // Check existing key
-        $this->adapter->set( 'existing_key', 'existing_value' );
-        $this->assertTrue( $this->adapter->has( 'existing_key' ) );
+        rca()->set( 'existing_key', 'existing_value' );
+        $this->assertTrue( rca()->has( 'existing_key' ) );
     }
 
 }
