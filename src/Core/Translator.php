@@ -41,7 +41,7 @@ final class Translator
             foreach ( self::getTranslationDirectories() as $translationDirectory ) {
                 $redisKey = sprintf( 'translated_strings:%s', $locale );
 
-                if ( ( $translations = rc()->get( $redisKey ) ) === null ) {
+                if ( ( $translations = ca()->get( $redisKey ) ) === null ) {
                     if ( file_exists( ( $path = sprintf( '%s/%s.php', $translationDirectory, $locale ) ) ) === false )
                         // @formatter::off
                         file_put_contents( $path, <<<'EOF'

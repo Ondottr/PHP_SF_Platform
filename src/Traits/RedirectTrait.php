@@ -161,17 +161,12 @@ trait RedirectTrait
         $this->validateErrors( $errors );
         $this->validateMessages( $messages );
 
-        $getKey = "_GET:$url:$redirectId";
-        $postKey = "_POST:$url:$redirectId";
-        $errorsKey = "_ERRORS:$url:$redirectId";
-        $messagesKey = "_MESSAGES:$url:$redirectId";
-        $formDataKey = "_FORM_DATA:$url:$redirectId";
 
-        rc()->setex( $getKey, 5, json_encode( $get, JSON_THROW_ON_ERROR ) );
-        rc()->setex( $postKey, 5, json_encode( $post, JSON_THROW_ON_ERROR ) );
-        rc()->setex( $errorsKey, 5, json_encode( $errors, JSON_THROW_ON_ERROR ) );
-        rc()->setex( $messagesKey, 5, json_encode( $messages, JSON_THROW_ON_ERROR ) );
-        rc()->setex( $formDataKey, 5, json_encode( $formData, JSON_THROW_ON_ERROR ) );
+        ca()->set( ":GET:$url:$redirectId", j_encode( $get ), 5 );
+        ca()->set( ":POST:$url:$redirectId", j_encode( $post ), 5 );
+        ca()->set( ":ERRORS:$url:$redirectId", j_encode( $errors ), 5 );
+        ca()->set( ":MESSAGES:$url:$redirectId", j_encode( $messages ), 5 );
+        ca()->set( ":FORM_DATA:$url:$redirectId", j_encode( $formData ), 5 );
 
         return $redirectId;
     }

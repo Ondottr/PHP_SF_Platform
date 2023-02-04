@@ -85,13 +85,13 @@ class Router
         if ( empty( static::$routesList ) === false )
             return;
 
-        $routesList = ra()->get( 'cache:routes_list' );
+        $routesList = ca()->get( 'cache:routes_list' );
         if ( $routesList === null ) {
             foreach ( static::getControllersDirectories() as $controllersDirectory )
                 static::controllersFromDir( $controllersDirectory );
 
             if ( DEV_MODE === false )
-                ra()->set( 'cache:routes_list', j_encode( static::$routesList ), null );
+                ca()->set( 'cache:routes_list', j_encode( static::$routesList ), null );
 
         } else
             static::$routesList = j_decode( $routesList, true );
@@ -99,7 +99,7 @@ class Router
         if ( empty( static::$routesByUrl ) === false )
             return;
 
-        $routesByUrl = ra()->get( 'cache:routes_by_url_list' );
+        $routesByUrl = ca()->get( 'cache:routes_by_url_list' );
         if ( $routesByUrl !== null ) {
             static::$routesByUrl = j_decode( $routesByUrl, true );
 
@@ -110,7 +110,7 @@ class Router
             static::$routesByUrl[ $route['httpMethod'] ][ $route['url'] ] = $route;
 
         if ( DEV_MODE === false )
-            ra()->set( 'cache:routes_by_url_list', j_encode( static::$routesByUrl ), null );
+            ca()->set( 'cache:routes_by_url_list', j_encode( static::$routesByUrl ), null );
 
     }
 
@@ -291,9 +291,9 @@ class Router
         $currentUrl = static::getCurrentRequestUrl();
         $urlHash = hash( 'sha256', $currentUrl );
 
-        if ( ra()->get( sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) ) ) {
-            static::$currentRoute = j_decode( ra()->get( sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) ) );
-            static::$routeParams = j_decode( ra()->get( sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) ), true );
+        if ( ca()->get( sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) ) ) {
+            static::$currentRoute = j_decode( ca()->get( sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) ) );
+            static::$routeParams = j_decode( ca()->get( sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) ), true );
 
             return true;
         }
@@ -313,7 +313,7 @@ class Router
             if ( $currentUrl === $routeUrl ) {
                 static::$currentRoute = (object)static::$routesByUrl[ $httpMethod ][ $currentUrl ];
 
-                ra()->setMultiple( [
+                ca()->setMultiple( [
                     sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
                     sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
                     sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) => j_encode( [] )
@@ -379,7 +379,7 @@ class Router
                     static::$routeParams[ str_replace( [ '{$', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
 
             # Store the selected URL, route and its parameters in a cache
-            ra()->setMultiple( [
+            ca()->setMultiple( [
                 sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
                 sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
                 sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) => j_encode( static::$routeParams )

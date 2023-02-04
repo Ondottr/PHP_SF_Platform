@@ -7,6 +7,7 @@ use Doctrine\DBAL\Connections\PrimaryReadReplicaConnection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Exception\CannotGenerateIds;
 use Serializable;
+
 use function serialize;
 use function unserialize;
 
@@ -56,7 +57,7 @@ class SequenceGenerator extends AbstractIdGenerator implements Serializable
 
             $this->_nextValue = (int)$connection->fetchOne( $sql );
 
-            $res = ra()->deleteByKeyPattern( sprintf( "*%s*", sprintf( "nextval:%s:", $this->_sequenceName ) ) );
+            $res = ca()->deleteByKeyPattern( sprintf( "*%s*", sprintf( "nextval:%s:", $this->_sequenceName ) ) );
             if ( $res === false )
                 throw new CannotGenerateIds( sprintf( 'Failed to delete cache key for "%s" sequence', $this->_sequenceName ), 500 );
 

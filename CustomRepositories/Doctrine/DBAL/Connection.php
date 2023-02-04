@@ -903,11 +903,11 @@ final class Connection
 
                 $this->bindParameters( $stmt, $params, $types );
 
-                if ( ra()->has( $key ) === false )
-                    ra()->set( $key, j_encode( $stmt->execute()->fetchAllAssociative() ) );
+                if ( ca()->has( $key ) === false )
+                    ca()->set( $key, j_encode( $stmt->execute()->fetchAllAssociative() ) );
 
-            } elseif ( ra()->has( $key ) === false )
-                ra()->set( $key, j_encode( $connection->query( $sql )->fetchAllAssociative() ) );
+            } elseif ( ca()->has( $key ) === false )
+                ca()->set( $key, j_encode( $connection->query( $sql )->fetchAllAssociative() ) );
 
             $result = new DoctrineResultCache( $key, /** $unHashedKey  */);
 

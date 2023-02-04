@@ -31,7 +31,7 @@ final class DoctrineResultCache implements DriverResult
         $this->associativeResult = new ArrayCollection;
         $this->fetchOneResult    = new ArrayCollection;
 
-        if ( ra()->has( $this->cacheKey ) === null )
+        if ( ca()->has( $this->cacheKey ) === null )
             throw new InvalidCacheArgumentException( 'Cache key does not exist!' );
 
         $this->setAll();
@@ -40,7 +40,7 @@ final class DoctrineResultCache implements DriverResult
 
     private function setAll(): void
     {
-        if ( ( $result = ra()->get( $this->cacheKey ) ) === null )
+        if ( ( $result = ca()->get( $this->cacheKey ) ) === null )
             $result = "[]";
 
         $cachedValue = j_decode( $result, true );

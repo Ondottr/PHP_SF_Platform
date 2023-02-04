@@ -15,9 +15,9 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Classes\Helpers;
 
+use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
-use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -31,7 +31,7 @@ use function array_key_exists;
  *
  * The class also provides methods for converting between locale names and keys, and caching the results for faster access.
  *
- * The cache is managed using the {@link RedisCacheAdapter} {@link rc()}.
+ * The cache is managed using the {@link AbstractCacheAdapter} {@link ca()}.
  */
 final class Locale
 {
@@ -735,10 +735,10 @@ final class Locale
     public static function getLocaleKeysList(): array
     {
         if ( isset( self::$localeKeysList ) === false ) {
-            if ( rc()->get( 'locale_keys_list') === null )
+            if ( ca()->get( 'locale_keys_list') === null )
                 self::setLocaleKeysList();
             else
-                self::$localeKeysList = j_decode( rc()->get( 'locale_keys_list' ), true );
+                self::$localeKeysList = j_decode( ca()->get( 'locale_keys_list' ), true );
         }
 
         return self::$localeKeysList;
@@ -753,7 +753,7 @@ final class Locale
     {
         self::$localeKeysList = array_flip( self::getLocaleNamesList() );
 
-        rc()->set( 'locale_keys_list', j_encode( self::$localeKeysList ) );
+        ca()->set( 'locale_keys_list', j_encode( self::$localeKeysList ) );
     }
 
     /**
@@ -766,10 +766,10 @@ final class Locale
     public static function getLocaleNamesList(): array
     {
         if ( isset( self::$localesList ) === false ) {
-            if ( rc()->get( 'locale_names_list') === null )
+            if ( ca()->get( 'locale_names_list') === null )
                 self::setLocaleNamesList();
             else
-                self::$localesList = j_decode( rc()->get( 'locale_names_list' ), true );
+                self::$localesList = j_decode( ca()->get( 'locale_names_list' ), true );
         }
 
         return self::$localesList;
@@ -785,7 +785,7 @@ final class Locale
         self::$localesList = ( new ReflectionClass( self::class ) )
             ->getConstants( ReflectionProperty::IS_PUBLIC );
 
-        rc()->set( 'locale_names_list', j_encode( self::$localesList ) );
+        ca()->set( 'locale_names_list', j_encode( self::$localesList ) );
     }
 
     /**

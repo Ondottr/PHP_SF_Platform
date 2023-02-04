@@ -15,9 +15,14 @@
 use App\Entity\User;
 use App\Kernel;
 use Doctrine\ORM\QueryBuilder;
+use JetBrains\PhpStorm\Deprecated;
+use JetBrains\PhpStorm\ExpectedValues;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
+use PHP_SF\System\Core\Cache\APCuCacheAdapter;
+use PHP_SF\System\Core\Cache\MemcachedCacheAdapter;
 use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\Translator;
@@ -135,7 +140,7 @@ function mca(): MemcachedCacheAdapter
 
 function rp(): Pipeline
 {
-    return Redis::getRp();
+    return Redis::getPipeline();
 }
 
 
@@ -177,9 +182,9 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
     );
 
     // Check if route link is cached
-    if ( ra()->has( $cacheKey ) )
+    if ( ca()->has( $cacheKey ) )
         // Return cached route link
-        return ra()->get( $cacheKey );
+        return ca()->get( $cacheKey );
 
     if ( $siteUrl !== null && filter_var( $siteUrl, FILTER_VALIDATE_URL ) === false )
         throw new InvalidArgumentException( 'Invalid site url' );
@@ -195,7 +200,7 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
 
             // If link is not null then cache it and return
             if ( $link !== null ) {
-                ra()->set( $cacheKey, $link );
+                ca()->set( $cacheKey, $link );
 
                 return $link;
             }
@@ -248,7 +253,7 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
             $link .= '?' . http_build_query( $query );
 
         // Cache route link
-        ra()->set( $cacheKey, $link );
+        ca()->set( $cacheKey, $link );
 
         // Return route link
         return $link;

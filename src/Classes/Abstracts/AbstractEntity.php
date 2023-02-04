@@ -211,14 +211,12 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     public static function clearQueryBuilderCache(): void
     {
-        foreach ( rc()->keys( self::getClearQueryBuilderCacheKey() ) as $key )
-            rc()->del( str_replace( sprintf( "%s:%s:", env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
-
+        ca()->deleteByKeyPattern( self::getClearQueryBuilderCacheKey() );
     }
 
     final protected static function getClearQueryBuilderCacheKey(): string
     {
-        return sprintf( '*doctrine_result_cache:*' );
+        return '*doctrine_result_cache:*';
     }
 
     final public function validate( bool $isUpdated = false ): array|bool

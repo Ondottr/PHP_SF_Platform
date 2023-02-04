@@ -50,11 +50,11 @@ final class RedirectResponse extends Response
         $_SERVER['REQUEST_URI']    = $this->getTargetUrl();
         $_SERVER['REQUEST_METHOD'] = Request::METHOD_GET;
 
-        $get = rc()->get("_GET:$key");
-        $post = rc()->get("_POST:$key");
-        $errors = rc()->get("_ERRORS:$key");
-        $messages = rc()->get("_MESSAGES:$key");
-        $formData = rc()->get("_FORM_DATA:$key");
+        $get      = ca()->get( ":GET:$key" );
+        $post     = ca()->get( ":POST:$key" );
+        $errors   = ca()->get( ":ERRORS:$key" );
+        $messages = ca()->get( ":MESSAGES:$key" );
+        $formData = ca()->get( ":FORM_DATA:$key" );
 
         if ($get === null || $post === null || $errors === null)
             throw new HttpException(Response::HTTP_NOT_ACCEPTABLE, 'The page has expired, please return to the previous page!');
