@@ -1,4 +1,10 @@
 <?php declare( strict_types=1 );
+/**
+ * Created by PhpStorm.
+ * User: ondottr
+ * Date: 04/02/2023
+ * Time: 8:55 am
+ */
 
 namespace PHP_SF\System\Core\Cache;
 
@@ -7,18 +13,17 @@ use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\CacheKeyExceptionCache;
 use PHP_SF\System\Classes\Exception\CacheValueException;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
-use PHP_SF\System\Database\Redis;
 use Throwable;
 
 /**
- * The RedisCacheAdapter class is an implementation of PSR-16 Cache interface using Redis as cache storage.
- * This class provides a simple and efficient way to store cache data in Redis and retrieve it when needed.
+ * The APCuCacheAdapter class is an implementation of PSR-16 Cache interface using APCu as cache storage.
+ * This class provides a simple and efficient way to store cache data in APCu and retrieve it when needed.
  *
- * Use this class by calling the {@link rca()} function which returns an instance of this class.
+ * Use this class by calling the {@link aca()} function which returns an instance of this class.
  *
  * @note Use this class only if you have Redis installed and configured on your system.
  */
-final class RedisCacheAdapter extends AbstractCacheAdapter
+final class APCuCacheAdapter extends AbstractCacheAdapter
 {
 
     /**
@@ -31,7 +36,12 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function get( string $key, mixed $default = null ): mixed
     {
-        return Redis::getClient()->get( $key ) ?? $default;
+        $res = apcu_fetch( $key );
+
+        if ( $res === false )
+            return $default;
+
+        return $res;
     }
 
     /**
@@ -63,10 +73,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
             $ttl = $ttl->s + $ttl->i * 60 + $ttl->h * 3600 + $ttl->days * 86400;
 
         try {
-            if ( $ttl !== null )
-                Redis::getClient()->setex( $key, $ttl, $value );
-            else
-                Redis::getClient()->set( $key, $value );
+            apcu_store( $key, $value, $ttl );
         } catch ( Throwable $e ) {
             throw new InvalidCacheArgumentException( $e->getMessage(), $e->getCode(), $e );
         }
@@ -83,7 +90,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function delete( string $key ): bool
     {
-        return Redis::getClient()->del( $key ) > 0;
+        return apcu_delete( $key );
     }
 
     /**
@@ -93,32 +100,58 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      *                           Only alphanumeric characters and "*" are allowed.
      *
      * @throws CacheKeyExceptionCache If the key pattern is not valid.
-     *                                The "*" character must be at the beginning or at the end of the pattern, not in the middle.
-     *                                Example: "my_key_*" or "*_my_key" or "*my_key*" are valid patterns.
-     *                                Example: "my_*_key" is not a valid pattern.
+     *                      The "*" character must be at the beginning or at the end of the pattern, not in the middle.
+     *                      Example: "my_key_*" or "*_my_key" or "*my_key*" are valid patterns.
+     *                      Example: "my_*_key" is not a valid pattern.
      *
      * @return bool True if all the keys were successfully deleted, False otherwise.
      */
     public function deleteByKeyPattern( string $keyPattern ): bool
     {
-        if ( preg_match('/^[a-zA-Z0-9*]+$/', $keyPattern) === false )
+        if ( preg_match( '/^[a-zA-Z0-9*]+$/', $keyPattern ) === false )
             throw new CacheKeyExceptionCache(
-                sprintf( 'The key pattern "%s" is not valid. Only alphanumeric characters and "*" are allowed.', $keyPattern )
+                sprintf(
+                    'The key pattern "%s" is not valid. Only alphanumeric characters and "*" are allowed.',
+                    $keyPattern
+                )
             );
 
         if ( preg_match( "/^[^*].*[^*]$/", $keyPattern ) )
             throw new CacheKeyExceptionCache(
-                sprintf( 'The key pattern "%s" is not valid. The "*" character must be at the beginning or at the end of the pattern, not in the middle.', $keyPattern )
+                sprintf(
+                    'The key pattern "%s" is not valid. The "*" character must be at the beginning or at the end of the pattern, not in the middle.',
+                    $keyPattern
+                )
             );
 
-        $keys = Redis::getClient()->keys( $keyPattern );
+        $arr = apcu_cache_info()['cache_list'];
 
-        if ( empty( $keys ) )
-            return false;
+        $keys = [];
+        foreach ( $arr as $v )
+            $keys[] = $v['info'];
+
+        $keys = array_filter( $keys, static function ( $v ) use ( $keyPattern ) {
+            if ( $keyPattern === '*' )
+                return true;
+
+            if ( str_starts_with( $keyPattern, '*' ) && str_ends_with( $keyPattern, '*' ) )
+                return str_contains( $v, substr( $keyPattern, 1, -1 ) );
+
+            elseif ( str_starts_with( $keyPattern, '*' ) )
+                return str_ends_with( $v, substr( $keyPattern, 1 ) );
+
+            elseif ( str_ends_with( $keyPattern, '*' ) )
+                return str_starts_with( $v, substr( $keyPattern, 0, -1 ) );
+
+            else
+                return $v === $keyPattern;
+        } );
 
         $result = true;
         foreach ( $keys as $key )
-            $result = $result && $this->delete( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+            $result = $result && $this->delete(
+                    str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key )
+                );
 
         return $result;
     }
@@ -130,18 +163,19 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function clear(): bool
     {
-        return Redis::getClient()->flushdb()->getPayload() === 'OK';
+        return apcu_clear_cache();
     }
 
     /**
      * Determines if a cache item with the given key exists.
      *
      * @param string $key The key to check.
+     *
      * @return bool True if the key exists, False otherwise.
      */
     public function has( string $key ): bool
     {
-        return Redis::getClient()->get( $key ) !== null;
+        return apcu_exists( $key );
     }
 
 }

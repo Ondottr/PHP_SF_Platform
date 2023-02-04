@@ -42,16 +42,96 @@ function qb(): QueryBuilder
     return em()->createQueryBuilder();
 }
 
+
+/**
+ * @deprecated Use {@link rca()} function instead
+ */
+#[Deprecated( replacement: 'rca()' )]
 function ra(): RedisCacheAdapter
 {
     return RedisCacheAdapter::getInstance();
 }
 
-
+/**
+ * @deprecated Use {@link rca()} function instead
+ */
+#[Deprecated( replacement: 'rca()' )]
 function rc(): Client
 {
-    return Redis::getRc();
+    return Redis::getClient();
 }
+
+
+/**
+ * This function returns an instance of one of the cache adapter classes ({@link RedisCacheAdapter} or {@link APCuCacheAdapter})
+ *
+ * @param string|null $cacheAdapter
+ *
+ * @return AbstractCacheAdapter
+ */
+function ca(
+    #[ExpectedValues( [ null,
+        AbstractCacheAdapter::APCU_CACHE_ADAPTER,
+        AbstractCacheAdapter::REDIS_CACHE_ADAPTER,
+        AbstractCacheAdapter::MEMCACHED_CACHE_ADAPTER
+    ] )]
+    string|null $cacheAdapter = null
+): AbstractCacheAdapter {
+    if ( $cacheAdapter === null ) {
+        $isAPCuAvailable = function_exists( 'apcu_enabled' ) && apcu_enabled();
+        if ( $isAPCuAvailable )
+            $cacheAdapter = AbstractCacheAdapter::APCU_CACHE_ADAPTER;
+        else
+            $cacheAdapter = AbstractCacheAdapter::REDIS_CACHE_ADAPTER;
+    }
+
+    return match ( $cacheAdapter ) {
+        AbstractCacheAdapter::APCU_CACHE_ADAPTER      => aca(),
+        AbstractCacheAdapter::REDIS_CACHE_ADAPTER     => rca(),
+        AbstractCacheAdapter::MEMCACHED_CACHE_ADAPTER => mca(),
+        default                                       => throw new InvalidArgumentException( 'Invalid cache adapter' ),
+    };
+}
+
+
+/**
+ * This function returns {@link RedisCacheAdapter} class instance
+ *
+ * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
+ *
+ * @return RedisCacheAdapter
+ */
+function rca(): RedisCacheAdapter
+{
+    return RedisCacheAdapter::getInstance();
+}
+
+
+/**
+ * This function returns {@link APCuCacheAdapter} class instance
+ *
+ * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
+ *
+ * @return APCuCacheAdapter
+ */
+function aca(): APCuCacheAdapter
+{
+    return APCuCacheAdapter::getInstance();
+}
+
+
+/**
+ * This function returns {@link MemcachedCacheAdapter} class instance
+ *
+ * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
+ *
+ * @return MemcachedCacheAdapter
+ */
+function mca(): MemcachedCacheAdapter
+{
+    return MemcachedCacheAdapter::getInstance();
+}
+
 
 function rp(): Pipeline
 {

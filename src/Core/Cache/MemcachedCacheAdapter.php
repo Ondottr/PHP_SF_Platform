@@ -1,24 +1,30 @@
 <?php declare( strict_types=1 );
+/**
+ * Created by PhpStorm.
+ * User: ondottr
+ * Date: 04/02/2023
+ * Time: 8:55 am
+ */
 
 namespace PHP_SF\System\Core\Cache;
 
 use DateInterval;
 use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
-use PHP_SF\System\Classes\Exception\CacheKeyExceptionCache;
 use PHP_SF\System\Classes\Exception\CacheValueException;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
-use PHP_SF\System\Database\Redis;
+use PHP_SF\System\Classes\Exception\UnsupportedPlatformException;
+use PHP_SF\System\Database\Memcached;
 use Throwable;
 
 /**
- * The RedisCacheAdapter class is an implementation of PSR-16 Cache interface using Redis as cache storage.
- * This class provides a simple and efficient way to store cache data in Redis and retrieve it when needed.
+ * The MemcachedCacheAdapter class is an implementation of PSR-16 Cache interface using Memcached as cache storage.
+ * This class provides a simple and efficient way to store cache data in Memcached and retrieve it when needed.
  *
- * Use this class by calling the {@link rca()} function which returns an instance of this class.
+ * Use this class by calling the {@link mca()} function which returns an instance of this class.
  *
  * @note Use this class only if you have Redis installed and configured on your system.
  */
-final class RedisCacheAdapter extends AbstractCacheAdapter
+final class MemcachedCacheAdapter extends AbstractCacheAdapter
 {
 
     /**
@@ -31,7 +37,12 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function get( string $key, mixed $default = null ): mixed
     {
-        return Redis::getClient()->get( $key ) ?? $default;
+        $result = Memcached::getInstance()->get( $key );
+
+        if ( $result === false )
+            return $default;
+
+        return $result;
     }
 
     /**
@@ -63,10 +74,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
             $ttl = $ttl->s + $ttl->i * 60 + $ttl->h * 3600 + $ttl->days * 86400;
 
         try {
-            if ( $ttl !== null )
-                Redis::getClient()->setex( $key, $ttl, $value );
-            else
-                Redis::getClient()->set( $key, $value );
+            Memcached::getInstance()->set( $key, $value, $ttl );
         } catch ( Throwable $e ) {
             throw new InvalidCacheArgumentException( $e->getMessage(), $e->getCode(), $e );
         }
@@ -83,44 +91,23 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function delete( string $key ): bool
     {
-        return Redis::getClient()->del( $key ) > 0;
+        return Memcached::getInstance()->delete( $key );
     }
 
     /**
-     * Deletes cache keys that match a certain pattern.
+     * Memcached does not support deleting keys by pattern because memcache doesn't guarantee to return all keys you
+     * also cannot assume that all keys have been returned. <p>
+     * So, there is no way to get all keys or keys by pattern from memcached and delete them.
      *
-     * @param string $keyPattern The pattern that the keys need to match.
-     *                           Only alphanumeric characters and "*" are allowed.
+     * @link https://www.php.net/manual/en/memcached.getallkeys.php
      *
-     * @throws CacheKeyExceptionCache If the key pattern is not valid.
-     *                                The "*" character must be at the beginning or at the end of the pattern, not in the middle.
-     *                                Example: "my_key_*" or "*_my_key" or "*my_key*" are valid patterns.
-     *                                Example: "my_*_key" is not a valid pattern.
-     *
-     * @return bool True if all the keys were successfully deleted, False otherwise.
+     * @throws UnsupportedPlatformException Always thrown because Memcached does not support deleting keys by pattern.
      */
     public function deleteByKeyPattern( string $keyPattern ): bool
     {
-        if ( preg_match('/^[a-zA-Z0-9*]+$/', $keyPattern) === false )
-            throw new CacheKeyExceptionCache(
-                sprintf( 'The key pattern "%s" is not valid. Only alphanumeric characters and "*" are allowed.', $keyPattern )
-            );
-
-        if ( preg_match( "/^[^*].*[^*]$/", $keyPattern ) )
-            throw new CacheKeyExceptionCache(
-                sprintf( 'The key pattern "%s" is not valid. The "*" character must be at the beginning or at the end of the pattern, not in the middle.', $keyPattern )
-            );
-
-        $keys = Redis::getClient()->keys( $keyPattern );
-
-        if ( empty( $keys ) )
-            return false;
-
-        $result = true;
-        foreach ( $keys as $key )
-            $result = $result && $this->delete( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
-
-        return $result;
+        throw new UnsupportedPlatformException(
+            'Memcached does not support deleting keys by pattern. Use the "clear" method instead.'
+        );
     }
 
     /**
@@ -130,7 +117,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function clear(): bool
     {
-        return Redis::getClient()->flushdb()->getPayload() === 'OK';
+        return Memcached::getInstance()->flush();
     }
 
     /**
@@ -141,7 +128,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function has( string $key ): bool
     {
-        return Redis::getClient()->get( $key ) !== null;
+        return Memcached::getInstance()->get( $key ) !== false;
     }
 
 }
