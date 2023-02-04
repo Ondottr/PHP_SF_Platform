@@ -29,6 +29,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     /**
      * @noinspection PhpMissingParentCallCommonInspection
      * @noinspection OffsetOperationsInspection
+     * @noinspection MissingParentCallInspection
      */
     #[NoReturn] public function send(): static
     {

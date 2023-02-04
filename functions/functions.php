@@ -165,7 +165,7 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
         // Check if query parameters are provided
         if ( empty( $query ) === false )
             // Add query parameters to route link
-            $link .= http_build_query( $query );
+            $link .= '?' . http_build_query( $query );
 
         // Cache route link
         ra()->set( $cacheKey, $link );

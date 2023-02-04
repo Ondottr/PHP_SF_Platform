@@ -6,7 +6,7 @@
  * Time: 7:54 AM
  */
 
-namespace PHP_SF\Functions;
+namespace PHP_SF\Tests\Functions;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

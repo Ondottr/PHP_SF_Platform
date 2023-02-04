@@ -7,6 +7,7 @@ use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\CacheKeyExceptionCache;
 use PHP_SF\System\Classes\Exception\CacheValueException;
 use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
+use PHP_SF\System\Database\Redis;
 use Throwable;
 
 /**
@@ -20,57 +21,21 @@ use Throwable;
 final class RedisCacheAdapter extends AbstractCacheAdapter
 {
 
-    public const DEFAULT_TTL = 86400;
-
     /**
-     * Instance of the class
-     */
-    private static self $instance;
-
-    /**
-     * Private constructor to prevent direct instantiation
-     */
-    private function __construct() {}
-
-
-    /**
-     * Get the instance of the class
+     * Fetches a value from the cache.
      *
-     * @return self
-     */
-    public static function getInstance(): self
-    {
-        if ( isset( self::$instance ) === false )
-            self::setInstance();
-
-        return self::$instance;
-    }
-
-    /**
-     * Set the instance of the class
-     */
-    private static function setInstance(): void
-    {
-        self::$instance = new self;
-    }
-
-
-    /**
-     * Get the value of a key from the cache
+     * @param string $key     The unique key of this item in the cache.
+     * @param mixed  $default Default value to return if the key does not exist.
      *
-     * @param string $key The key to retrieve
-     * @param mixed $default The default value to return if the key does not exist
-     *
-     * @return mixed
+     * @return mixed The value of the item from the cache, or $default {@var $default} in case of cache miss.
      */
     public function get( string $key, mixed $default = null ): mixed
     {
-        return rc()->get( $key ) ?? $default;
+        return Redis::getClient()->get( $key ) ?? $default;
     }
 
     /**
-     * Store a value in the cache
-     * This method is used to store a value in cache using a specified key.
+     * Persists data in the cache, uniquely referenced by a key with an optional expiration TTL time.
      * If the key already exists in the cache, it will be overwritten.
      * The value to be stored must be a scalar type, otherwise a {@link CacheValueException} will be thrown.
      * The time to live for the key can be specified in seconds, or as a {@link DateInterval} object.
@@ -99,9 +64,9 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
 
         try {
             if ( $ttl !== null )
-                rc()->setex( $key, $ttl, $value );
+                Redis::getClient()->setex( $key, $ttl, $value );
             else
-                rc()->set( $key, $value );
+                Redis::getClient()->set( $key, $value );
         } catch ( Throwable $e ) {
             throw new InvalidCacheArgumentException( $e->getMessage(), $e->getCode(), $e );
         }
@@ -110,112 +75,62 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
     }
 
     /**
-     * Delete a key from the cache
+     * Delete an item from the cache by its unique key.
      *
-     * @param string $key The key to delete
+     * @param string $key The unique cache key of the item to delete.
      *
-     * @return bool Whether the key was successfully deleted
+     * @return bool True if the item was successfully removed. False if there was an error.
      */
     public function delete( string $key ): bool
     {
-        return rc()->del( $key ) > 0;
+        return Redis::getClient()->del( $key ) > 0;
     }
 
     /**
      * Deletes cache keys that match a certain pattern.
      *
      * @param string $keyPattern The pattern that the keys need to match.
+     *                           Only alphanumeric characters and "*" are allowed.
+     *
+     * @throws CacheKeyExceptionCache If the key pattern is not valid.
+     *                                The "*" character must be at the beginning or at the end of the pattern, not in the middle.
+     *                                Example: "my_key_*" or "*_my_key" or "*my_key*" are valid patterns.
+     *                                Example: "my_*_key" is not a valid pattern.
+     *
      * @return bool True if all the keys were successfully deleted, False otherwise.
      */
     public function deleteByKeyPattern( string $keyPattern ): bool
     {
-        $keys = rc()->keys( $keyPattern );
+        if ( preg_match('/^[a-zA-Z0-9*]+$/', $keyPattern) === false )
+            throw new CacheKeyExceptionCache(
+                sprintf( 'The key pattern "%s" is not valid. Only alphanumeric characters and "*" are allowed.', $keyPattern )
+            );
+
+        if ( preg_match( "/^[^*].*[^*]$/", $keyPattern ) )
+            throw new CacheKeyExceptionCache(
+                sprintf( 'The key pattern "%s" is not valid. The "*" character must be at the beginning or at the end of the pattern, not in the middle.', $keyPattern )
+            );
+
+        $keys = Redis::getClient()->keys( $keyPattern );
 
         if ( empty( $keys ) )
             return false;
 
         $result = true;
         foreach ( $keys as $key )
-            $result = $result && 0 < rc()->del( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
+            $result = $result && $this->delete( str_replace( sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ), '', $key ) );
 
         return $result;
     }
 
     /**
-     * Clears all the keys in the current Redis database.
+     * Wipes clean the entire cache's keys.
      *
-     * @return bool True if the database was successfully cleared, False otherwise.
+     * @return bool True on success and false on failure.
      */
     public function clear(): bool
     {
-        rc()->flushdb();
-
-        return empty( rc()->keys( '*' ) );
-    }
-
-    /**
-     * Gets multiple cache items by their keys.
-     *
-     * @param iterable $keys The keys to retrieve.
-     * @param mixed $default The value to return if a key is not found.
-     * @return iterable An array of key-value pairs.
-     */
-    public function getMultiple( iterable $keys, mixed $default = null ): iterable
-    {
-        $result = [];
-
-        foreach ( $keys as $key ) {
-            if ( is_string( $key ) === false )
-                throw new CacheKeyExceptionCache;
-
-            $result[ $key ] = $this->get( $key, $default );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Sets multiple cache items.
-     *
-     * @param iterable $values The values to set, in the form of key-value pairs.
-     * @param DateInterval|int|null $ttl The time to live of the values, in seconds.
-     * @return bool True if all the values were successfully set, False otherwise.
-     */
-    public function setMultiple( iterable $values, DateInterval|int|null $ttl = self::DEFAULT_TTL ): bool
-    {
-        $result = true;
-
-        foreach ( $values as $key => $value ) {
-            if ( is_string( $key ) === false )
-                throw new CacheKeyExceptionCache;
-
-            if ( is_scalar( $value ) === false )
-                throw new CacheValueException;
-
-            $result = $result && $this->set( $key, $value, $ttl );
-        }
-
-        return $result;
-    }
-
-    /**
-     * Deletes multiple cache items by their keys.
-     *
-     * @param iterable $keys The keys to delete.
-     * @return bool True if all the keys were successfully deleted, False otherwise.
-     */
-    public function deleteMultiple( iterable $keys ): bool
-    {
-        $result = true;
-
-        foreach ( $keys as $key ) {
-            if ( is_string( $key ) === false )
-                throw new CacheKeyExceptionCache;
-
-            $result = $result && $this->delete( $key );
-        }
-
-        return $result;
+        return Redis::getClient()->flushdb()->getPayload() === 'OK';
     }
 
     /**
@@ -226,7 +141,7 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
      */
     public function has( string $key ): bool
     {
-        return rc()->get( $key ) !== null;
+        return Redis::getClient()->get( $key ) !== null;
     }
 
 }

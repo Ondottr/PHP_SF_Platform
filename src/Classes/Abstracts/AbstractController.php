@@ -30,9 +30,6 @@ abstract class AbstractController
     private string $generatedUrl;
 
 
-    /**
-     * @noinspection OffsetOperationsInspection
-     */
     final protected function render( string $view, array $data = [], string $pageTitle = null ): Response
     {
         s()->set( 'page_title', $pageTitle ?? APPLICATION_NAME );

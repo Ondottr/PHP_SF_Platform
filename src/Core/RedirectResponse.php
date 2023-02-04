@@ -45,9 +45,10 @@ final class RedirectResponse extends Response
      */
     #[NoReturn] public function send(): static
     {
-        $_SERVER[ 'REQUEST_URI' ] = $this->getTargetUrl();
-        $_SERVER[ 'REQUEST_METHOD' ] = Request::METHOD_GET;
         $key = "{$this->getTargetUrl()}:{$this->getRequestDataId()}";
+
+        $_SERVER['REQUEST_URI']    = $this->getTargetUrl();
+        $_SERVER['REQUEST_METHOD'] = Request::METHOD_GET;
 
         $get = rc()->get("_GET:$key");
         $post = rc()->get("_POST:$key");
@@ -59,11 +60,11 @@ final class RedirectResponse extends Response
             throw new HttpException(Response::HTTP_NOT_ACCEPTABLE, 'The page has expired, please return to the previous page!');
 
 
-        $this->setFormData($formData);
-        $this->setMessages($messages);
-        $this->setErrors($errors);
         $this->setQuery($get);
         $this->setParams($post);
+        $this->setErrors($errors);
+        $this->setMessages($messages);
+        $this->setFormData($formData);
 
         $replacedUrl = $this->getTargetUrl();
         if ( empty( $_GET ) === false )
@@ -74,8 +75,6 @@ final class RedirectResponse extends Response
         </script>
 
         <?php
-        restore_error_handler();
-        restore_exception_handler();
         Router::init();
 
       /**

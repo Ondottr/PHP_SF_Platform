@@ -8,32 +8,32 @@ use Predis\Pipeline\Pipeline;
 final class Redis
 {
 
-    private static Client   $rc;
-    private static Pipeline $rp;
+    private static Client   $client;
+    private static Pipeline $pipeline;
 
     private function __construct()
     {
-        self::$rc = new Client( options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ] );
-        self::$rp = self::$rc->pipeline();
+        self::$client   = new Client( options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ] );
+        self::$pipeline = self::$client->pipeline();
 
         $arr = array_values( explode( '/', env( 'REDIS_CACHE_URL', 'redis://localhost:6379/0' ) ) );
-        self::$rc->select( end( $arr ) );
+        self::$client->select( end( $arr ) );
     }
 
-    public static function getRc(): Client
+    public static function getClient(): Client
     {
-        if ( !isset( self::$rc ) )
+        if ( !isset( self::$client ) )
             new self;
 
-        return self::$rc;
+        return self::$client;
     }
 
-    public static function getRp(): Pipeline
+    public static function getPipeline(): Pipeline
     {
-        if ( !isset( self::$rc ) )
+        if ( !isset( self::$client ) )
             new self;
 
-        return self::$rp;
+        return self::$pipeline;
     }
 
 }

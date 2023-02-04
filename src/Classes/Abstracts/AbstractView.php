@@ -38,7 +38,7 @@ abstract class AbstractView
     }
 
 
-    final protected function import( string $className, array $data = [], bool $htmlClassTagEnabled = true ): void
+    final protected function import( string $view, array $data = [], bool $htmlClassTagEnabled = true ): void
     {
         if ( TEMPLATES_CACHE_ENABLED ) {
             $arr = TemplatesCache::getInstance()->getCachedTemplateClass( $className );
@@ -48,15 +48,14 @@ abstract class AbstractView
             }
         }
 
-
-        $class = new $className( array_merge( $this->data, $data ), $htmlClassTagEnabled );
+        $class = new $view( [ ...$this->data, ...$data ], $htmlClassTagEnabled );
 
         if ( $class instanceof self ) {
             if ( $class instanceof head || $class instanceof footer )
                 $class->show();
 
             else {
-                $array = explode( '\\', $className );
+                $array = explode( '\\', $view );
                 if ( $class->isViewClassTagEnabled() )
                     echo sprintf( '<div class="%s">', array_pop( $array ) );
 

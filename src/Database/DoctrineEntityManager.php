@@ -52,7 +52,7 @@ final class DoctrineEntityManager extends EntityManager
 
     private static function setEntityManager(): void
     {
-        $ra = new RedisAdapter( rc() );
+        $ra = new RedisAdapter( Redis::getClient() );
         $config = ORMSetup::createAttributeMetadataConfiguration(
             self::getEntityDirectories(), DEV_MODE,
             __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
