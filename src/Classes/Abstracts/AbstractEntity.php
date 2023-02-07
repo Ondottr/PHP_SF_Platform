@@ -17,6 +17,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
@@ -26,7 +27,6 @@ use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
 use ReflectionProperty;
-
 use function array_key_exists;
 use function assert;
 use function count;
@@ -56,7 +56,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     }
 
     /**
-     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws NonUniqueResultException
      *
      * @return bool
      */
@@ -73,7 +73,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
             $ap = $attributes->getPropertyAttribute( $rp, ORM\Column::class );
             if ( $ap === null )
-                $ap = $attributes->getPropertyAttribute( $rp, ORM\JoinColumn::class );
+                $ap = $attributes->getPropertyAttributeCollection( $rp, ORM\JoinColumn::class )->getIterator()->current();
 
             if ( $ap !== null && $ap->unique !== false ) {
                 if ( isset( $this->{$pName} ) === false ) {
