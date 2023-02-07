@@ -16,6 +16,7 @@ declare( strict_types=1 );
 
 namespace PHP_SF\Framework\Http\Controller\Api;
 
+use Memcached;
 use PHP_SF\Framework\Http\Middleware\admin;
 use PHP_SF\Framework\Http\Middleware\api;
 use PHP_SF\System\Attributes\Route;
@@ -33,7 +34,8 @@ class ApiCacheController extends AbstractController
             aca()->clear();
         
         rca()->clear();
-        mca()->clear();
+        if ( class_exists( Memcached::class ) )
+            mca()->clear();
 
         return new JsonResponse( [ 'status' => 'ok' ], JsonResponse::HTTP_OK );
     }
