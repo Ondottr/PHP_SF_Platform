@@ -17,6 +17,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\Driver\AttributeReader;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use ReflectionClass;
@@ -80,10 +81,10 @@ abstract class AbstractConstraintValidator
 
     final protected function isDefaultValue(): bool
     {
-        ( $annotations = new AnnotationReader() )
-            ->getClassAnnotations( new ReflectionClass( $this->validatedClass::class ) );
+        ( $annotations = new AttributeReader )
+            ->getClassAttributes( new ReflectionClass( $this->validatedClass::class ) );
 
-        $annotationProperty = $annotations->getPropertyAnnotation(
+        $annotationProperty = $annotations->getPropertyAttribute(
             new ReflectionProperty( $this->getValidatedClass()::class, $this->constraint->getPropertyName() ),
             Column::class
         );

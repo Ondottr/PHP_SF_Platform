@@ -14,8 +14,6 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\JoinColumn;
@@ -23,7 +21,6 @@ use Doctrine\Persistence\Proxy;
 use JsonSerializable;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
-use PHP_SF\System\Core\DateTime;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
 use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
@@ -33,28 +30,18 @@ use ReflectionProperty;
 use function array_key_exists;
 use function assert;
 use function count;
-use function is_array;
-use function is_object;
-
 
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSerializable
 {
+
     use ModelPropertyIdTrait;
     use EntityRepositoriesTrait;
 
 
-    private static bool $__force_serialise__;
-    private static array $entitiesList = [];
-    private array $changedProperties;
-    private array $validationErrors;
-
-
-    public function __construct()
-    {
-        $this->setDefaultValues();
-    }
+    private static array $entitiesList     = [];
+    private array        $validationErrors = [];
 
 
     final public static function new(): static
@@ -63,286 +50,149 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
     }
 
 
-    private function setDefaultValues(): void
+    public static function clearQueryBuilderCache(): void
     {
-        $annotations = new AnnotationReader;
-        $reflectionClass = new ReflectionClass( static::class );
-
-        $annotations->getClassAnnotations( $reflectionClass );
-
-        foreach ( self::getPropertiesList() as $property ) {
-            if ( $property === 'id' )
-                continue;
-
-            $isNullable = false;
-
-            $annotationProperty = $annotations
-                ->getPropertyAnnotation( $reflectionClass->getProperty( $property ), ORM\Column::class );
-
-            if ( $annotationProperty === null )
-                $annotationProperty = $annotations
-                    ->getPropertyAnnotation( $reflectionClass->getProperty( $property ), ORM\OneToOne::class );
-
-
-            if ( $annotationProperty === null )
-                $annotationProperty = $annotations
-                    ->getPropertyAnnotation( $reflectionClass->getProperty( $property ), ORM\ManyToOne::class );
-
-
-            if ( $annotationProperty instanceof ORM\Column ) {
-                if ( isset( $annotationProperty->nullable ) )
-                    $isNullable = $annotationProperty->nullable;
-
-
-                if ( $isNullable ) {
-                    $this->$property = null;
-
-                    continue;
-                }
-
-                if (
-                    property_exists( $annotationProperty, 'options' ) === false ||
-                    array_key_exists( 'default', $annotationProperty->options ) === false
-                )
-                    continue;
-
-
-                if ( property_exists( $annotationProperty, 'type' ) ) {
-                    $defaultValue = $annotationProperty->options['default'];
-
-                    $this->$property = match ( $annotationProperty->type ) {
-
-                        Types::STRING, Types::TEXT => $defaultValue,
-
-                        Types::ARRAY, Types::SIMPLE_ARRAY => j_decode( $defaultValue, true ),
-
-                        Types::OBJECT, Types::JSON => j_decode( $defaultValue ),
-
-                        Types::INTEGER, Types::SMALLINT, Types::BIGINT => (int)$defaultValue,
-
-                        Types::FLOAT, Types::DECIMAL, Types::BLOB => (float)$defaultValue,
-
-                        Types::BOOLEAN => (bool)$defaultValue,
-
-                        Types::DATE_MUTABLE, Types::TIME_MUTABLE,
-                        Types::DATETIME_MUTABLE => new DateTime
-
-                    };
-                }
-            } elseif ( $annotationProperty instanceof ORM\ManyToOne || $annotationProperty instanceof ORM\OneToOne ) {
-                $targetEntity = $annotationProperty->targetEntity;
-
-                $annotationProperty = $annotations
-                    ->getPropertyAnnotation( $reflectionClass->getProperty( $property ), ORM\JoinColumn::class );
-
-                if ( isset( $annotationProperty->nullable ) )
-                    $isNullable = $annotationProperty->nullable;
-
-
-                if ( $isNullable ) {
-                    $this->$property = null;
-
-                    continue;
-                }
-
-                if ( isset( $annotationProperty->columnDefinition ) ) {
-                    $arr = explode( 'DEFAULT ', $annotationProperty->columnDefinition );
-                    $defaultValue = (int)end( $arr );
-
-                    $this->$property = em()
-                        ->getRepository( $targetEntity )
-                        ->find( $defaultValue );
-                }
-            }
-        }
-    }
-
-    private static function getPropertiesList(): array
-    {
-        $reflectionClass = new ReflectionClass( static::class );
-
-        foreach ( $reflectionClass->getProperties( ReflectionProperty::IS_PROTECTED ) as $ReflectionProperty )
-            $arr[] = $ReflectionProperty->getName();
-
-
-        return $arr ?? [];
+        ca()->deleteByKeyPattern( '*doctrine_result_cache:*' );
     }
 
     /**
-     * Use this method if you want to create an instance of an existing entity <strong>without</strong> future saving to DB!
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     *
+     * @return bool
      */
-    final public static function createFromParams( object|null $arr ): static|null
+    final public function validate(): bool
     {
-        if ( $arr === null )
-            return null;
+        $rc                   = new ReflectionClass( static::class );
+        $reflectionProperties = $rc->getProperties( ReflectionProperty::IS_PROTECTED );
 
-        $entity = new ( static::class );
+        $attributes = new ORM\Driver\AttributeReader();
 
-        foreach ( self::getPropertiesList() as $property ) {
-            if ( is_array( $arr->$property ) ) {
-                if ( isset( $arr->$property['id'] ) )
-                    $entity->$property = $arr->$property['id'];
+        // Validate nullable and unique fields
+        foreach ( $reflectionProperties as $rp ) {
+            $pName = $rp->getName();
 
-                elseif ( isset( $arr->$property['date'] ) )
-                    $entity->$property = new DateTime( $arr->$property['date'] );
+            $ap = $attributes->getPropertyAttribute( $rp, ORM\Column::class );
+            if ( $ap === null )
+                $ap = $attributes->getPropertyAttribute( $rp, ORM\JoinColumn::class );
 
-                else
-                    $entity->$property = $arr->$property;
-
-            } elseif ( is_object( $arr->$property ) && isset( $arr->$property->date ) )
-                $entity->$property = new DateTime( $arr->$property->date );
-
-            else
-                $entity->$property = $arr->$property;
-
-        }
-
-        return $entity;
-    }
-
-    final public static function getClassName( string $className = null ): string
-    {
-        $className = $className ?: static::class;
-
-        $arr = explode( '\\', $className );
-
-        return end( $arr );
-    }
-
-    public static function clearQueryBuilderCache(): void
-    {
-        ca()->deleteByKeyPattern( self::getClearQueryBuilderCacheKey() );
-    }
-
-    final protected static function getClearQueryBuilderCacheKey(): string
-    {
-        return '*doctrine_result_cache:*';
-    }
-
-    final public function validate( bool $isUpdated = false ): array|bool
-    {
-        $this->validationErrors = [];
-
-        $reflectionClass = new ReflectionClass( static::class );
-
-        $annotations = new AnnotationReader();
-        $annotations->getClassAnnotations( $reflectionClass );
-
-        $properties = $reflectionClass
-            ->getProperties( ReflectionProperty::IS_PROTECTED );
-
-        foreach ( $properties as $ReflectionProperty ) {
-            $propertyName = $ReflectionProperty->getName();
-
-            if ( isset( $this->changedProperties ) && !array_key_exists( $propertyName, $this->changedProperties ) )
-                continue;
-
-
-            $annotationProperty = $annotations->getPropertyAnnotation( $ReflectionProperty, ORM\Column::class );
-            if ( $annotationProperty === null )
-                $annotationProperty = $annotations->getPropertyAnnotation( $ReflectionProperty, ORM\JoinColumn::class );
-
-
-            if ( $annotationProperty && $annotationProperty->unique === true ) {
-                if ( isset( $this->$propertyName ) === false ) {
-                    if ( $annotationProperty->nullable === true )
+            if ( $ap !== null && $ap->unique !== false ) {
+                if ( isset( $this->{$pName} ) === false ) {
+                    if ( $ap->nullable === true )
                         continue;
 
 
-                    $this->validationErrors[ $propertyName ] =
-                        _t('Field `%s` cannot be null.', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
-
-                    return $this->getValidationErrors();
-                }
-
-                if ( $isUpdated === false ) {
-                    $propertyValue = $this->$propertyName;
-
-                    $entity = em()
-                        ->getRepository( static::class )
-                        ->findOneBy( [ $propertyName => $propertyValue ] );
-
-                    if ( $entity instanceof ( static::class ) ) {
-                        $this->validationErrors[ $propertyName ] = _t(
-                                'field_with_this_value_already_exists_validation_error',
-                                _t( $this->getTranslatablePropertyName( $propertyName ) ), $propertyValue
+                    $this->validationErrors[ $pName ] =
+                        _t( 'Field `%s` cannot be null.',
+                            _t( $this->getTranslatablePropertyName( $pName ) )
                         );
 
-                        return $this->getValidationErrors();
-                    }
+                    return false;
+                }
+
+                $pValue = $this->{$pName};
+
+                $query = qb()
+                    ->select( 'e' )
+                    ->from( static::class, 'e' )
+                    ->where( 'e.' . $pName . ' = :pValue' )
+                    ->setParameter( 'pValue', $pValue );
+
+                if ( isset( $this->id ) )
+                    $query->andWhere( 'e.id != :id' )
+                        ->setParameter( 'id', $this->id );
+
+                $entity = $query->getQuery()
+                    ->getOneOrNullResult();
+
+                if ( $entity instanceof ( static::class ) ) {
+                    $this->validationErrors[ $pName ] = _t(
+                        'Field `%s` with value "%s" already exists!',
+                        _t( $this->getTranslatablePropertyName( $pName ) ),
+                        $pValue
+                    );
+
+                    return false;
                 }
             }
         }
 
-        foreach ( $properties as $ReflectionProperty ) {
-            $propertyName = $ReflectionProperty->getName();
-            if ( $propertyName === 'id' )
+        // Run validator constraints
+        foreach ( $reflectionProperties as $rp ) {
+            $pName = $rp->getName();
+            if ( $pName === 'id' )
                 continue;
 
-            if ( isset( $this->changedProperties ) && !array_key_exists( $propertyName, $this->changedProperties ) )
-                continue;
-
-            if ( count( $reflectionAttributes = $ReflectionProperty->getAttributes() ) === 0 )
+            if ( count( $reflectionAttributes = $rp->getAttributes() ) === 0 )
                 continue;
 
 
-            unset( $annotationProperty );
-            foreach ( $ReflectionProperty->getAttributes() as $ra )
+            unset( $ap );
+            foreach ( $rp->getAttributes() as $ra )
                 if ( $ra->getName() === Column::class )
-                    $annotationProperty = $ra;
+                    $ap = $ra;
 
-            if ( isset( $annotationProperty ) === false )
-                foreach ( $ReflectionProperty->getAttributes() as $ra )
+            if ( isset( $ap ) === false )
+                foreach ( $rp->getAttributes() as $ra )
                     if ( $ra->getName() === JoinColumn::class )
-                        $annotationProperty = $ra;
+                        $ap = $ra;
 
 
             foreach ( $reflectionAttributes as $reflectionAttribute ) {
-                $validationConstraint = new ( $reflectionAttribute->getName() )( ...$reflectionAttribute->getArguments() );
+                $validationConstraint = new ( $reflectionAttribute->getName() )(
+                    ...$reflectionAttribute->getArguments()
+                );
 
-                if ( isset( $this->$propertyName ) ) {
+                if ( isset( $this->$pName ) ) {
                     if ( $validationConstraint instanceof AbstractConstraint === false )
                         continue;
 
-                    $validationConstraint->setPropertyName( $propertyName );
+                    $validationConstraint->setPropertyName( $pName );
 
                     $validator = new ( $reflectionAttribute->getName() . 'Validator' )(
-                        $this->$propertyName, $validationConstraint, $this
+                        $this->$pName, $validationConstraint, $this
                     );
                     assert( $validator instanceof AbstractConstraintValidator );
 
                     $validator->validate();
                     if ( ( $err = $validator->getError() ) !== false )
-                        $this->validationErrors[ $propertyName ] = $err;
+                        $this->validationErrors[ $pName ] = $err;
 
-                } elseif ( $annotationProperty !== null ) {
-                    if ( array_key_exists( 'nullable', $annotationProperty->getArguments() ) ) {
-                        if ( $annotationProperty->getArguments()['nullable'] === false )
-                            $this->validationErrors[ $propertyName ] =
-                                _t('Field `%s` cannot be null.', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
+                } elseif ( $ap !== null ) {
+                    if ( array_key_exists( 'nullable', $ap->getArguments() ) ) {
+                        if ( $ap->getArguments()['nullable'] === false )
+                            $this->validationErrors[ $pName ] =
+                                _t(
+                                    'Field `%s` cannot be null.',
+                                    _t( $this->getTranslatablePropertyName( $pName ) )
+                                );
 
                     } else
-                        $this->validationErrors[ $propertyName ] =
-                            _t('Field `%s` cannot be null.', _t( $this->getTranslatablePropertyName( $propertyName ) ) );
+                        $this->validationErrors[ $pName ] =
+                            _t(
+                                'Field `%s` cannot be null.',
+                                _t( $this->getTranslatablePropertyName( $pName ) )
+                            );
 
                     return $this->getValidationErrors();
                 }
             }
         }
 
-        return $this->getValidationErrors();
+
+        return empty( $this->validationErrors );
     }
 
     final public function getTranslatablePropertyName( string $propertyName ): string
     {
-        $rp = new ReflectionProperty( static::class, $propertyName );
+        $rp  = new ReflectionProperty( static::class, $propertyName );
         $tpn = $rp->getAttributes( TranslatablePropertyName::class );
 
         if ( empty( $tpn ) )
             throw new InvalidEntityConfigurationException(
                 sprintf(
                     'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
-                    $rp->getName(), static::class
+                    $rp->getName(),
+                    static::class
                 )
             );
 
@@ -352,27 +202,30 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final public function getValidationErrors(): array|bool
     {
-        return empty( $this->validationErrors ) ? true : $this->validationErrors;
+        if ( empty( $this->validationErrors ) )
+            return true;
+
+        return $this->validationErrors;
     }
 
 
     final public function jsonSerialize(): array|int
     {
-        if ( $this instanceof Proxy && self::isForceSerialiseEnabled() === false )
+        if ( $this instanceof Proxy )
             return $this->id;
 
         $arr = [];
 
-        foreach ( self::getPropertiesList() as $property )
+        $reflectionClass = new ReflectionClass( static::class );
+
+        $properties = [];
+        foreach ( $reflectionClass->getProperties( ReflectionProperty::IS_PROTECTED ) as $ReflectionProperty )
+            $properties[] = $ReflectionProperty->getName();
+
+        foreach ( $properties as $property )
             $arr[ $property ] = ( $this->$property instanceof self ) ? $this->$property->getId() : $this->$property;
 
-
         return $arr;
-    }
-
-    private static function isForceSerialiseEnabled(): bool
-    {
-        return isset( self::$__force_serialise__ ) && self::$__force_serialise__;
     }
 
 }
