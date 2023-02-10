@@ -208,7 +208,7 @@ function input(
         sprintf( " style='%s;'",
                  implode( '; ',
                           array_map(
-                              static function ( $v, $k ) { return "$k: $v"; }, $styles, array_keys( $styles )
+                              function ( $v, $k ) { return "$k: $v"; }, $styles, array_keys( $styles )
                           )
                  )
         ) : '';

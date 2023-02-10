@@ -130,7 +130,7 @@ final class APCuCacheAdapter extends AbstractCacheAdapter
         foreach ( $arr as $v )
             $keys[] = $v['info'];
 
-        $keys = array_filter( $keys, static function ( $v ) use ( $keyPattern ) {
+        $keys = array_filter( $keys, function ( $v ) use ( $keyPattern ) {
             if ( $keyPattern === '*' )
                 return true;
 

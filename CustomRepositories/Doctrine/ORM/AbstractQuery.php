@@ -110,7 +110,7 @@ abstract class AbstractQuery
 
     /**
      * Have no fucking clue what is this for.
-     * But {@link \Doctrine\ORM\NativeQuery} uses it.
+     * But {@link NativeQuery} uses it.
      */
     protected $_queryCacheProfile;
 
@@ -180,7 +180,7 @@ abstract class AbstractQuery
         $key = Query\Parameter::normalizeName( $key );
 
         $filteredParameters = $this->parameters->filter(
-            static function ( Query\Parameter $parameter ) use ( $key ): bool {
+            function ( Query\Parameter $parameter ) use ( $key ): bool {
                 $parameterName = $parameter->getName();
 
                 return $key === $parameterName;

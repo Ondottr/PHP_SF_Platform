@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
-
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -552,7 +551,7 @@ class Router
     {
         if ( self::$routeMethodResponse instanceof Response ) {
             ob_start(
-                static function ( $b ) {
+                function ( $b ) {
                     if ( TEMPLATES_CACHE_ENABLED )
                         return preg_replace( [ '/>\s+</' ], [ '><' ], $b );
 
