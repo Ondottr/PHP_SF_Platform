@@ -3,10 +3,12 @@
 namespace PHP_SF\System\Classes\Abstracts;
 
 use ArgumentCountError;
+use PHP_SF\Framework\Http\Middleware\admin;
+use PHP_SF\Framework\Http\Middleware\api;
+use PHP_SF\Framework\Http\Middleware\auth;
+use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\System\Core\Response;
 use PHP_SF\System\Interface\EventSubscriberInterface;
-use PHP_SF\System\Interface\MiddlewareInterface;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
 use PHP_SF\System\Traits\RedirectTrait;
@@ -17,7 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 use function array_key_exists;
 
-abstract class Middleware implements MiddlewareInterface, EventSubscriberInterface
+abstract class Middleware implements EventSubscriberInterface
 {
     use RedirectTrait;
 

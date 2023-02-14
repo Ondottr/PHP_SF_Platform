@@ -15,38 +15,26 @@
 namespace PHP_SF\Framework\Http\Middleware;
 
 use App\Entity\User;
-use App\View\AdminPanel\Layout\Footer\admin_panel_footer;
-use App\View\AdminPanel\Layout\Header\admin_panel_header;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 class admin extends Middleware
 {
 
-    public function __construct(Request|null $request, Kernel $kernel )
-    {
-        $this->changeHeaderTemplateClassName( admin_panel_header::class );
-        $this->changeFooterTemplateClassName( admin_panel_footer::class );
-
-        parent::__construct( $request, $kernel );
-    }
-
+    /**
+     * @noinspection MethodShouldBeFinalInspection
+     */
     public function result(): bool|RedirectResponse|JsonResponse
     {
-        auth::logInUser();
-
         if ( auth::isAuthenticated() === false ) {
-            if ( str_starts_with( Router::$currentRoute->url, '/api/' ) ) {
+            if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
                 return new JsonResponse(
                     [ 'error' => 'Unauthorized!', ], JsonResponse::HTTP_UNAUTHORIZED
                 );
-            }
 
-            return $this->redirectTo( 'admin_panel_login_page' );
+            return $this->redirectTo( 'admin_login_page' );
         }
 
 

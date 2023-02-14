@@ -1,5 +1,4 @@
 <?php declare( strict_types=1 );
-
 /*
  * Copyright © 2018-2023, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
@@ -17,19 +16,28 @@ namespace PHP_SF\Framework\Http\Middleware;
 
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use function in_array;
+
 use function array_key_exists;
+use function in_array;
 
 
 final class cron extends Middleware
 {
 
+    /**
+     * @noinspection GlobalVariableUsageInspection
+     */
     public function result(): bool|JsonResponse
     {
-        if ( array_key_exists( 'REMOTE_ADDR', $_SERVER ) && in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS ) )
+        if (
+            array_key_exists( 'REMOTE_ADDR', $_SERVER ) &&
+            in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS )
+        )
             return true;
 
-        return new JsonResponse( [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN );
+        return new JsonResponse(
+            [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
+        );
     }
 
 }

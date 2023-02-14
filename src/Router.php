@@ -7,6 +7,7 @@ use JetBrains\PhpStorm\NoReturn;
 use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
 use PHP_SF\System\Classes\Exception\ViewException;
@@ -14,7 +15,6 @@ use PHP_SF\System\Core\MiddlewareEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Database\DoctrineEntityManager;
-use PHP_SF\System\Interface\MiddlewareInterface;
 use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
 use ReflectionException;
@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
+
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -418,11 +419,7 @@ class Router
     protected static function setRequest(): void
     {
         static::$requestData = new Request(
-            $_GET,
-            array_merge(
-                $_POST,
-                ( json_decode( file_get_contents( 'php://input' ), true ) ?? [] )
-            )
+            $_GET, array_merge( $_POST, ( json_decode( file_get_contents( 'php://input' ), true ) ?? [] ) )
         );
     }
 

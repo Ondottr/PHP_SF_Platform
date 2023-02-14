@@ -39,18 +39,14 @@ class auth extends Middleware
     public static function logOutUser(): void
     {
         s()->clear();
+
         self::$user = false;
     }
 
 
-    /**
-     * @return bool|RedirectResponse|JsonResponse
-     */
     final public function result(): bool|RedirectResponse|JsonResponse
     {
-        self::logInUser();
-
-        if ( !self::isAuthenticated() ) {
+        if ( self::isAuthenticated() === false ) {
             if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
                 return new JsonResponse( [ 'error' => 'Unauthorized!' ], JsonResponse::HTTP_UNAUTHORIZED );
 
@@ -76,8 +72,7 @@ class auth extends Middleware
 
                 self::$user = $user;
             }
-        }
-        elseif ( $user instanceof ( Kernel::getApplicationUserClassName() ) ) {
+        } elseif ( $user instanceof ( Kernel::getApplicationUserClassName() ) ) {
             self::$user = $user;
 
             s()->set( 'session_user_id', $user->getId() );

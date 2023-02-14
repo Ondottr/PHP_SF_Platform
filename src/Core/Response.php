@@ -76,15 +76,6 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         }
 
         ob_end_flush();
-        /**
-         * By default uopz disables the exit opcode, so exit() calls are
-         * practically ignored. uopz_allow_exit() allows to control this behavior.
-         *
-         * @url https://www.php.net/manual/en/function.uopz-allow-exit
-         */
-        if ( function_exists( 'uopz_allow_exit' ) )
-          /** @noinspection PhpUndefinedFunctionInspection */
-          uopz_allow_exit( /* Whether to allow the execution of exit opcodes or not.  */ true );
 
         if ( function_exists( 'fastcgi_finish_request' ) )
             fastcgi_finish_request();
