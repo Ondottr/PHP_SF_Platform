@@ -217,23 +217,57 @@ class Router
         static::$routesList[ $data['name'] ] = $data;
     }
 
+    /**
+     * Check if the provided data object contains valid parameters for route definition
+     *
+     * @param object $data The object containing data for route definition
+     *
+     * @throws RouteParameterException If the provided data object contains invalid parameters for route definition
+     * @throws ReflectionException
+     */
     protected static function checkParams( object $data ): void
     {
-        # Check if middleware exists and implements the required interface
+        // Check if middlewares extends Middleware class
         if ( $data->middleware ) {
+            // If middleware is an array or not, make it an array for easy iteration
             $middleware = is_array( $data->middleware ) ? $data->middleware : [ $data->middleware ];
+
             foreach ( $middleware as $m ) {
-                if ( is_subclass_of( $m, MiddlewareInterface::class ) === false ) {
+
+                if ( is_array( $m ) ) {
+                    // If middleware is nested array, check each of them
+                    foreach ( $m as $mm ) {
+
+                        if ( is_array( $mm ) ) {
+                            // If middleware is another nested array, check each of them
+                            foreach ( $mm as $mmm )
+                                // Check if middleware extends Middleware class, if not throw an exception
+                                if ( ( new ReflectionClass( $mmm ) )->getParentClass()->getName() !== Middleware::class )
+                                    throw new RuntimeException(
+                                        "Middleware for route $data->name in class $data->class must be extended from " . Middleware::class
+                                    );
+
+                        } elseif ( ( new ReflectionClass( $mm ) )->getParentClass()->getName() !== Middleware::class )
+                            // Check if middleware extends Middleware class, if not throw an exception
+                            throw new RuntimeException(
+                                "Middleware for route $data->name in class $data->class must be extended from " . Middleware::class
+                            );
+
+                    }
+
+                } elseif ( ( new ReflectionClass( $m ) )->getParentClass()->getName() !== Middleware::class )
+                    // Check if middleware extends Middleware class, if not throw an exception
                     throw new RuntimeException(
-                        "Middleware for route $data->name in class $data->class must implement " . MiddlewareInterface::class
+                        "Middleware for route $data->name in class $data->class must be extended from " . Middleware::class
                     );
-                }
+
             }
         }
 
+        // Check if method parameters are of allowed types
         self::checkMethodParameterTypes( $data );
 
-        # Check if HTTP method is allowed
+        // Check if HTTP method is allowed
         if ( array_key_exists( $data->httpMethod, static::ALLOWED_HTTP_METHODS ) === false )
             throw new InvalidConfigurationException(
                 "Undefined HTTP method `$data->httpMethod` for route `$data->name` in class `$data->class`"
@@ -469,25 +503,169 @@ class Router
         }
     }
 
-    protected static function initializeRouteMiddlewares(): void
+    private static function initializeRouteMiddlewares(): void
     {
+        // Get the route's middleware
         $routeMiddleware = static::$currentRoute->middleware;
+        // If there is no middleware, return
+        if ( $routeMiddleware === [] || $routeMiddleware === null )
+            return;
 
-        if ( $routeMiddleware !== null ) {
-            if ( !is_array( $routeMiddleware ) )
-                $routeMiddleware = [ $routeMiddleware ];
+        // If the middleware is a string, convert it to an array
+        if ( is_string( $routeMiddleware ) )
+            $routeMiddleware = [ Middleware::MATCH_ALL => [ $routeMiddleware ] ];
 
-            foreach ( $routeMiddleware as $middleware ) {
-                $middlewareInstance = new $middleware( static::getRequest(), self::$kernel );
+        // If the first key in the middleware array is numeric, assume it is an array of middlewares for all route matches
+        if ( array_keys( $routeMiddleware )[0] === 0 )
+            $routeMiddleware = [ Middleware::MATCH_ALL => $routeMiddleware ];
 
-                new MiddlewareEventDispatcher(
-                    $middlewareInstance,
-                    static::getRequest(),
-                    self::$controller
-                );
-            }
+        // If the middleware array has more than two elements, throw an exception
+        if ( count( $routeMiddleware ) > 2 )
+            throw new RouteParameterException( 'Middleware array can contain maximum 2 elements!' );
+
+        // If the middleware array does not have any of the expected keys, throw an exception
+        if (
+            array_key_exists( Middleware::MATCH_ALL, $routeMiddleware ) === false &&
+            array_key_exists( Middleware::MATCH_ANY, $routeMiddleware ) === false &&
+            array_key_exists( Middleware::MATCH_CUSTOM, $routeMiddleware ) === false
+        )
+            throw new RouteParameterException( 'Middleware array must contain at least one of the following keys: "all" or "any" or "custom"!' );
+
+        // If the middleware array has a custom key and more than one element, throw an exception
+        if ( array_key_exists( Middleware::MATCH_CUSTOM, $routeMiddleware ) && count( $routeMiddleware ) > 1 )
+            throw new RouteParameterException( 'Middleware array can contain only one element if "custom" key is present!' );
+
+        // If the middleware array has a custom key, check that it only has an "all" or "any" key
+        if ( array_key_exists( Middleware::MATCH_CUSTOM, $routeMiddleware ) ) {
+
+            // If the middleware array has more than two elements, throw an exception
+            if ( count( $routeMiddleware[ Middleware::MATCH_CUSTOM ] ) > 2 )
+                throw new RouteParameterException( 'Middleware array can contain maximum 2 elements!' );
+
+            // If the middleware array does not have any of the expected keys, throw an exception
+            if (
+                array_key_exists( Middleware::MATCH_ALL, $routeMiddleware[ Middleware::MATCH_CUSTOM ] ) === false &&
+                array_key_exists( Middleware::MATCH_ANY, $routeMiddleware[ Middleware::MATCH_CUSTOM ] ) === false
+            )
+                throw new RouteParameterException( 'Middleware key "custom" array must contain at least one of the following keys: "all" or "any"!' );
 
         }
+
+        // Set the initial result to true
+        $result = true;
+        /**
+         * Execute {@link Middleware::MATCH_ALL} middlewares and {@link Middleware::MATCH_CUSTOM} => {@link Middleware::MATCH_ALL} middlewares
+         * and stop if one of them returns false
+         */
+        // If the middleware array has an "all" key or a custom key with an "all" key
+        if (
+            array_key_exists( Middleware::MATCH_ALL, $routeMiddleware ) ||
+            (
+                array_key_exists( Middleware::MATCH_CUSTOM, $routeMiddleware ) &&
+                array_key_exists( Middleware::MATCH_ALL, $routeMiddleware[ Middleware::MATCH_CUSTOM ] )
+            )
+        ) {
+            // Determine which middlewares to execute based on whether they're defined
+            // as MATCH_ANY or MATCH_CUSTOM => MATCH_ANY.
+            if ( array_key_exists( Middleware::MATCH_ALL, $routeMiddleware ) )
+                $middles = $routeMiddleware[ Middleware::MATCH_ALL ];
+            else {
+                $middles = $routeMiddleware[ Middleware::MATCH_CUSTOM ][ Middleware::MATCH_ALL ];
+
+                if ( is_array( $middles ) === false )
+                    throw new RouteParameterException( 'Middleware key "custom" must contain an array of middlewares!' );
+
+            }
+
+            if ( empty( $middles ) )
+                throw new RouteParameterException( 'Middleware key "all" must contain at least one middleware!' );
+
+            if ( array_unique( $middles ) !== $middles )
+                throw new RouteParameterException( 'Middleware key "all" cannot contain duplicate middlewares!' );
+
+            // Loop through each middleware to be executed and check its result.
+            foreach ( $middles as $middleware ) {
+                if ( is_array( $middleware ) )
+                    throw new RouteParameterException( 'Middleware array can contain only strings!' );
+
+                // Instantiate the middleware class.
+                $middlewareInstance = new $middleware( static::getRequest(), self::$kernel );
+                assert( $middlewareInstance instanceof Middleware );
+
+                // Execute the middleware.
+                $middlewareResult = $middlewareInstance->execute();
+                $result = $middlewareResult === true;
+
+                // Dispatch a MiddlewareEventDispatcher event for the middleware
+
+                new MiddlewareEventDispatcher(
+                    $middlewareInstance, static::getRequest(), self::$controller
+                );
+
+                // If the middleware result is not true, send the result and exit.
+                if ( $result !== true ) {
+                    $middlewareResult->send();
+
+                    exit( die() );
+                }
+            }
+        }
+
+        /**
+         * Execute {@link Middleware::MATCH_ANY} middlewares and {@link Middleware::MATCH_CUSTOM} => {@link Middleware::MATCH_ANY} middlewares
+         * and stop if one of them returns true
+         */
+        // Determine which middlewares to execute based on whether they're defined
+        // as MATCH_ANY or MATCH_CUSTOM => MATCH_ANY.
+        if (
+            array_key_exists( Middleware::MATCH_ANY, $routeMiddleware ) ||
+            (
+                array_key_exists( Middleware::MATCH_CUSTOM, $routeMiddleware ) &&
+                array_key_exists( Middleware::MATCH_ANY, $routeMiddleware[ Middleware::MATCH_CUSTOM ] )
+            )
+        ) {
+            if ( array_key_exists( Middleware::MATCH_ANY, $routeMiddleware ) )
+                $middles = $routeMiddleware[ Middleware::MATCH_ANY ];
+            else {
+                $middles = $routeMiddleware[ Middleware::MATCH_CUSTOM ][ Middleware::MATCH_ANY ];
+
+                if ( is_array( $middles ) === false )
+                    throw new RouteParameterException( 'Middleware key "custom" must contain an array of middlewares!' );
+
+            }
+
+            if ( empty( $middles ) )
+                throw new RouteParameterException( 'Middleware key "any" must contain at least one middleware!' );
+
+            if ( array_unique( $middles ) !== $middles )
+                throw new RouteParameterException( 'Middleware key "any" cannot contain duplicate middlewares!' );
+
+            foreach ( $middles as $middleware ) {
+                if ( is_array( $middleware ) )
+                    throw new RouteParameterException( 'Middleware array can contain only strings!' );
+
+                // Instantiate the middleware and ensure it implements the Middleware interface
+                $middlewareInstance = new $middleware( static::getRequest(), self::$kernel );
+                assert( $middlewareInstance instanceof Middleware );
+
+                // Execute the middleware
+                $middlewareResult = $middlewareInstance->execute();
+
+                // Dispatch a MiddlewareEventDispatcher event for the middleware
+                new MiddlewareEventDispatcher(
+                    $middlewareInstance, static::getRequest(), self::$controller
+                );
+
+                // If the middleware returned true, then stop executing the remaining middlewares
+                if ( $middlewareResult === true )
+                    return;
+
+            }
+
+            // If none of the middlewares returned true, then send the middleware result to the client
+            $middlewareResult->send();
+        }
+
     }
 
     /**

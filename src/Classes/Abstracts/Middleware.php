@@ -24,43 +24,82 @@ abstract class Middleware implements EventSubscriberInterface
     use RedirectTrait;
 
 
+    /**
+     * All middlewares must be executed and all must return true <p>
+     * Example: <p>
+     * \#[{@link Route}( middleware: [ {@link Middleware::MATCH_ALL} => [ {@link auth::class}, {@link api::class} ] ] )]
+     *
+     * In this example, the route will be accepted if:
+     * - The user is authenticated
+     * - The request is an API request
+     *
+     * Note: <p>
+     * On the first middleware that returns false, the execution will be stopped, route will be rejected,
+     * and the middleware result will be returned
+     */
+    const MATCH_ALL = 'all';
+
+    /**
+     * All middlewares must be executed and at least one must return true <p>
+     * Example: <p>
+     * \#[{@link Route}( middleware: [ {@link Middleware::MATCH_ANY} => [ {@link auth::class}, {@link api::class} ] ] )]
+     *
+     * In this example, the route will be accepted if:
+     * - The user is authenticated
+     * - The request is an API request
+     *
+     * Note: <p>
+     * If all middlewares return false, the execution will be stopped, route will be rejected,
+     * and result of the last middleware will be returned
+     */
+    const MATCH_ANY = 'any';
+
+    /**
+     * Provide a custom logic to determine if the middleware must be executed or not <p>
+     * Example: <p>
+     * \#[{@link Route}( middleware: [ {@link Middleware::MATCH_ALL} => [ {@link auth::class} ], {@link Middleware::MATCH_ANY} => [ {@link admin::class}, {@link api::class} ] ] )]
+     *
+     * In this example, the route will be accepted if:
+     * - The user is authenticated and the user is an admin
+     * - The user is authenticated and the request is an API request
+     *
+     * Note: <p>
+     * See the description of {@link Middleware::MATCH_ALL} and {@link Middleware::MATCH_ANY} for more information about the execution logic
+     * First the {@link Middleware::MATCH_ALL} will be executed, then the {@link Middleware::MATCH_ANY} will be executed
+     * regardless of the position of the {@link Middleware::class} constants in the array <p>
+     *
+     * Another example: <p>
+     * \#[{@link Route}( middleware: [ {@link Middleware::MATCH_ALL} => [ ... ], {@link Middleware::MATCH_ANY} => [ ... ] ] )] <p>
+     * In the example below, the execution logic will be the same as the example above (First {@link Middleware::MATCH_ALL}, then {@link Middleware::MATCH_ANY}) <p>
+     * \#[{@link Route}( middleware: [ {@link Middleware::MATCH_ANY} => [ ... ], {@link Middleware::MATCH_ALL} => [ ... ] ] )]
+     */
+    const MATCH_CUSTOM = 'custom';
+
+
     public function __construct(
         protected readonly Request|null $request,
         private readonly Kernel $kernel,
-    )
-    {
-        if (( $middlewareResult = $this->result() ) === true)
-            return;
+    ) {}
 
-        if ($middlewareResult === false) {
-            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
-                $middlewareResult = new JsonResponse([ 'error' => _t('access_denied') ], JsonResponse::HTTP_FORBIDDEN);
-            } else {
-                $middlewareResult = $this->redirectTo('access_denied_page');
-            }
+    abstract protected function result(): bool|JsonResponse|RedirectResponse;
+
+    final public function execute(): bool|JsonResponse|RedirectResponse
+    {
+        if ( ( $middlewareResult = $this->result() ) === true )
+            return true;
+
+        if ( $middlewareResult === false ) {
+            if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
+                $middlewareResult = new JsonResponse(
+                    [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
+                );
+
+            else
+                $middlewareResult = $this->redirectBack( errors: [ _t( 'Access Denied!' ) ] );
+
         }
 
-        if ($middlewareResult instanceof Response ||
-            $middlewareResult instanceof RedirectResponse ||
-            $middlewareResult instanceof JsonResponse
-        ) {
-            $middlewareResult->send();
-        }
-
-
-        die();
-    }
-
-    abstract public function result(): bool|JsonResponse|RedirectResponse|Response;
-
-    final protected function changeHeaderTemplateClassName( string $headerClassName ): void
-    {
-        $this->kernel->setHeaderTemplateClassName( $headerClassName );
-    }
-
-    final protected function changeFooterTemplateClassName( string $footerClassName ): void
-    {
-        $this->kernel->setFooterTemplateClassName( $footerClassName );
+        return $middlewareResult;
     }
 
     final public function dispatchEvent( AbstractEventListener $eventListener, mixed $args ): bool
@@ -112,6 +151,17 @@ abstract class Middleware implements EventSubscriberInterface
         $eventListener::markExecuted();
 
         return true;
+    }
+
+
+    final protected function changeHeaderTemplateClassName( string $headerClassName ): void
+    {
+        $this->kernel->setHeaderTemplateClassName( $headerClassName );
+    }
+
+    final protected function changeFooterTemplateClassName( string $footerClassName ): void
+    {
+        $this->kernel->setFooterTemplateClassName( $footerClassName );
     }
 
 }
