@@ -3,18 +3,17 @@
 namespace PHP_SF\Templates\Layout;
 
 use PHP_SF\System\Classes\Abstracts\AbstractView;
-use PHP_SF\Templates\Layout\Header\head;
+use PHP_SF\Templates\Layout\HeaderComponents\head;
 
 // @formatter:off
 final class header extends AbstractView { public function show(): void { ?>
-<!--@formatter:on-->
+  <!--@formatter:on-->
 
-    <?php $this->import( head::class, htmlClassTagEnabled: false ) ?>
+  <?php $this->import(head::class, htmlClassTagEnabled: false ) ?>
 
-    <div class="header">
+  <div class="header header_elements row">
 
+  </div>
 
-    </div>
-
-    <!--@formatter:off-->
+  <!--@formatter:off-->
 <?php } }
