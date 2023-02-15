@@ -64,8 +64,11 @@ final class APCuCacheAdapter extends AbstractCacheAdapter
      * @return bool Whether the value was successfully stored.
      *              Returns true if the key was successfully set, false otherwise.
      */
-    public function set( string $key, mixed $value, DateInterval|int|null $ttl = self::DEFAULT_TTL ): bool
+    public function set( string $key, mixed $value, DateInterval|int|null $ttl = null ): bool
     {
+        if ( $ttl === null )
+            $ttl = self::DEFAULT_TTL;
+
         if ( is_scalar( $value ) === false )
             throw new CacheValueException;
 
