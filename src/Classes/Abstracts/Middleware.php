@@ -7,6 +7,7 @@ use PHP_SF\Framework\Http\Middleware\admin;
 use PHP_SF\Framework\Http\Middleware\api;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Core\MiddlewareEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Interface\EventSubscriberInterface;
 use PHP_SF\System\Kernel;
@@ -23,21 +24,6 @@ abstract class Middleware implements EventSubscriberInterface
 {
     use RedirectTrait;
 
-
-    /**
-     * All middlewares must be executed and all must return true <p>
-     * Example: <p>
-     * \#[{@link Route}( middleware: [ {@link Middleware::MATCH_ALL} => [ {@link auth::class}, {@link api::class} ] ] )]
-     *
-     * In this example, the route will be accepted if:
-     * - The user is authenticated
-     * - The request is an API request
-     *
-     * Note: <p>
-     * On the first middleware that returns false, the execution will be stopped, route will be rejected,
-     * and the middleware result will be returned
-     */
-    const MATCH_ALL = 'all';
 
     /**
      * All middlewares must be executed and at least one must return true <p>
@@ -79,7 +65,12 @@ abstract class Middleware implements EventSubscriberInterface
     public function __construct(
         protected readonly Request|null $request,
         private readonly Kernel $kernel,
-    ) {}
+        AbstractController $controller,
+    )
+    {
+        new MiddlewareEventDispatcher( $this, $this->request, $controller );
+    }
+
 
     abstract protected function result(): bool|JsonResponse|RedirectResponse;
 
