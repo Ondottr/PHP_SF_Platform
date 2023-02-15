@@ -12,19 +12,4 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-return [
-    //
-    //
-    'Field `%s` is not a valid email address.' => 'Field `%s` is not a valid email address.',
-    //
-    //
-    'Field `%s` must be one of these numbers: (%s)' => 'Field `%s` must be one of these numbers: (%s)',
-    //
-    //
-    'Field `%s` should be between `%s` and `%s`!' => 'Field `%s` should be between `%s` and `%s`.',
-    //
-    //
-    'Field %s is too long. It should have %s character or less.' => 'Field %s is too long. It should have %s character or less.',
-    'Field %s is too short. It should have %s character or more.' => 'Field %s is too short. It should have %s character or more.',
-    //
-];
+return [];

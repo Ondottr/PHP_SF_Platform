@@ -69,10 +69,6 @@ function rc(): Client
 
 /**
  * This function returns an instance of one of the cache adapter classes ({@link RedisCacheAdapter} or {@link APCuCacheAdapter})
- *
- * @param string|null $cacheAdapter
- *
- * @return AbstractCacheAdapter
  */
 function ca(
     #[ExpectedValues( [ null,
@@ -103,8 +99,6 @@ function ca(
  * This function returns {@link RedisCacheAdapter} class instance
  *
  * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
- *
- * @return RedisCacheAdapter
  */
 function rca(): RedisCacheAdapter
 {
@@ -117,7 +111,6 @@ function rca(): RedisCacheAdapter
  *
  * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
  *
- * @return APCuCacheAdapter
  */
 function aca(): APCuCacheAdapter
 {
@@ -129,8 +122,6 @@ function aca(): APCuCacheAdapter
  * This function returns {@link MemcachedCacheAdapter} class instance
  *
  * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
- *
- * @return MemcachedCacheAdapter
  */
 function mca(): MemcachedCacheAdapter
 {
@@ -168,8 +159,7 @@ function s(): Session
  * @throws InvalidArgumentException If $siteUrl is not valid url
  * @throws RouteNotFoundException If route not exists in symfony routes and in routes from {@link Route} attribute
  * @throws RouteParameterExpectedException If route parameter is not provided in $with array and is required
- *
- * @return string
+ * @throws \Psr\SimpleCache\InvalidArgumentException If cache key is invalid
  */
 function routeLink( string $routeName, array $with = [], array $query = [], string $siteUrl = null ): string
 {

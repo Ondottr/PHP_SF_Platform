@@ -17,7 +17,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
-use PHP_SF\Templates\Layout\Header\head;
+use PHP_SF\Templates\Layout\HeaderComponents\head;
 
 use function array_key_exists;
 

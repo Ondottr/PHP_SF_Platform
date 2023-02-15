@@ -27,9 +27,12 @@ use PHP_SF\Templates\base;
 final class DefaultController extends AbstractController
 {
 
-    /**
-     * @return Response
-     */
+    #[Route( url: 'base', httpMethod: 'GET' )]
+    public function base(): Response
+    {
+        return $this->render( base::class );
+    }
+
     #[Route( url: 'welcome', httpMethod: 'GET', middleware: auth::class )]
     public function welcome_page(): Response
     {
