@@ -6,7 +6,7 @@ use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
 function asset( string $path ): string
 {
-    if ( file_exists( sprintf( "%s/../../public/%s", __DIR__, $path ) ) === false )
+    if ( file_exists( sprintf( "%s/public/%s", project_dir(), $path ) ) === false )
         throw new FileNotFoundException( "Asset not found: $path" );
 
     return "/$path";

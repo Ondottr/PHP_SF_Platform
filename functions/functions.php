@@ -304,3 +304,9 @@ function env( string $name, string|null $default = null ): string|null
 
     return $_ENV[ $name ] ?? $default;
 }
+
+
+function project_dir( string $path = '' ): string
+{
+    return Kernel::getInstance()->getProjectDir();
+}
