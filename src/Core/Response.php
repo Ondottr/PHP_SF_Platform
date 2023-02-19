@@ -47,7 +47,6 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
 
             ( new $headerClassName( $this->dataFromController ) )->show();
 
-            echo '<div class="content">';
         }
 
         if ( $this->view instanceof AbstractView ) {
