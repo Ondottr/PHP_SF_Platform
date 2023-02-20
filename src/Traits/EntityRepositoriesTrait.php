@@ -25,18 +25,18 @@ trait EntityRepositoriesTrait
     private static array $repositories = [];
 
 
-    public static function find( int $id ): AbstractEntity|null
+    public static function find( int $id ): static|null
     {
         return self::rep()->find( $id );
     }
 
-    public static function findOneBy( array $criteria, array $orderBy = null ): AbstractEntity|null
+    public static function findOneBy( array $criteria, array $orderBy = null ): static|null
     {
         return self::rep()->findOneBy( $criteria, $orderBy );
     }
 
     /**
-     * @return array<AbstractEntity>
+     * @return array<static>
      */
     public static function findBy( array $criteria = [], array $orderBy = null, int $limit = null, int $offset = null ): array
     {
@@ -50,7 +50,7 @@ trait EntityRepositoriesTrait
     }
 
     /**
-     * @return array<AbstractEntity>
+     * @return array<static>
      */
     public static function findAll(): array
     {
