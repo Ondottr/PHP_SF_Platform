@@ -1,5 +1,4 @@
 <?php /** @noinspection MagicMethodsValidityInspection */
-
 /*
  * Copyright © 2018-2023, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
