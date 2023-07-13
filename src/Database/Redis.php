@@ -13,11 +13,19 @@ final class Redis
 
     private function __construct()
     {
-        self::$client   = new Client( options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ] );
+        $redisCacheUrl = env( 'REDIS_CACHE_URL', 'redis://localhost:6379/0' );
+
+        $redisHost = parse_url( $redisCacheUrl, PHP_URL_HOST );
+        $redisPort = parse_url( $redisCacheUrl, PHP_URL_PORT );
+        $redisDB   = (int)parse_url( $redisCacheUrl, PHP_URL_PATH );
+
+        self::$client   = new Client(
+            parameters: [ 'host' => $redisHost, 'port' => $redisPort ],
+            options: [ 'prefix' => sprintf( '%s:%s:', env( 'SERVER_PREFIX' ), env( 'APP_ENV' ) ) ]
+        );
         self::$pipeline = self::$client->pipeline();
 
-        $arr = array_values( explode( '/', env( 'REDIS_CACHE_URL', 'redis://localhost:6379/0' ) ) );
-        self::$client->select( end( $arr ) );
+        self::$client->select( $redisDB );
     }
 
     public static function getClient(): Client
