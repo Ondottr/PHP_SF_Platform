@@ -433,7 +433,7 @@ class Router
     }
 
     #[NoReturn]
-    private static function route(): void
+    private static function route(): never
     {
         static::setRequest();
         static::setRequestHeaders();
@@ -448,6 +448,8 @@ class Router
         static::initializeRouteMethod();
 
         static::sendRouteMethodResponse();
+
+        exit(die());
     }
 
     protected static function setRequest(): void
