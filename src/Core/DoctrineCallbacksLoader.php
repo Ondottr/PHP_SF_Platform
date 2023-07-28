@@ -20,6 +20,7 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Classes\Abstracts\AbstractDoctrineLifecycleCallback;
 use PHP_SF\System\Interface\DoctrineCallbacksLoaderInterface;
+
 use function array_key_exists;
 use function in_array;
 
@@ -37,11 +38,6 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
         Events::postUpdate,
     ];
 
-    #[ORM\PreFlush]
-    final public function __preFlush( EventArgs $args ): void
-    {
-        $this->getCallbackClass( Events::preFlush, $args )?->callback();
-    }
 
     final public function getCallbackClass( string $callback, EventArgs $args ): AbstractDoctrineLifecycleCallback|null
     {
@@ -51,6 +47,13 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
             return null;
 
         return new ( $this->getLifecycleCallbacks()[ $callback ] )( $this, $args );
+    }
+
+
+    #[ORM\PreFlush]
+    final public function __preFlush( EventArgs $args ): void
+    {
+        $this->getCallbackClass( Events::preFlush, $args )?->callback();
     }
 
     #[ORM\PreRemove]

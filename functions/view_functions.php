@@ -6,7 +6,7 @@ use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
 function asset( string $path ): string
 {
-    if ( file_exists( sprintf( "%s/public/%s", project_dir(), $path ) ) === false )
+    if ( file_exists( sprintf( '%s/public/%s', project_dir(), $path ) ) === false )
         throw new FileNotFoundException( "Asset not found: $path" );
 
     return "/$path";
@@ -178,7 +178,7 @@ function input(
     $inputStr = "<input type='$type'";
 
     if ( $isRequired )
-        $inputStr .= " required";
+        $inputStr .= ' required';
 
     $inputStr .= $id ? " id='$id'" : " id='$name'";
     $inputStr .= " name='$name'";
@@ -216,7 +216,7 @@ function input(
     foreach ( $customAttributes as $attr => $value )
         $inputStr .= " $attr='$value'";
 
-    $inputStr .= ">";
+    $inputStr .= '>';
 
     return $inputStr;
 }
@@ -488,6 +488,4 @@ function formSelect(
     $inputStr .= '</select>';
 
     echo trim( str_replace( PHP_EOL, '', preg_replace( '/\s+/', ' ', $inputStr ) ) );
-
-
 }
