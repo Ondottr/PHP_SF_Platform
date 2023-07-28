@@ -10,7 +10,7 @@ trait ModelPropertyIdTrait
     #[ORM\Id]
     #[ORM\Cache]
     #[ORM\Column( type: 'integer' )]
-    #[ORM\GeneratedValue]
+    #[ORM\GeneratedValue( 'SEQUENCE' )]
     protected int $id;
 
 
