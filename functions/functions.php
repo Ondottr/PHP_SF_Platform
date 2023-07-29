@@ -57,15 +57,6 @@ function ra(): RedisCacheAdapter
     return RedisCacheAdapter::getInstance();
 }
 
-/**
- * @deprecated Use {@link rca()} function instead
- */
-#[Deprecated( replacement: 'rca()' )]
-function rc(): Client
-{
-    return Redis::getClient();
-}
-
 
 /**
  * This function returns an instance of one of the cache adapter classes ({@link RedisCacheAdapter} or {@link APCuCacheAdapter})
