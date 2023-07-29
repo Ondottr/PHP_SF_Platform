@@ -15,7 +15,7 @@ declare( strict_types=1 );
 
 namespace PHP_SF\Framework\Http\Controller;
 
-use App\Enums\UserGroupEnum;
+use App\Entity\UserGroup;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ObjectRepository;
 use PHP_SF\Framework\Http\Middleware\auth;
@@ -132,7 +132,7 @@ class AuthController extends AbstractController
         $user->setLogin( $login );
         $user->setEmail( $email );
         $user->setPassword( $password );
-        $user->setUserGroup( UserGroupEnum::USER->getEntity() );
+        $user->setUserGroup( UserGroup::find( 6 ) ); // TODO: Change to constant
 
         if ( $user->validate() !== true )
             return $this->redirectBack( errors: array_values( $user->getValidationErrors() ) );

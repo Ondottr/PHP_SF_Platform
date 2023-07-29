@@ -120,6 +120,12 @@ function mca(): MemcachedCacheAdapter
 }
 
 
+function rc(): Client
+{
+    return Redis::getClient();
+}
+
+
 function rp(): Pipeline
 {
     return Redis::getPipeline();
@@ -133,32 +139,32 @@ function s(): Session
 
 
 /**
- * @param string      $routeName Route name, first parameter from {@link Route} attribute
- * @param array       $with      Route parameters to replace in route link
- *                               Example: routeLink('user_profile', ['id' => 1])
- *                               Route link: /user/{id}
- *                               Result: /user/1
- * @param array       $query     Query parameters to add to route link
- *                               Example: routeLink('user_profile', ['id' => 1], ['page' => 2])
- *                               Route link: /user/{id}
- *                               Result: /user/1?page=2
- * @param string|null $siteUrl   Site url to add to route link
- *                               Example: routeLink('user_profile', ['id' => 1], ['page' => 2], 'https://example.com')
- *                               Route link: /user/{id}
- *                               Result: https://example.com/user/1?page=2
+ * @param string      $routeName   Route name, first parameter from {@link Route} attribute
+ * @param array       $pathParams  Route parameters to replace in route link
+ *                                 Example: routeLink('user_profile', ['id' => 1])
+ *                                 Route link: /user/{id}
+ *                                 Result: /user/1
+ * @param array       $queryParams Query parameters to add to route link
+ *                                 Example: routeLink('user_profile', ['id' => 1], ['page' => 2])
+ *                                 Route link: /user/{id}
+ *                                 Result: /user/1?page=2
+ * @param string|null $siteUrl     Site url to add to route link
+ *                                 Example: routeLink('user_profile', ['id' => 1], ['page' => 2], 'https://example.com')
+ *                                 Route link: /user/{id}
+ *                                 Result: https://example.com/user/1?page=2
  *
  * @throws InvalidArgumentException If $siteUrl is not valid url
  * @throws RouteNotFoundException If route not exists in symfony routes and in routes from {@link Route} attribute
  * @throws RouteParameterExpectedException If route parameter is not provided in $with array and is required
  * @throws \Psr\SimpleCache\InvalidArgumentException If cache key is invalid
  */
-function routeLink( string $routeName, array $with = [], array $query = [], string $siteUrl = null ): string
+function routeLink( string $routeName, array $pathParams = [], array $queryParams = [], string $siteUrl = null ): string
 {
     $cacheKey = sprintf(
         'route_link_%s_%s_%s_%s',
         $routeName,
-        md5( serialize( $with ) ),
-        md5( serialize( $query ) ),
+        md5( serialize( $pathParams ) ),
+        md5( serialize( $queryParams ) ),
         md5( serialize( $siteUrl ) )
     );
 
@@ -177,7 +183,7 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
      */
     try {
         if ( Router::isRouteExists( $routeName ) === false ) {
-            $link = Kernel::getInstance()->getContainer()->get( 'router' )?->generate( $routeName, $with );
+            $link = Kernel::getInstance()->getContainer()->get( 'router' )?->generate( $routeName, $pathParams );
 
             // If link is not null then cache it and return
             if ( $link !== null ) {
@@ -197,13 +203,12 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
             : Router::getRouteLink( $routeName );
 
         // Check if parameters are provided
-        if ( empty( $with ) === false ) {
+        if ( empty( $pathParams ) === false ) {
             $link = str_replace( [ '{', '}' ], '', $link );
 
             // Replace parameters in route link
-            foreach ( $with as $propertyName => $propertyValue )
+            foreach ( $pathParams as $propertyName => $propertyValue )
                 $link = str_replace( sprintf( '$%s', $propertyName ), (string)$propertyValue, $link );
-
         }
 
         // Check if route exists in routes from {@link Route} attribute
@@ -216,7 +221,7 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
                 // Loop through route parameters
                 foreach ( $routeInfo['routeParams'] as $param )
                     // Check if parameter is provided to replace in route link
-                    if ( array_key_exists( $param, $with ) === false )
+                    if ( array_key_exists( $param, $pathParams ) === false )
                         // If parameter is required then throw an exception
                         throw new RouteParameterExpectedException( $routeName, $param );
 
@@ -229,9 +234,9 @@ function routeLink( string $routeName, array $with = [], array $query = [], stri
             return "#$routeName";
 
         // Check if query parameters are provided
-        if ( empty( $query ) === false )
+        if ( empty( $queryParams ) === false )
             // Add query parameters to route link
-            $link .= '?' . http_build_query( $query );
+            $link .= '?' . http_build_query( $queryParams );
 
         // Cache route link
         ca()->set( $cacheKey, $link );
