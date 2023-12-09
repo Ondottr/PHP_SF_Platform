@@ -13,9 +13,9 @@ use ReflectionProperty;
 use ReflectionUnionType;
 use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-
 use function array_key_exists;
 
+#[\AllowDynamicProperties]
 final class Translator
 {
 
