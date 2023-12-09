@@ -7,7 +7,6 @@ use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
-
 use function function_exists;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
@@ -31,7 +30,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
      * @noinspection OffsetOperationsInspection
      * @noinspection MissingParentCallInspection
      */
-    #[NoReturn] public function send(): static
+    #[NoReturn] public function send(bool $flush = true): static
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             if ( TEMPLATES_CACHE_ENABLED ) {
