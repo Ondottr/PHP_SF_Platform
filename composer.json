@@ -19,7 +19,7 @@
   "name": "nations-original/php-simple-framework",
   "prefer-stable": true,
   "require": {
-    "php": "8.1.*"
+    "php": "8.3.*"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"
