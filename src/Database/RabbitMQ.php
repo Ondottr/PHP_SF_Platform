@@ -67,7 +67,7 @@ final class RabbitMQ
     }
 
 
-    public function sendMessage( string $message ): void
+    public function dispatch( string $message ): void
     {
         $this->channel->basic_publish(
             msg: new AMQPMessage( $message ),

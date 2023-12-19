@@ -27,7 +27,6 @@ use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 use Symfony\Component\HttpFoundation\Request;
-
 use function strlen;
 
 
@@ -140,7 +139,7 @@ class AuthController extends AbstractController
 
         em()
             ->getRepository( Kernel::getApplicationUserClassName() )
-            ->add( $user );
+            ->persist( $user );
 
         auth::logInUser( $user );
 

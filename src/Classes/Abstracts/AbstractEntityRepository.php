@@ -16,11 +16,16 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\ORM\EntityRepository;
 
-abstract class AbstractEntityRepository
-    extends EntityRepository
+/**
+ * Class AbstractEntityRepository
+ *
+ * @package PHP_SF\System\Classes\Abstracts
+ * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
+ */
+abstract class AbstractEntityRepository extends EntityRepository
 {
 
-    final public function add( AbstractEntity $entity, bool $flush = true ): void
+    final public function persist( AbstractEntity $entity, bool $flush = true ): void
     {
         em()->persist( $entity );
 
