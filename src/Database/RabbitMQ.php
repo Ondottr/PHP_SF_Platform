@@ -12,14 +12,14 @@
  *  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 namespace PHP_SF\System\Database;
 
-use App\Enums\AmqpQueueEnum;
+use App\Enums\Amqp\QueueEnum;
 use PHP_SF\System\Classes\Exception\InvalidRabbitMQConfigurationException;
 use PhpAmqpLib\Channel\AbstractChannel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use PhpAmqpLib\Message\AMQPMessage;
 
 /**
@@ -43,10 +43,10 @@ final class RabbitMQ
 
     private array $queues = [];
 
-    private AmqpQueueEnum $queue;
+    private QueueEnum $queue;
 
 
-    private function __construct( AmqpQueueEnum $queue )
+    private function __construct( QueueEnum $queue )
     {
         $this->parseConfig();
         $this->setQueue( $queue );
@@ -58,7 +58,7 @@ final class RabbitMQ
     }
 
 
-    public static function getInstance( AmqpQueueEnum $queue = AmqpQueueEnum::DEFAULT ): self
+    public static function getInstance( QueueEnum $queue = QueueEnum::DEFAULT ): self
     {
         if ( array_key_exists( $queue->value, self::$instances ) === false )
             self::$instances[ $queue->value ] = ( new self( $queue ) );
@@ -91,7 +91,7 @@ final class RabbitMQ
         }
     }
 
-    private function setQueue( AmqpQueueEnum $queue ): self
+    private function setQueue( QueueEnum $queue ): self
     {
         if ( array_key_exists( $queue->value, $this->queues ) === false )
             throw new InvalidRabbitMQConfigurationException( "Queue $queue->value not found in config/packages/messenger.yaml" );
@@ -119,7 +119,14 @@ final class RabbitMQ
 
     private function initQueue(): void
     {
-        $this->channel->queue_declare( $this->queue->value, false, true, false, false );
+        try {
+            $this->channel->queue_declare( $this->queue->value, false, true, false, false );
+        } catch ( AMQPProtocolChannelException $e ) {
+            // Avoid "chanel was closed" exception, by creating a new one
+            $this->channel = $this->connection->channel();
+
+            $this->channel->queue_declare( $this->queue->value, false, false, false, false );
+        }
     }
 
 

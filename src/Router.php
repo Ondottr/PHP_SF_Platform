@@ -26,7 +26,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
-
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -71,7 +70,7 @@ class Router
                 'Kernel must be set before calling Router::init() without passing it as a parameter!'
             );
 
-        DoctrineEntityManager::invalidateEntityManager( self::$kernel );
+        DoctrineEntityManager::invalidateEntityManager();
 
         static::parseRoutes();
 

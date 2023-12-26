@@ -25,7 +25,6 @@ use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Query;
 use Exception;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
-use PHP_SF\System\Kernel;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 final class DoctrineEntityManager extends EntityManager
@@ -37,7 +36,7 @@ final class DoctrineEntityManager extends EntityManager
      */
     private static array $entityDirectories = [];
 
-    public static function invalidateEntityManager( Kernel $kernel ): void
+    public static function invalidateEntityManager(): void
     {
         self::$entityManager = null;
     }
