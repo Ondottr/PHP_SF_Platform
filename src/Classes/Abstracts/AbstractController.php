@@ -14,19 +14,26 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use App\Kernel;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
-use PHP_SF\System\Traits\ControllerTrait;
+use PHP_SF\System\Traits\RedirectTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\Form\FormFactory;
-use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class AbstractController
+ *
+ * @package PHP_SF\System\Classes\Abstracts
+ * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
+ */
 abstract class AbstractController
 {
-    use ControllerTrait;
+    use RedirectTrait;
 
     private string $generatedUrl;
+
+
+    public function __construct( protected Request|null $request ) {}
 
 
     final protected function render( string $view, array $data = [], string $pageTitle = null ): Response
@@ -49,21 +56,4 @@ abstract class AbstractController
         return new Response( view: $view, dataFromController: $data );
     }
 
-    final protected function submitForm( string $type, array $options = [] ): AbstractEntity
-    {
-        ( $form = $this
-            ->createForm( $type, options: $options ) )
-            ->setData( $user = new ( $form->getConfig()->getDataClass() )( false ) )
-            ->submit( $this->request->request->all() );
-
-        return $user;
-    }
-
-    /**
-     * Creates and returns a Form instance from the type of the form.
-     */
-    final protected function createForm( string $type, mixed $data = null, array $options = [] ): FormInterface
-    {
-        return Kernel::getInstance()->getContainer()->get( FormFactory::class )?->create( $type, $data, $options );
-    }
 }
