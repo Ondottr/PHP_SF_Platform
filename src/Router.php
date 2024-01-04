@@ -454,7 +454,11 @@ class Router
     protected static function setRequest(): void
     {
         static::$requestData = new Request(
-            $_GET, array_merge( $_POST, ( json_decode( file_get_contents( 'php://input' ), true ) ?? [] ) )
+            query: $_GET,
+            request: array_merge( $_POST, ( json_decode( file_get_contents( 'php://input' ), true ) ?? [] ) ),
+            cookies: $_COOKIE,
+            files: $_FILES,
+            server: $_SERVER
         );
     }
 
