@@ -4,18 +4,11 @@ namespace PHP_SF\Templates;
 
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 
-final class base extends AbstractView
-{
+// @formatter:off
+final class base extends AbstractView { public function show(): void { ?>
+  <!--@formatter:on-->
 
-    public function show(): void
-    {
-        ?>
+  <h1 style="text-align: center;">Hello World!</h1>
 
-      <div class="content">
-
-        <h1 style="text-align: center;">Hello World!</h1>
-
-      </div>
-
-    <?php }
-}
+  <!--@formatter:off-->
+<?php } }

@@ -1,6 +1,6 @@
-<?php declare(strict_types=1);
-/*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+<?php declare( strict_types=1 );
+/**
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -15,12 +15,11 @@
 namespace PHP_SF\System\Classes\Exception;
 
 use Exception;
-use function _t;
 
-class UndefinedLocaleNameException extends Exception
+final class UndefinedLocaleNameException extends Exception
 {
-    public function __construct($localeName)
+    public function __construct( $localeName )
     {
-        parent::__construct(_t('undefined_locale_name_exception', $localeName));
+        parent::__construct( sprintf( 'Undefined locale name “%s”', $localeName ) );
     }
 }

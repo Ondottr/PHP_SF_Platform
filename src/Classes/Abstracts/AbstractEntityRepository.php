@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -16,207 +15,30 @@
 namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\ORM\EntityRepository;
-use PHP_SF\System\Database\DoctrineEntityManager;
 
-
+/**
+ * Class AbstractEntityRepository
+ *
+ * @package PHP_SF\System\Classes\Abstracts
+ * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
+ */
 abstract class AbstractEntityRepository extends EntityRepository
 {
 
-    final public function find( $id, $lockMode = null, $lockVersion = null ): AbstractEntity|null
+    final public function persist( AbstractEntity $entity, bool $flush = true ): void
     {
-        $entityClass = static::getEntityClass();
-        /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
-        if ( $entityClass instanceof AbstractEntity ) {
-            //
-        }
+        em()->persist( $entity );
 
-        $queryName = sprintf( 'repository:one:%s:%s', $entityClass::getClassName(), $id );
-
-        if ( DoctrineEntityManager::$cacheEnabled === false ) {
-            $result = parent::find( $id, $lockMode, $lockVersion );
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            return $result;
-        }
-
-        $key = sprintf( '%s:cache:%s', SERVER_NAME, $queryName );
-
-        if ( ( $cache = rc()->get( $key ) ) === null ) {
-            $entity = parent::find( $id, $lockMode, $lockVersion );
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            $entityClass::setForceSerialise( true );
-
-            $cache = j_encode( $entity );
-
-            $entityClass::setForceSerialise( false );
-
-            rc()->set( $key, $cache );
-
-            return $entity;
-        }
-
-        return $entityClass::createFromParams( j_decode( $cache ) );
+        if ( $flush )
+            em()->flush( $entity );
     }
 
-    abstract protected static function getEntityClass(): string;
-
-    /**
-     * @return array<AbstractEntity>
-     */
-    final public function findAll(): array
+    final public function remove( AbstractEntity $entity, bool $flush = true ): void
     {
-        $entityClass = static::getEntityClass();
-        /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
-        if ( $entityClass instanceof AbstractEntity ) {
-            //
-        }
+        em()->remove( $entity );
 
-        $queryName = 'repository:all:' . $entityClass;
-
-        if ( DoctrineEntityManager::$cacheEnabled === false ) {
-            $result = parent::findAll();
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            foreach ( $result as $item ) {
-                $item->cacheEnabled = false;
-            }
-
-            return $result;
-        }
-
-        $key = sprintf( '%s:cache:%s:', SERVER_NAME, $queryName );
-
-        if ( ( $cache = rc()->get( $key ) ) === null ) {
-            $arr = parent::findAll();
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            $entityClass::setForceSerialise( true );
-
-            $cache = j_encode( $arr );
-
-            $entityClass::setForceSerialise( false );
-
-            rc()->set( $key, $cache );
-
-            return $arr;
-        }
-
-        $arr = [];
-        foreach ( j_decode( $cache ) as $entity ) {
-            $arr[] = $entityClass::createFromParams( $entity );
-        }
-
-        return $arr;
-    }
-
-    final public function findOneBy( array $criteria, ?array $orderBy = null ): AbstractEntity|null
-    {
-        $entityClass = static::getEntityClass();
-        /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
-        if ( $entityClass instanceof AbstractEntity ) {
-            //
-        }
-
-        $queryName = sprintf(
-            'repository:oneBy:%s:criteria:%s:orderBy:%s',
-            $entityClass::getClassName(),
-            j_encode( $criteria ),
-            j_encode( $orderBy )
-        );
-
-        if ( DoctrineEntityManager::$cacheEnabled === false ) {
-            $result = parent::findOneBy( $criteria, $orderBy );
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            return $result;
-        }
-
-        $key = sprintf( '%s:cache:%s', SERVER_NAME, $queryName );
-
-        if ( ( $cache = rc()->get( $key ) ) === null ) {
-            $entity = parent::findOneBy( $criteria, $orderBy );
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            $entityClass::setForceSerialise( true );
-
-            $cache = j_encode( $entity );
-
-            $entityClass::setForceSerialise( false );
-
-            rc()->set( $key, $cache );
-
-            return $entity;
-        }
-
-        return $entityClass::createFromParams( j_decode( $cache ) );
-    }
-
-    /**
-     * @param array      $criteria
-     * @param array|null $orderBy
-     * @param null       $limit
-     * @param null       $offset
-     *
-     * @return array<AbstractEntity>
-     */
-    final public function findBy( array $criteria = [], ?array $orderBy = null, $limit = null, $offset = null ): array
-    {
-        $entityClass = static::getEntityClass();
-        /** @noinspection PhpStatementHasEmptyBodyInspection */
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
-        if ( $entityClass instanceof AbstractEntity ) {
-            //
-        }
-
-        $queryName = sprintf(
-            'repository:allBy:%s:criteria:%s:orderBy:%s:limit:%s:offset:%s',
-            $entityClass::getClassName(),
-            j_encode( $criteria ),
-            j_encode( $orderBy ),
-            j_encode( $offset ),
-            j_encode( $limit )
-        );
-
-        if ( DoctrineEntityManager::$cacheEnabled === false ) {
-            $result = parent::findBy( $criteria, $orderBy, $limit, $offset );
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            return $result;
-        }
-
-        $key = sprintf( '%s:cache:%s', SERVER_NAME, $queryName );
-
-        if ( ( $cache = rc()->get( $key ) ) === null ) {
-            $arr = parent::findBy( $criteria, $orderBy, $limit, $offset );
-
-            DoctrineEntityManager::addDBRequest( $queryName );
-
-            $entityClass::setForceSerialise( true );
-
-            $cache = j_encode( $arr );
-
-            $entityClass::setForceSerialise( false );
-
-            rc()->set( $key, $cache );
-
-            return $arr;
-        }
-
-        $arr = [];
-        foreach ( j_decode( $cache ) as $entity )
-            $arr[] = $entityClass::createFromParams( $entity );
-
-        return $arr;
+        if ( $flush )
+            em()->flush( $entity );
     }
 
 }

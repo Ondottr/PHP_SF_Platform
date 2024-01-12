@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -15,12 +14,15 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\Mapping\Column;
+use Doctrine\ORM\Mapping\Driver\AttributeReader;
+use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
+use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use ReflectionClass;
 use ReflectionProperty;
-use Doctrine\ORM\Mapping\Column;
-use Doctrine\Common\Annotations\AnnotationReader;
-use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
+
 use function array_key_exists;
 
 abstract class AbstractConstraintValidator
@@ -57,29 +59,36 @@ abstract class AbstractConstraintValidator
 
     final protected function getTranslatablePropertyName(): string
     {
-        $translatablePropertyName =
-            ( new ReflectionProperty( $this->getValidatedClass()::class, $this->constraint->getPropertyName() ) )
-                ->getAttributes( TranslatablePropertyName::class )[0];
+        $rp = new ReflectionProperty( $this->getValidatedClass()::class, $this->constraint->getPropertyName() );
+        $tpn = $rp->getAttributes( TranslatablePropertyName::class );
 
-        return $translatablePropertyName->getArguments()[0];
+        if ( empty( $tpn ) )
+            throw new InvalidEntityConfigurationException(
+                sprintf(
+                    'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
+                    $rp->getName(), $this->getValidatedClass()::class
+                )
+            );
+
+        return $tpn[0]->getArguments()[0];
     }
 
-    public function getValidatedClass(): AbstractEntity
+    final public function getValidatedClass(): AbstractEntity
     {
         return $this->validatedClass;
     }
 
     final protected function isDefaultValue(): bool
     {
-        ( $annotations = new AnnotationReader() )
-            ->getClassAnnotations( new ReflectionClass( $this->validatedClass::class ) );
+        ( $annotations = new AttributeReader )
+            ->getClassAttributes( new ReflectionClass( $this->validatedClass::class ) );
 
-        $annotationProperty = $annotations->getPropertyAnnotation(
+        $annotationProperty = $annotations->getPropertyAttribute(
             new ReflectionProperty( $this->getValidatedClass()::class, $this->constraint->getPropertyName() ),
             Column::class
         );
 
-        if ( $annotationProperty && $annotationProperty->options )
+        if ( $annotationProperty?->options )
             if ( array_key_exists( 'default', $annotationProperty->options ) )
                 if ( $annotationProperty->options['default'] == $this->getValue() )
                     return true;

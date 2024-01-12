@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -24,15 +23,15 @@ final class RangeValidator extends AbstractConstraintValidator
 {
     public function validate(): bool
     {
-        $val = $this->getValue();
-
         if ( $this->isDefaultValue() )
             return true;
-        
 
-        if ( $val < $this->constraint->min || $val > $this->constraint->max ) {
+        if ( $this->constraint->allowNull === true && $this->getValue() === null )
+            return true;
+
+        if ( $this->getValue() < $this->constraint->min || $this->getValue() > $this->constraint->max ) {
             $this->setError(
-                'range_validation_error',
+                'Field `%s` should be between `%s` and `%s`!',
                 _t( $this->getTranslatablePropertyName() ),
                 $this->constraint->min,
                 $this->constraint->max

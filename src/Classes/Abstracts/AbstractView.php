@@ -1,6 +1,6 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types=1 );
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -14,82 +14,81 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
-use PHP_SF\Templates\Layout\Header\head;
-use function is_array;
+use PHP_SF\Templates\Layout\HeaderComponents\head;
+
 use function array_key_exists;
 
 abstract class AbstractView
 {
 
     public function __construct(
-        protected array $data = []
+        protected readonly array $data = [],
+        protected readonly bool  $viewClassTagEnabled = true,
     )
     {
         Response::$activeTemplates[] = static::class;
     }
 
-    final public function __unset(string $name): void
+
+    final public function isViewClassTagEnabled(): bool
     {
-        unset($this->data[$name]);
+        return $this->viewClassTagEnabled;
     }
 
-    #[Pure] final public function __isset(string $name): bool
-    {
-        return array_key_exists($name, $this->data);
-    }
 
-    final public function __get(string $name): mixed
+    final protected function import( string $view, array $data = [], bool $htmlClassTagEnabled = true ): void
     {
-        if (array_key_exists($name, $this->data)) {
-            return $this->data[$name];
+        if ( TEMPLATES_CACHE_ENABLED ) {
+            $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
+            if ( $result !== false ) {
+                eval( $result['fileContent'] );
+                $view = $result['className'];
+            }
         }
 
-        trigger_error("Undefined Property `$name` in view: " . static::class, E_USER_ERROR);
-    }
+        $class = new $view( [ ...$this->data, ...$data ], $htmlClassTagEnabled );
 
-    final public function __set(string $name, mixed $value): void
-    {
-        $this->data[$name] = $value;
-    }
-
-    /**
-     * @noinspection OffsetOperationsInspection
-     */
-
-    final protected function import(string $className, array $data = []): void
-    {
-        if (TEMPLATES_CACHE_ENABLED &&
-            is_array($arr = tc()->getCachedTemplateClass($className))
-        ) {
-            require_once($arr['fileName']);
-            $className = $arr['className'];
-        }
-
-        if (empty($data)) {
-            $data = $this->getData();
-        }
-
-        $class = new $className($data);
-
-        if ($class instanceof self) {
-            if ($class instanceof head || $class instanceof footer) {
+        if ( $class instanceof self ) {
+            if ( $class instanceof head || $class instanceof footer )
                 $class->show();
-            } else {
-                $array = explode('\\', $className);
-                echo sprintf('<div class="%s">', end($array));
+
+            else {
+                $array = explode( '\\', $view );
+                if ( $class->isViewClassTagEnabled() )
+                    echo sprintf( '<div class="%s">', array_pop( $array ) );
+
                 $class->show();
-                echo '</div>';
+
+                if ( $class->isViewClassTagEnabled() )
+                    echo '</div>';
+
             }
         }
     }
 
-    final protected function getData(): array
+    abstract public function show(): void;
+
+
+    /**
+     * @noinspection MagicMethodsValidityInspection
+     */
+    final public function __get( string $name ): mixed
     {
-        return $this->data;
+        if ( array_key_exists( $name, $this->data ) )
+            return $this->data[ $name ];
+
+        trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );
     }
 
-    abstract public function show(): void;
+    /**
+     * @noinspection MagicMethodsValidityInspection
+     */
+    public function __isset( string $name ): bool
+    {
+        return array_key_exists( $name, $this->data );
+    }
+
 }

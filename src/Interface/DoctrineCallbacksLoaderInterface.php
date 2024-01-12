@@ -1,8 +1,7 @@
 <?php /** @noinspection PhpAttributeCanBeAddedToOverriddenMemberInspection */
 declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -17,8 +16,8 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Interface;
 
-use Doctrine\ORM\Events;
 use Doctrine\Common\EventArgs;
+use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
 
@@ -29,9 +28,6 @@ use JetBrains\PhpStorm\ArrayShape;
 interface DoctrineCallbacksLoaderInterface
 {
 
-    /**
-     * @return array<string>
-     */
     #[ArrayShape( [
         Events::postRemove  => 'string',
         Events::postUpdate  => 'string',

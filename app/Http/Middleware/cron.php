@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -17,23 +16,28 @@ namespace PHP_SF\Framework\Http\Middleware;
 
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use function _t;
-use function in_array;
+
 use function array_key_exists;
+use function in_array;
 
 
 final class cron extends Middleware
 {
 
+    /**
+     * @noinspection GlobalVariableUsageInspection
+     */
     public function result(): bool|JsonResponse
     {
         if (
-            ( array_key_exists( 'REMOTE_ADDR', $_SERVER ) && in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS ) ) ||
-            ( array_key_exists( 'SERVER_ADDR', $_SERVER ) && in_array( $_SERVER['SERVER_ADDR'], AVAILABLE_HOSTS ) )
+            array_key_exists( 'REMOTE_ADDR', $_SERVER ) &&
+            in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS )
         )
             return true;
 
-        return new JsonResponse( [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN );
+        return new JsonResponse(
+            [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
+        );
     }
 
 }

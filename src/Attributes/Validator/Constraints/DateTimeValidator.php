@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -22,14 +21,13 @@ use PHP_SF\System\Classes\Abstracts\AbstractConstraintValidator;
  */
 final class DateTimeValidator extends AbstractConstraintValidator
 {
-
     public function validate(): bool
     {
-        if ( $this->getValue() instanceof \DateTime === false ) {
-            $this->setError(
-                'datetime_validation_error',
-                _t( $this->getTranslatablePropertyName() )
-            );
+        if ( $this->constraint->allowNull === true && $this->getValue() === null )
+            return true;
+
+        if ( $this->getValue() instanceof \PHP_SF\System\Core\DateTime === false ) {
+            $this->setError( 'datetime_validation_error', _t( $this->getTranslatablePropertyName() ) );
 
             return false;
         }

@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -16,21 +15,24 @@
 namespace PHP_SF\Framework\Http\Controller\Defaults;
 
 use App\Kernel;
+use JetBrains\PhpStorm\NoReturn;
+use PHP_SF\Framework\Http\Middleware\auth;
+use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
 use PHP_SF\Templates\base;
-use PHP_SF\System\Core\Response;
-use JetBrains\PhpStorm\NoReturn;
-use PHP_SF\System\Attributes\Route;
-use PHP_SF\Framework\Http\Middleware\auth;
-use PHP_SF\System\Classes\Abstracts\AbstractController;
 
 
-class DefaultController extends AbstractController
+final class DefaultController extends AbstractController
 {
 
-    /**
-     * @return Response
-     */
+    #[Route( url: 'base', httpMethod: 'GET' )]
+    public function base(): Response
+    {
+        return $this->render( base::class );
+    }
+
     #[Route( url: 'welcome', httpMethod: 'GET', middleware: auth::class )]
     public function welcome_page(): Response
     {
@@ -40,17 +42,17 @@ class DefaultController extends AbstractController
 
     /** @noinspection ForgottenDebugOutputInspection */
     #[NoReturn]
-    #[Route( url: 'routes_list', httpMethod: 'GET' )]
-    final public function routes_list(): void
+    #[Route( url: 'api/routes_list', httpMethod: 'GET' )]
+    final public function api_routes_list(): void
     {
         dd(
             array_merge(
                 Router::getRoutesList(),
                 Kernel::getInstance()
-                      ->getContainer()
-                      ->get( 'router' )
-                      ?->getRouteCollection()
-                      ?->all()
+                    ->getContainer()
+                    ->get( 'router' )
+                    ?->getRouteCollection()
+                    ?->all() ?? []
             )
         );
     }

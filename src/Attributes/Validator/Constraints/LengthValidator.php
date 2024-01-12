@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -25,15 +24,17 @@ final class LengthValidator extends AbstractConstraintValidator
 {
     public function validate(): bool
     {
-        if ( $this->isDefaultValue() ) {
+        if ( $this->isDefaultValue() )
             return true;
-        }
+
+        if ( $this->constraint->allowNull === true && $this->getValue() === null )
+            return true;
 
         $length = strlen( $this->getValue() );
 
         if ( $length < $this->constraint->min ) {
             $this->setError(
-                'to_short_length_validation_error',
+                'Field %s is too short. It should have %s character or more.',
                 _t( $this->getTranslatablePropertyName() ),
                 $this->constraint->min
             );
@@ -43,7 +44,7 @@ final class LengthValidator extends AbstractConstraintValidator
 
         if ( $length > $this->constraint->max ) {
             $this->setError(
-                'to_long_length_validation_error',
+                'Field %s is too long. It should have %s character or less.',
                 _t( $this->getTranslatablePropertyName() ),
                 $this->constraint->max
             );

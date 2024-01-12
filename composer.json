@@ -10,21 +10,18 @@
     "psr-4": {
       "PHP_SF\\System\\": "src/",
       "PHP_SF\\Framework\\": "app/",
-      "PHP_SF\\Templates\\": "templates/"
+      "PHP_SF\\Templates\\": "templates/",
+      "PHP_SF\\Tests\\": "tests/"
     }
   },
   "license": "ISC",
   "minimum-stability": "stable",
-  "name": "nations-original/php-simple-framework-template",
+  "name": "nations-original/php-simple-framework",
   "prefer-stable": true,
   "require": {
-    "php": "8.1.*",
-    "ext-intl": "*",
-    "ext-json": "*",
-    "ext-curl": "*"
+    "php": "8.3.*"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"
-  },
-  "version": "v1.0.1-dev"
+  }
 }

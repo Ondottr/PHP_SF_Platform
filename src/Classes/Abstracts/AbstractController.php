@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -15,55 +14,46 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use App\Kernel;
 use PHP_SF\System\Core\Response;
-use PHP_SF\System\Traits\ControllerTrait;
-use Symfony\Component\Form\FormInterface;
-use function assert;
-use function is_array;
+use PHP_SF\System\Core\TemplatesCache;
+use PHP_SF\System\Traits\RedirectTrait;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Class AbstractController
+ *
+ * @package PHP_SF\System\Classes\Abstracts
+ * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
+ */
 abstract class AbstractController
 {
-    use ControllerTrait;
-
+    use RedirectTrait;
 
     private string $generatedUrl;
 
 
-    /**
-     * @noinspection OffsetOperationsInspection
-     */
-    final protected function render( string $view, array $data = [] ): Response
+    public function __construct( protected Request|null $request ) {}
+
+
+    final protected function render( string $view, array $data = [], string $pageTitle = null ): Response
     {
-        if ( TEMPLATES_CACHE_ENABLED &&
-             is_array( $arr = tc()->getCachedTemplateClass( $view ) )
-        ) {
-            require_once( $arr['fileName'] );
-            $view = $arr['className'];
+        s()->set( 'page_title', $pageTitle ?? APPLICATION_NAME );
+
+        if ( TEMPLATES_CACHE_ENABLED ) {
+            $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
+            if ( $result !== false ) {
+                eval( $result['fileContent'] );
+                $view = $result['className'];
+            }
         }
 
         $view = new $view( $data );
 
-        assert( $view instanceof AbstractView );
+        if ( $view instanceof AbstractView === false )
+            throw new InvalidConfigurationException;
 
-        return new Response( view: $view );
+        return new Response( view: $view, dataFromController: $data );
     }
 
-    final protected function submitForm( string $type, array $options = [] ): AbstractEntity
-    {
-        ( $form = $this
-            ->createForm( $type, options: $options ) )
-            ->setData( $user = new ( $form->getConfig()->getDataClass() )( false ) )
-            ->submit( $this->request->request->all() );
-
-        return $user;
-    }
-
-    /**
-     * Creates and returns a Form instance from the type of the form.
-     */
-    final protected function createForm( string $type, $data = null, array $options = [] ): FormInterface
-    {
-        return Kernel::getInstance()->getContainer()->get( 'form.factory' )?->create( $type, $data, $options );
-    }
 }

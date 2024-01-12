@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -15,26 +14,27 @@
 
 namespace PHP_SF\Framework\Http\Controller\Defaults;
 
-use PHP_SF\System\Core\Lang;
-use PHP_SF\System\Core\Response;
 use PHP_SF\System\Attributes\Route;
-use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\Framework\Http\Middleware\auth;
-use PHP_SF\Templates\SettingsPage\change_language_page;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Core\Lang;
+use PHP_SF\System\Core\RedirectResponse;
+use PHP_SF\System\Core\Response;
+use PHP_SF\Templates\SettingsPage\change_language_page;
+
+use function in_array;
 
 final class SettingsController extends AbstractController
 {
 
-    #[Route( url: 'settings/change_language', httpMethod: 'GET', middleware: auth::class )]
+    #[Route( url: 'settings/change_language', httpMethod: 'GET' )]
     public function change_language_page(): Response
     {
         return $this->render( change_language_page::class );
     }
 
 
-    #[Route( url: 'settings/change_language', httpMethod: 'POST', middleware: auth::class )]
-    public function change_language_handler(): RedirectResponse
+    #[Route( url: 'settings/change_language', httpMethod: 'POST' )]
+    public function change_language_post_handler(): RedirectResponse
     {
         $lang = $this->request->request->get( 'lang', false );
 
@@ -43,7 +43,17 @@ final class SettingsController extends AbstractController
 
         Lang::setCurrentLocale( $lang );
 
-        return $this->redirectTo( 'change_language_page', messages: [ _t( 'language_changed' ) ] );
+        return $this->redirectBack();
     }
+
+
+    #[Route( url: 'settings/change_language/{$lang}', httpMethod: 'GET' )]
+    public function change_language_get_handler( string $lang ): RedirectResponse
+    {
+        Lang::setCurrentLocale( $lang );
+
+        return $this->redirectBack();
+    }
+
 
 }

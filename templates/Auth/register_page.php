@@ -1,60 +1,70 @@
-<?php
+<?php declare( strict_types=1 );
+/*
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
+ * granted, provided that the above copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE
+ * LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+ * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 namespace PHP_SF\Templates\Auth;
 
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 
+// @formatter:off
+final class register_page extends AbstractView { public function show(): void { ?>
+<!--@formatter:on-->
 
-final class register_page extends AbstractView
-{
+  <div>
 
-    public function show(): void
-    {
-        ?>
+    <form action="" method="POST">
 
-        <div>
+<!--      --><?php //showErrors() ?>
 
-            <form action="" method="POST">
+      <label for="login">
+        Login: [2-35] <?php formInput( 'login', [ 2, 35 ] ) ?><br />
+        Enter your login
+      </label>
 
-                <?php showErrors() ?>
+      <div class="line"></div>
 
-                <label for="login">
-                    <?= _t( 'login' ) ?>: [2-35] <?php formInput( 'login', [ 2, 35 ] ) ?><br />
-                    <?= _t( 'login_field_description' ) ?>
-                </label>
+      <label for="email">
+        <?= _t( 'E-mail' ) ?>: [6-50] <?php formInput( 'email', [ 6, 50 ], 'email' ) ?><br />
+        Enter your email address
+      </label>
 
-                <div class="line"></div>
+      <div class="line"></div>
 
-                <label for="email">
-                    <?= _t( 'email' ) ?>: [6-50] <?php formInput( 'email', [ 6, 50 ], 'email' ) ?><br />
-                    <?= _t( 'email_field_description' ) ?>
-                </label>
+      <label for="password">
+        Password<span class="war">*</span>:
+        [6-50] <?php formInput( 'password', [ 6, 50 ], 'password' ) ?><br />
+        Enter your password
 
-                <div class="line"></div>
+      </label>
 
-                <label for="password">
-                    <?= _t( 'password' ) ?><span class="war">*</span>:
-                    [6-50] <?php formInput( 'password', [ 6, 50 ], 'password' ) ?><br />
-                    <?= _t( 'password_field_description' ) ?>
+      <div class="line"></div>
 
-                </label>
+      <label for="accept">
+        <?php formCheckbox( 'accept' ) ?>
+        I hereby certify that I am over the age of 13 or other minimum age of consent as required by the laws of my
+        country. Please ask your legal representative to consent for you by ticking the appropriate box if you are below
+        the minimum age of consent under the laws of your country. <br /><br />
+      </label>
 
-                <div class="line"></div>
+      <input type="submit" value="Register!">
 
-                <label for="accept">
-                    <?php formCheckbox( 'accept' ) ?>
-                    <?= _t( 'accept_checkbox_description' ) ?> <br /><br />
-                </label>
+    </form>
 
-                <input type="submit" value="<?= _t( 'register' ) ?>!">
+    <a href="<?= routeLink( 'login_page' ) ?>">
+      <span class="nav_button">Login</span>
+    </a>
 
-            </form>
+  </div>
 
-            <a href="<?= routeLink( 'login_page' ) ?>">
-                <span class="nav_button"><?= _t( 'login' ) ?></span>
-            </a>
-
-        </div>
-
-    <?php }
-}
+  <!--@formatter:off-->
+<?php } }

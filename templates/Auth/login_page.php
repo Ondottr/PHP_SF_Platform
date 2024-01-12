@@ -1,6 +1,6 @@
 <?php declare( strict_types=1 );
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
  * granted, provided that the above copyright notice and this permission notice appear in all copies.
@@ -16,45 +16,43 @@ namespace PHP_SF\Templates\Auth;
 
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 
-final class login_page extends AbstractView
-{
+// @formatter:off
+final class login_page extends AbstractView { public function show(): void { ?>
+<!--@formatter:on-->
 
-    public function show(): void
-    {
-        ?>
-        <div>
+  <div>
 
-            <form action="" method="POST">
+    <form action="" method="POST">
 
-                <?php showErrors() ?>
+<!--      --><?php //showErrors() ?>
 
-                <table>
-                    <tbody>
+      <table>
+        <tbody>
 
-                    <tr>
-                        <td><?= _t( 'email' ) ?>:</td>
-                        <td><?php formInput( 'email', [ 6, 50 ], _t( 'email' ) ) ?></td>
-                    </tr>
+        <tr>
+          <td><?= _t( 'E-mail' ) ?>:</td>
+          <td><?php formInput( 'E-mail', [ 6, 50 ], _t( 'E-mail' ) ) ?></td>
+        </tr>
 
-                    <tr>
-                        <td><?= _t( 'password' ) ?>:</td>
-                        <td><?php formInput( 'password', [ 6, 50 ], _t( 'password' ) ) ?></td>
-                    </tr>
+        <tr>
+          <td>Password:</td>
+          <td><?php formInput( 'password', [ 6, 50 ], 'password' ) ?></td>
+        </tr>
 
-                    <tr>
-                        <td><input type="submit" value="<?= _t( 'login_button' ) ?>"></td>
-                        <td><a href="<?= routeLink( 'password_recovery' ) ?>"><?= _t( 'forgot_password' ) ?></a></td>
-                    </tr>
+        <tr>
+          <td><input type="submit" value="<?= _t( 'Sign In' ) ?>"></td>
+          <td><a href="<?= routeLink( 'password_recovery' ) ?>">Forgot password?</a></td>
+        </tr>
 
-                    </tbody>
-                </table>
-            </form>
+        </tbody>
+      </table>
+    </form>
 
-            <a href="<?= routeLink( 'register_page' ) ?>">
-                <span class="nav_button"><?= _t( 'register' ) ?></span>
-            </a>
+    <a href="<?= routeLink( 'register_page' ) ?>">
+      <span class="nav_button">Register</span>
+    </a>
 
-        </div>
+  </div>
 
-    <?php }
-}
+  <!--@formatter:off-->
+<?php } }

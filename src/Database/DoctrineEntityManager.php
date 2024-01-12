@@ -1,8 +1,7 @@
-<?php /** @noinspection PhpMissingParentCallCommonInspection */
+<?php /** @noinspection ProhibitedClassExtendInspection @noinspection PhpMissingParentCallCommonInspection */
 declare( strict_types=1 );
-
 /*
- * Copyright © 2018-2022, Nations Original Sp. z o.o. <contact@nations-original.com>
+ * Copyright © 2018-2024, Nations Original Sp. z o.o. <contact@nations-original.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,55 +18,58 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Database;
 
-use Exception;
-use BadMethodCallException;
-use Doctrine\ORM\Tools\Setup;
-use Doctrine\ORM\ORMException;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\OptimisticLockException;
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
+use Doctrine\ORM\ORMSetup;
+use Doctrine\ORM\Query;
+use Exception;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 
-
-class DoctrineEntityManager extends EntityManager
+final class DoctrineEntityManager extends EntityManager
 {
 
-    public static bool $cacheEnabled = true;
+    private static self|null $entityManager = null;
     /**
-     * @var array{string}
+     * @var array<string>
      */
-    private static array                 $dbRequestsList    = [];
-    private static DoctrineEntityManager $entityManager;
-    private static array                 $entityDirectories = [];
+    private static array $entityDirectories = [];
 
-    public static function getEntityManager( bool $cacheEnabled = true ): DoctrineEntityManager
+    public static function invalidateEntityManager(): void
     {
-        self::$cacheEnabled = $cacheEnabled;
+        self::$entityManager = null;
+    }
 
-        if ( !isset( self::$entityManager ) )
+    public static function getEntityManager(): self
+    {
+        if ( self::$entityManager === null )
             self::setEntityManager();
 
         return self::$entityManager;
     }
 
-    /**
-     * @throws ORMException
-     */
     private static function setEntityManager(): void
     {
-        $config = Setup::createAnnotationMetadataConfiguration(
-                                       self::getEntityDirectories(),
-                                       DEV_MODE,
-            useSimpleAnnotationReader: false
+        $ra = new RedisAdapter( Redis::getClient() );
+        $config = ORMSetup::createAttributeMetadataConfiguration(
+            self::getEntityDirectories(), DEV_MODE,
+            __DIR__ . '/../../../var/cache/prod/doctrine/orm/Proxies',
+            $ra
         );
 
-        if ( !$config->getMetadataDriverImpl() ) {
+        $config->setProxyNamespace( 'Proxies' );
+
+        $config->setMetadataCache( $ra );
+        $config->setHydrationCache( $ra );
+
+        if ( $config->getMetadataDriverImpl() === false )
             throw MissingMappingDriverImplementation::create();
-        }
 
-        $connection = self::createConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
 
-        self::$entityManager = new DoctrineEntityManager( $connection, $config, $connection->getEventManager() );
+        $connection = DriverManager::getConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
+
+        self::$entityManager = new self( $connection, $config );
     }
 
     public static function getEntityDirectories(): array
@@ -80,36 +82,17 @@ class DoctrineEntityManager extends EntityManager
         self::$entityDirectories[] = $entityDirectories;
     }
 
-    /**
-     * @return array{string}
-     */
-    public static function getDbRequestsList(): array
-    {
-        return self::$dbRequestsList;
-    }
-
-    public static function addDBRequest( string $dbRequestsList ): void
-    {
-        self::$dbRequestsList[] = $dbRequestsList;
-    }
-
-    public static function disableCache(): void
-    {
-        self::$cacheEnabled = false;
-    }
-
-    public function createQuery( $dql = '' ): Query
+    public function createQuery($dql = '' ): Query
     {
         $query = new Query( $this );
 
-        if ( !empty( $dql ) ) {
+        if ( empty( $dql ) === false )
             $query->setDQL( $dql );
-        }
 
         return $query;
     }
 
-    public function executeSeveral( \Doctrine\ORM\Query|Query ...$queries ): bool
+    final public function executeSeveral( Query ...$queries ): bool
     {
         try {
             em()->beginTransaction();
@@ -128,13 +111,17 @@ class DoctrineEntityManager extends EntityManager
         return true;
     }
 
-    public function flushUsingTransaction( AbstractEntity ...$entities ): void
+    final public function flushUsingTransaction( AbstractEntity ...$entities ): void
     {
         try {
             em()->beginTransaction();
 
-            foreach ( $entities as $entity )
-                em()->flush( $entity );
+            if ( empty( $entities ) === false ) {
+                foreach ( $entities as $entity )
+                    em()->flush( $entity );
+
+            } else
+                em()->flush();
 
             em()->commit();
         } catch ( Exception $e ) {
@@ -146,16 +133,9 @@ class DoctrineEntityManager extends EntityManager
 
     /**
      * @param AbstractEntity|null $entity
-     *
-     * @throws ORMException
-     * @throws OptimisticLockException
      */
-    public function flush( $entity = null ): void
+    final public function flush( $entity = null ): void
     {
-        if ( $entity instanceof AbstractEntity === false ) {
-            throw new BadMethodCallException( '`Flush` method must be called with entity object!' );
-        }
-
         parent::flush( $entity );
     }
 
