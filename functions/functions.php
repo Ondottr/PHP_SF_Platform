@@ -302,7 +302,7 @@ function env( string $name, string|null $default = null ): string|null
 }
 
 
-function project_dir( string $path = '' ): string
+function project_dir(): string
 {
     return Kernel::getInstance()->getProjectDir();
 }

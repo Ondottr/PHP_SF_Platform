@@ -3,6 +3,7 @@
 namespace PHP_SF\System\Traits\ModelProperty;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 trait ModelPropertyIdTrait
 {
@@ -11,6 +12,7 @@ trait ModelPropertyIdTrait
     #[ORM\Cache]
     #[ORM\Column( type: 'integer' )]
     #[ORM\GeneratedValue( 'SEQUENCE' )]
+    #[Groups( [ 'read' ] )]
     protected int $id;
 
 

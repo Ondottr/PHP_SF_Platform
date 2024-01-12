@@ -19,7 +19,7 @@ use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Attributes\Validator\Constraints as Validate;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Core\DateTime;
-
+use Symfony\Component\Serializer\Attribute\Groups;
 use function is_string;
 
 trait ModelPropertyCreatedAtTrait
@@ -28,6 +28,7 @@ trait ModelPropertyCreatedAtTrait
     #[Validate\DateTime]
     #[TranslatablePropertyName( 'Created At' )]
     #[ORM\Column( name: 'created_at', type: 'datetime', nullable: false, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
+    #[Groups( [ 'read' ] )]
     protected string|DateTimeInterface|null $createdAt;
 
 

@@ -36,7 +36,7 @@ trait JsonResponseHelperTrait
      * @param array      $headers Additional headers to include in the response.
      * @param bool       $json Indicates if the provided data is already a JSON string.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a JsonResponse object.
+     * @return JsonResponse Returns a JsonResponse object.
      */
     protected function json( mixed $data = null, int $status = 200, array $headers = [], bool $json = false ): JsonResponse
     {
@@ -49,7 +49,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 200 OK JsonResponse.
+     * @return JsonResponse Returns a 200 OK JsonResponse.
      */
     protected function ok( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -62,7 +62,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 201 Created JsonResponse.
+     * @return JsonResponse Returns a 201 Created JsonResponse.
      */
     protected function created( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -75,7 +75,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 202 Accepted JsonResponse.
+     * @return JsonResponse Returns a 202 Accepted JsonResponse.
      */
     protected function accepted( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -87,7 +87,7 @@ trait JsonResponseHelperTrait
      *
      * @param array $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 204 No Content JsonResponse.
+     * @return JsonResponse Returns a 204 No Content JsonResponse.
      */
     protected function noContent( array $headers = [] ): JsonResponse
     {
@@ -100,7 +100,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 400 Bad Request JsonResponse.
+     * @return JsonResponse Returns a 400 Bad Request JsonResponse.
      */
     protected function badRequest( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -113,7 +113,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 401 Unauthorized JsonResponse.
+     * @return JsonResponse Returns a 401 Unauthorized JsonResponse.
      */
     protected function unauthorized( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -126,7 +126,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 403 Forbidden JsonResponse.
+     * @return JsonResponse Returns a 403 Forbidden JsonResponse.
      */
     protected function forbidden( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -139,7 +139,7 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 404 Not Found JsonResponse.
+     * @return JsonResponse Returns a 404 Not Found JsonResponse.
      */
     protected function notFound( mixed $data = null, array $headers = [] ): JsonResponse
     {
@@ -152,11 +152,24 @@ trait JsonResponseHelperTrait
      * @param mixed|null $data The response data.
      * @param array      $headers Additional headers for the response.
      *
-     * @return \Symfony\Component\HttpFoundation\JsonResponse Returns a 406 Not Acceptable JsonResponse.
+     * @return JsonResponse Returns a 406 Not Acceptable JsonResponse.
      */
     protected function notAcceptable( mixed $data = null, array $headers = [] ): JsonResponse
     {
         return $this->json( data: $data, status: JsonResponse::HTTP_NOT_ACCEPTABLE, headers: $headers );
+    }
+
+    /**
+     * Shortcut to return a 422 Unprocessable Entity response.
+     *
+     * @param mixed|null $data    The response data.
+     * @param array      $headers Additional headers for the response.
+     *
+     * @return JsonResponse Returns a 422 Unprocessable Entity JsonResponse.
+     */
+    protected function unprocessableEntity( mixed $data = null, array $headers = [] ): JsonResponse
+    {
+        return $this->json( data: $data, status: JsonResponse::HTTP_UNPROCESSABLE_ENTITY, headers: $headers );
     }
 
 }
