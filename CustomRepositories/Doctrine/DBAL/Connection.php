@@ -1247,10 +1247,7 @@ final class Connection
      */
     public function createSchemaManager(): AbstractSchemaManager
     {
-        return $this->_driver->getSchemaManager(
-            $this,
-            $this->getDatabasePlatform(),
-        );
+        return $this->platform->createSchemaManager($this);
     }
 
     /**
