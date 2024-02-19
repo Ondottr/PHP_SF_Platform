@@ -21,6 +21,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Class RabbitMQ
@@ -78,7 +79,7 @@ final class RabbitMQ
     private function parseConfig(): void
     {
         // parse yaml config in config/packages/messenger.yaml to get list of queues(transports in symfony)
-        $config = yaml_parse_file( project_dir() . '/config/packages/messenger.yaml' );
+        $config = Yaml::parse( file_get_contents(project_dir() . '/config/packages/messenger.yaml') );
 
         $transports = $config['framework']['messenger']['transports'] ?? null;
 
