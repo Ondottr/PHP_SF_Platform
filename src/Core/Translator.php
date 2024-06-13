@@ -193,7 +193,7 @@ final class Translator
     private function saveLocalesToFiles(): void
     {
         foreach ( self::getTranslationDirectories() as $translationDirectory ) {
-            if ( !str_contains( $translationDirectory, 'Platform/src' ) ) {
+            if ( !str_contains( $translationDirectory, 'vendor/nations-original' ) ) {
                 foreach ( $this as $locale => $arr ) {
                     ksort( $this->$locale );
 
