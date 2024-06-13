@@ -2,10 +2,9 @@
 
 namespace PHP_SF\System\Core;
 
+use AllowDynamicProperties;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
-use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
-use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Database\DoctrineEntityManager;
 use ReflectionClass;
@@ -15,203 +14,161 @@ use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use function array_key_exists;
 
-#[\AllowDynamicProperties]
+
+/**
+ * Class Translator
+ *
+ * Class is responsible for managing translations in the application.
+ * It loads translations from specified directories, provides methods for
+ * translating strings, and handles the addition of new translation strings
+ * to locale files.
+ *
+ * @package PHP_SF\System\Core
+ * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
+ */
+#[AllowDynamicProperties]
 final class Translator
 {
 
+    /**
+     * An array storing all translation keys.
+     */
     private static array $allTranslationsKeys    = [];
-    private static self  $translator;
+    /**
+     * The singleton instance of the Translator class.
+     */
+    private static self $instance;
+    /**
+     * An array storing directories where translation files are located.
+     */
     private static array $translationDirectories = [];
-    private static bool  $saveEnabled            = true;
 
 
+    /**
+     * Loads translations on creation.
+     */
     private function __construct()
     {
         $this->loadTranslation();
     }
 
 
-    private function loadTranslation(): void
-    {
-        if ( empty( self::$translationDirectories ) )
-            throw new InvalidConfigurationException( 'No translation file directories specified!' );
-
-
-        foreach ( LANGUAGES_LIST as $locale ) {
-            foreach ( self::getTranslationDirectories() as $translationDirectory ) {
-                $redisKey = sprintf( 'translated_strings:%s', $locale );
-
-                if ( ( $translations = ca()->get( $redisKey ) ) === null ) {
-                    if ( file_exists( ( $path = sprintf( '%s/%s.php', $translationDirectory, $locale ) ) ) === false )
-                        // @formatter::off
-                        file_put_contents( $path, <<<'EOF'
-<?php /** @noinspection ALL @formatter::off */ return [
-/**
-* This file was automatically generated after adding new translation language to your project.
-* You can add new translated strings in format below or use {@link _t()} function.
-* "string_for_translation" => "Translation for string with arguments: %s, %s"
-* All provided strings in {@link _t()} function will be automatically added to this and another locale translation files
-*/
-];
-EOF
-                        ); // @formatter::on
-
-                    elseif ( isset( $this->$locale ) && !empty( $this->$locale ) )
-                        $this->$locale = array_merge( $this->$locale, ( require $path ) );
-
-                    else
-                        $this->$locale = require $path;
-
-
-                    if ( DEV_MODE === false )
-                        rp()->set( $redisKey, json_encode( $this->$locale ) );
-
-                } else
-                    $this->$locale = json_decode( $translations, true, 512, JSON_THROW_ON_ERROR );
-
-            }
-        }
-
-        if ( DEV_MODE )
-            $this->saveTranslatablePropertyNames();
-    }
-
-    private static function getTranslationDirectories(): array
-    {
-        return self::$translationDirectories;
-    }
-
+    /**
+     * Returns the singleton instance of the Translator class.
+     * If no instance exists, create a new one.
+     *
+     * @return self The singleton instance.
+     */
     public static function getInstance(): self
     {
-        if ( isset( self::$translator ) === false )
+        if ( isset( self::$instance ) === false )
             return self::setInstance();
 
 
-        return self::$translator;
+        return self::$instance;
     }
 
-    private static function setInstance(): self
-    {
-        return self::$translator = new self;
-    }
-
+    /**
+     * Adds a new directory to the list of translation directories.
+     *
+     * @param string $translationDirectory The directory to add.
+     */
     public static function addTranslationDirectory( string $translationDirectory ): void
     {
         self::$translationDirectories[] = $translationDirectory;
     }
 
-    public static function enableSave(): void
+
+    /**
+     * Returns all translations for all supported languages.
+     *
+     * @return array<string, string<string, string>> An array of translations.
+     */
+    public function getTranslations(): array
     {
-        self::$saveEnabled = true;
+        foreach ( LANGUAGES_LIST as $langKey ) {
+            $translations[ $langKey ] = $this->$langKey;
+        }
+
+        return $translations;
     }
 
-    public static function disableSave(): void
-    {
-        self::$saveEnabled = false;
-    }
-
+    /**
+     * Translates a given string to the current locale.
+     * If the string does not exist in the locale file, adds it.
+     *
+     * @param string $string    The string to translate.
+     * @param mixed  ...$values Values to format the translated string.
+     *
+     * @return string The translated string.
+     */
     public function translate( string $string, ...$values ): string
     {
-        if ( self::isSaveEnabled() &&
-            array_key_exists( $string, $this->{Lang::getCurrentLocale()} ) === false
-        )
+        if ( array_key_exists( $string, $this->{Lang::getCurrentLocale()} ) === false ) {
             $this->addTranslateStringToLocaleFile( $string );
-
+        }
 
         return sprintf( ( $this->{Lang::getCurrentLocale()} )[ $string ] ?? $string, ...$values );
     }
 
     /**
-     * Returns translation from provided object or array and for current or provided locale
+     * Translates a given string to a specified locale.
+     * If the string does not exist in the locale file, adds it.
      *
-     * Select localeKey from {@link Locale}
-     * using methods {@link Locale::getLocaleKey()} and {@link Locale::getLocaleName()}
+     * @param string $string      The string to translate.
+     * @param string $translateTo The locale to translate to.
+     * @param mixed  ...$values   Values to format the translated string.
      *
-     * Array or object must be in format:
-     *
-     * <code>[ "en" => "English translation", "bg" => "Bulgarian translation" ]</code>
-     *
-     * <code>{ "en": "English translation", "bg": "Bulgarian translation" }</code>
-     *
-     * @throws UndefinedLocaleKeyException|UndefinedLocaleNameException
-     * @throws InvalidConfigurationException if provided locale is not supported ( {@link LANGUAGES_LIST} )
-     * @throws RuntimeException if provided object or array is not in correct format or empty
+     * @return string The translated string.
+     * @throws InvalidConfigurationException If the specified locale is not supported.
      */
-    public function translateFromArray( array|object $object, string|null $localeName = null, string|null $localeKey = null ): string|array|object {
-        if ( is_object( $object ) )
-            $object = (array)$object;
-
-        if ( $localeName === null && $localeKey === null )
-            // Using current Locale
-            $translateTo = Lang::getCurrentLocale();
-
-        elseif ( $localeName !== null )
-            // Using Locale by provided locale name
-            $translateTo = Locale::getLocaleKey( $localeName );
-
-        elseif ( $localeKey !== null && Locale::checkLocaleKey( $localeKey ) )
-            // Using Locale by provided locale key
-            $translateTo = $localeKey;
-
-        else
-            throw new RuntimeException( 'Invalid locale name or key!' );
-
-
-        // Check if locale is available for translation
-        if ( in_array( $translateTo, LANGUAGES_LIST, true ) === false )
+    public function translateTo( string $string, string $translateTo, ...$values ): string
+    {
+        // Check if the provided locale is supported
+        if ( in_array( $translateTo, LANGUAGES_LIST, true ) === false ) {
             throw new InvalidConfigurationException(
                 sprintf( 'Locale "%s" is not supported!', Locale::getLocaleName( $translateTo ) )
             );
-
-        if ( count( $object ) === 0 )
-            throw new RuntimeException( 'Empty translation object!' );
-
-
-        // Return translation for current or provided locale if exists
-        if ( array_key_exists( $translateTo, $object ) )
-            return $object[ $translateTo ];
-
-        // Return translation for default locale if exists
-        if ( array_key_exists( DEFAULT_LOCALE, $object ) ) {
-            // Return translation for default locale if exists (DEV & TEST ENV ONLY)
-            if ( env( 'app_env' ) !== env( 'PROD_ENV' ) ) {
-//                TODO:: Create log
-//                trigger_error(
-//                    sprintf(
-//                        'Array «%s» missing translation for locale "%s"! Using default locale "%s" translation...',
-//                        j_encode( $object ), Locale::getLocaleName( $translateTo ), Locale::getLocaleName( DEFAULT_LOCALE )
-//                    ), E_USER_WARNING
-//                );
-
-                return $object[ array_key_first( $object ) ] . ' (not translated to ' . Locale::getLocaleName( $translateTo ) . ')';
-            }
-
-            return $object[ DEFAULT_LOCALE ];
         }
 
-        // Return first translation from array (DEV & TEST ENV ONLY)
-        if ( env( 'app_env' ) !== env( 'PROD_ENV' ) ) {
-//            TODO:: Create log
-//            trigger_error(
-//                sprintf(
-//                    'Array «%s» missing translation for locale "%s"! Using first array key translation...',
-//                    j_encode( $object ), Locale::getLocaleName( $translateTo )
-//                ), E_USER_WARNING
-//            );
-
-            return $object[ array_key_first( $object ) ] . ' (not translated to ' . Locale::getLocaleName( $translateTo ) . ')';
+        // Add the string to the locale file if it does not exist
+        if ( array_key_exists( $string, $this->$translateTo ) === false ) {
+            $this->addTranslateStringToLocaleFile( $string );
         }
 
-        // Return first translation from array
-        return $object[ array_key_first( $object ) ];
+        // Return the translated string or the original string if translation does not exist
+        return sprintf( ( $this->$translateTo[ $string ] ?? $string ), ...$values );
     }
 
 
-    public static function isSaveEnabled(): bool
+    /**
+     * Returns the list of translation directories.
+     *
+     * @return array The list of translation directories.
+     */
+    private static function getTranslationDirectories(): array
     {
-        return self::$saveEnabled;
+        return self::$translationDirectories;
     }
 
+    /**
+     * Creates and sets the singleton instance of the Translator class.
+     *
+     * @return self The newly created instance.
+     */
+    private static function setInstance(): self
+    {
+        return self::$instance = new self;
+    }
+
+
+    /**
+     * Adds a translation string to locale files if it does not already exist.
+     * Optionally, handles recursion for nested translations.
+     *
+     * @param string $string    The string to add.
+     * @param bool   $recursion Whether to handle recursion.
+     */
     private function addTranslateStringToLocaleFile( string $string, bool $recursion = true ): void
     {
         foreach ( $this as $locale => $arr )
@@ -230,6 +187,9 @@ EOF
             $this->addTranslateStringToLocaleFile( $string, false );
     }
 
+    /**
+     * Saves all locale translations to their respective files.
+     */
     private function saveLocalesToFiles(): void
     {
         foreach ( self::getTranslationDirectories() as $translationDirectory ) {
@@ -274,20 +234,10 @@ EOF
     }
 
     /**
-     * @noinspection PhpIllegalStringOffsetInspection
-     */
-    public function updateTranslatedString( string $locale, string $key, string $translation ): string
-    {
-        $previousValue         = $this->$locale[ $key ];
-        $this->$locale[ $key ] = $translation;
-
-        $this->saveLocalesToFiles();
-
-        return $previousValue;
-    }
-
-    /**
-     * Gets all translatable properties from all entities and saves them to locale files
+     * Gets all translatable properties from all entities and saves them to locale files.
+     *
+     * @throws InvalidEntityConfigurationException If entity configuration is invalid.
+     * @throws RuntimeException If a directory is found in the entity directory.
      */
     private function saveTranslatablePropertyNames(): void
     {
@@ -390,6 +340,59 @@ EOF
 
             }
         }
+    }
+
+    /**
+     * Loads translations from the specified directories.
+     * Throws an exception if no directories are specified.
+     *
+     * @throws InvalidConfigurationException If no translation directories are specified.
+     */
+    private function loadTranslation(): void
+    {
+        if ( empty( self::$translationDirectories ) )
+            throw new InvalidConfigurationException( 'No translation file directories specified!' );
+
+
+        foreach ( LANGUAGES_LIST as $locale ) {
+            foreach ( self::getTranslationDirectories() as $translationDirectory ) {
+                $redisKey = sprintf( 'translated_strings:%s', $locale );
+
+                if ( ( $translations = ca()->get( $redisKey ) ) === null ) {
+                    if ( file_exists( ( $path = sprintf( '%s/%s.php', $translationDirectory, $locale ) ) ) === false )
+                        // @formatter::off
+                        file_put_contents(
+                            $path,
+                            <<<'EOF'
+<?php /** @noinspection ALL @formatter::off */ return [
+/**
+* This file was automatically generated after adding new translation language to your project.
+* You can add new translated strings in format below or use {@link _t()} function.
+* "string_for_translation" => "Translation for string with arguments: %s, %s"
+* All provided strings in {@link _t()} function will be automatically added to this and another locale translation files
+*/
+];
+EOF
+                        ); // @formatter::on
+
+                    elseif ( isset( $this->$locale ) && !empty( $this->$locale ) )
+                        $this->$locale = array_merge( $this->$locale, ( require $path ) );
+
+                    else
+                        $this->$locale = require $path;
+
+
+                    if ( DEV_MODE === false )
+                        rp()->set( $redisKey, json_encode( $this->$locale ) );
+
+                } else
+                    $this->$locale = json_decode( $translations, true, 512, JSON_THROW_ON_ERROR );
+
+            }
+        }
+
+        if ( DEV_MODE )
+            $this->saveTranslatablePropertyNames();
     }
 
 }

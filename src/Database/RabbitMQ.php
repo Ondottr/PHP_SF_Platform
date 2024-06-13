@@ -19,8 +19,8 @@ use PHP_SF\System\Classes\Exception\InvalidRabbitMQConfigurationException;
 use PhpAmqpLib\Channel\AbstractChannel;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Exception\AMQPProtocolChannelException;
 use PhpAmqpLib\Message\AMQPMessage;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Class RabbitMQ
@@ -78,7 +78,7 @@ final class RabbitMQ
     private function parseConfig(): void
     {
         // parse yaml config in config/packages/messenger.yaml to get list of queues(transports in symfony)
-        $config = yaml_parse_file( project_dir() . '/config/packages/messenger.yaml' );
+        $config = Yaml::parse( file_get_contents(project_dir() . '/config/packages/messenger.yaml') );
 
         $transports = $config['framework']['messenger']['transports'] ?? null;
 
@@ -119,14 +119,7 @@ final class RabbitMQ
 
     private function initQueue(): void
     {
-        try {
-            $this->channel->queue_declare( $this->queue->value, false, true, false, false );
-        } catch ( AMQPProtocolChannelException $e ) {
-            // Avoid "chanel was closed" exception, by creating a new one
-            $this->channel = $this->connection->channel();
-
-            $this->channel->queue_declare( $this->queue->value, false, false, false, false );
-        }
+        $this->channel->queue_declare( $this->queue->value, false, true, false, false );
     }
 
 
