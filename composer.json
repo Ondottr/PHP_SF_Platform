@@ -1,4 +1,7 @@
 {
+  "name": "nations-original/php-simple-framework",
+  "description": "A simple PHP framework for Nations Original.",
+  "version": "1.0.0",
   "authors": [
     {
       "name": "Dmytro Dyvulskyi",
@@ -11,12 +14,12 @@
       "PHP_SF\\System\\": "src/",
       "PHP_SF\\Framework\\": "app/",
       "PHP_SF\\Templates\\": "templates/",
-      "PHP_SF\\Tests\\": "tests/"
+      "PHP_SF\\Tests\\": "tests/",
+      "Doctrine\\": "CustomRepositories/Doctrine"
     }
   },
   "license": "ISC",
   "minimum-stability": "stable",
-  "name": "nations-original/php-simple-framework",
   "prefer-stable": true,
   "require": {
     "php": "8.3.*"

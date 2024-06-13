@@ -18,17 +18,33 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Database;
 
-use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL as DBAL;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\MissingMappingDriverImplementation;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Query;
 use Exception;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
+use PHP_SF\System\Database\Doctrine\QuoteStrategy;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 final class DoctrineEntityManager extends EntityManager
 {
+
+    /**
+     * List of supported drivers and their mappings to the driver classes.
+     *
+     * To add your own driver use the 'driverClass' parameter to {@see DBAL\DriverManager::getConnection()}.
+     *
+     * @see DBAL\DriverManager::DRIVER_MAP const
+     */
+    private const DRIVER_MAP = [
+        'mysql' => 'pdo_mysql',
+        'sqlite' => 'pdo_sqlite',
+        'postgresql' => 'pdo_pgsql',
+    ];
+
 
     private static self|null $entityManager = null;
     /**
@@ -63,11 +79,17 @@ final class DoctrineEntityManager extends EntityManager
         $config->setMetadataCache( $ra );
         $config->setHydrationCache( $ra );
 
+        $config->setQuoteStrategy(new QuoteStrategy);
+
         if ( $config->getMetadataDriverImpl() === false )
             throw MissingMappingDriverImplementation::create();
 
+        $params = [
+            'driver' => self::DRIVER_MAP[ self::detectDriverByDBUrl( env( 'DATABASE_URL' ) ) ],
+            'url' => env( 'DATABASE_URL' ),
+        ];
 
-        $connection = DriverManager::getConnection( [ 'url' => env( 'DATABASE_URL' ) ], $config );
+        $connection = DBAL\DriverManager::getConnection( $params, $config );
 
         self::$entityManager = new self( $connection, $config );
     }
@@ -138,5 +160,28 @@ final class DoctrineEntityManager extends EntityManager
     {
         parent::flush( $entity );
     }
+
+
+    private static function detectDriverByDBUrl(?string $env)
+    {
+        if (!$env) {
+            throw new InvalidConfigurationException('DATABASE_URL environment variable is not defined.');
+        }
+
+        // Extract the driver from the DATABASE_URL
+        $urlParts = parse_url($env);
+        if (isset($urlParts['scheme'])) {
+            $driver = str_replace('pdo_', '', $urlParts['scheme']); // Remove 'pdo_' prefix if present
+            if (array_key_exists($driver, self::DRIVER_MAP)) {
+                return $driver;
+            }
+        }
+
+        // throw exception if the driver is not found or the URL is not valid
+        throw new InvalidConfigurationException(
+            sprintf('The given driver "%s" is not supported, or could not parse the url "%s".', $driver ?? '', $env)
+        );
+    }
+
 
 }
