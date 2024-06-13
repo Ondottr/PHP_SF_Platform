@@ -252,13 +252,9 @@ function _t( string $stringName, ...$values ): string
     return nl2br( Translator::getInstance()->translate( $stringName, ...$values ) );
 }
 
-function _tr( array|object $arr, string|null $localeName = null, string|null $localeKey = null ): string|array|object {
-    $translatedValue = Translator::getInstance()->translateFromArray( $arr, $localeName, $localeKey );
-
-    if ( is_scalar( $translatedValue ) )
-        return nl2br( $translatedValue );
-
-    return $translatedValue;
+function _tt( string $stringName, string $translateTo, ...$values ): string
+{
+    return nl2br( Translator::getInstance()->translateTo( $stringName, $translateTo, ...$values ) );
 }
 
 
