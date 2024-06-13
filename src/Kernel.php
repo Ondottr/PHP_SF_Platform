@@ -149,8 +149,14 @@ final class Kernel
 
     private function setDefaultLocale(): void
     {
+        if ( s()->has( 'locale' ) ) {
+            define( 'DEFAULT_LOCALE', s()->get( 'locale' ) );
+
+            return;
+        }
+
         /** @noinspection GlobalVariableUsageInspection */
-        if ( array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER ) === false || s()->has( 'locale' ) ) {
+        if ( array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER ) === false ) {
             define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
 
             return;
@@ -164,6 +170,7 @@ final class Kernel
             if ( $rc->hasConstant( $langCode ) && in_array( $langCode, LANGUAGES_LIST, true ) ) {
                 define( 'DEFAULT_LOCALE', Locale::getLocaleKey( $rc->getConstant( $langCode ) ) );
                 s()->set( 'locale', DEFAULT_LOCALE );
+
                 return;
             }
 
