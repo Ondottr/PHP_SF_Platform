@@ -25,7 +25,6 @@ use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Query;
 use Exception;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
-use PHP_SF\System\Database\Doctrine\QuoteStrategy;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -78,8 +77,6 @@ final class DoctrineEntityManager extends EntityManager
 
         $config->setMetadataCache( $ra );
         $config->setHydrationCache( $ra );
-
-        $config->setQuoteStrategy(new QuoteStrategy);
 
         if ( $config->getMetadataDriverImpl() === false )
             throw MissingMappingDriverImplementation::create();
