@@ -84,10 +84,11 @@ final class DoctrineEntityManager extends EntityManager
         if ( $config->getMetadataDriverImpl() === false )
             throw MissingMappingDriverImplementation::create();
 
-        $params = [
-            'driver' => self::DRIVER_MAP[ self::detectDriverByDBUrl( env( 'DATABASE_URL' ) ) ],
-            'url' => env( 'DATABASE_URL' ),
-        ];
+        // parse params from url
+        $params = parse_url( env( 'DATABASE_URL' ) );
+        $params['driver'] = self::DRIVER_MAP[self::detectDriverByDBUrl(env('DATABASE_URL'))];
+        $params['password'] = $params['pass'];
+        $params['dbname']   = ltrim( $params['path'], '/' );
 
         $connection = DBAL\DriverManager::getConnection( $params, $config );
 
