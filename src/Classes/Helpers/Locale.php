@@ -706,7 +706,7 @@ final class Locale
     public static function getLocaleKey( string $localeName ): string
     {
         if ( self::checkLocaleName( $localeName ) === false )
-            throw new UndefinedLocaleKeyException( $localeName );
+            throw new UndefinedLocaleNameException( $localeName );
 
         return self::getLocaleKeysList()[ $localeName ];
     }
@@ -802,7 +802,7 @@ final class Locale
     public static function getLocaleName( string $localeKey ): string
     {
         if ( self::checkLocaleKey( $localeKey ) === false )
-            throw new UndefinedLocaleNameException( $localeKey );
+            throw new UndefinedLocaleKeyException( $localeKey );
 
         return self::getLocaleNamesList()[ $localeKey ];
     }
