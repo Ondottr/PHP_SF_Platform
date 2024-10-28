@@ -13,8 +13,7 @@
       "PHP_SF\\System\\": "src/",
       "PHP_SF\\Framework\\": "app/",
       "PHP_SF\\Templates\\": "templates/",
-      "PHP_SF\\Tests\\": "tests/",
-      "Doctrine\\": "CustomRepositories/Doctrine"
+      "PHP_SF\\Tests\\": "tests/"
     }
   },
   "license": "ISC",

@@ -57,7 +57,7 @@ final class MiddlewaresExecutorTest extends TestCase
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    public function __construct()
+    public function __construct(string $methodName)
     {
         $this->kernel = $GLOBALS['kernel'];
 
@@ -76,7 +76,7 @@ final class MiddlewaresExecutorTest extends TestCase
             }
         };
 
-        parent::__construct();
+        parent::__construct($methodName);
     }
 
 

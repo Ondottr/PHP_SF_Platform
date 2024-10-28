@@ -20,11 +20,11 @@ final class APCuCacheAdapterTest extends TestCase
 
     private bool $isAPCuEnabled = false;
 
-    public function __construct()
+    public function __construct(string $methodName)
     {
         $this->isAPCuEnabled = function_exists( 'apcu_enabled' ) && apcu_enabled();
 
-        parent::__construct();
+        parent::__construct($methodName);
     }
 
     protected function setUp(): void

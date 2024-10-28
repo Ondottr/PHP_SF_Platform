@@ -14,13 +14,15 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use Serializable;
+
 /**
  * Class AbstractDataTransferObject
  *
  * @package PHP_SF\System\Classes\Abstracts
  * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
  */
-abstract readonly class AbstractDataTransferObject
+abstract readonly class AbstractDataTransferObject implements Serializable
 {
 
     /**
@@ -58,6 +60,26 @@ abstract readonly class AbstractDataTransferObject
     public function toString(): string
     {
         return json_encode( $this->toArray() );
+    }
+
+    public function serialize(): string
+    {
+        return serialize($this->toArray());
+    }
+
+    public function unserialize(string $data)
+    {
+        $this->fromArray(unserialize($data));
+    }
+
+    public function __serialize(): array
+    {
+        return $this->toArray();
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->fromArray($data);
     }
 
 }

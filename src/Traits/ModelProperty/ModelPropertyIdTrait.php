@@ -11,7 +11,7 @@ trait ModelPropertyIdTrait
     #[ORM\Id]
     #[ORM\Cache]
     #[ORM\Column( type: 'integer' )]
-    #[ORM\GeneratedValue( 'SEQUENCE' )]
+    #[ORM\GeneratedValue( 'AUTO' )]
     #[Groups( [ 'read' ] )]
     protected int $id;
 
