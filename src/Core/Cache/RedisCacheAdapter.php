@@ -144,4 +144,29 @@ final class RedisCacheAdapter extends AbstractCacheAdapter
         return Redis::getClient()->get( $key ) !== null;
     }
 
+    /**
+     * Publishes a message to a Redis channel.
+     *
+     * @param string $channel The name of the channel to publish the message to.
+     * @param mixed  $message The message to publish.
+     *
+     * @return bool True if the message published successfully, exception otherwise
+     */
+    public function pub(string $channel, mixed $message): bool
+    {
+        try {
+            // Convert non-scalar messages to a string (e.g., JSON encoding for arrays/objects)
+            if (!is_scalar($message)) {
+                $message = json_encode($message);
+                if ($message === false) {
+                    throw new CacheValueException('Message could not be converted to JSON.');
+                }
+            }
+
+            Redis::getClient()->publish($channel, (string)$message);
+            return true;
+        } catch (Throwable) {
+            throw new InvalidCacheArgumentException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
 }
