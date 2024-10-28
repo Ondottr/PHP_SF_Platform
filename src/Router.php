@@ -14,7 +14,6 @@ use PHP_SF\System\Classes\Exception\ViewException;
 use PHP_SF\System\Classes\MiddlewareChecks\MiddlewaresExecutor;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
-use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
 use ReflectionException;
@@ -26,6 +25,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
+
 use function apache_request_headers;
 use function array_key_exists;
 use function count;
@@ -70,7 +70,22 @@ class Router
                 'Kernel must be set before calling Router::init() without passing it as a parameter!'
             );
 
-        DoctrineEntityManager::invalidateEntityManager();
+        $yamlConfigCacheKey = '/config/packages/doctrine.yaml';
+
+        // parse yaml doctrine config
+        $config = ca()->get( $yamlConfigCacheKey );
+        if ( $config === null ) {
+            $config = yaml_parse_file( \App\Kernel::getInstance()->getProjectDir() . '/config/packages/doctrine.yaml' );
+            ca()->set( $yamlConfigCacheKey, json_encode( $config ) );
+        } else {
+            $config = json_decode( $config, true );
+        }
+
+        // clear entity managers
+        foreach ( $config['doctrine']['orm']['entity_managers'] as $connection => $ignored ) {
+            em( $connection )->clear();
+        }
+
 
         static::parseRoutes();
 

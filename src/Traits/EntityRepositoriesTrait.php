@@ -15,8 +15,9 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Traits;
 
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
+use App\Kernel;
 use PHP_SF\System\Classes\Abstracts\AbstractEntityRepository;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 trait EntityRepositoriesTrait
 {
@@ -73,7 +74,37 @@ trait EntityRepositoriesTrait
 
     private static function setRepository(): void
     {
-        self::$repositories[ static::class ] = em()->getRepository( static::class );
+        $projectDir = Kernel::getInstance()->getProjectDir();
+
+        $yamlConfigCacheKey = '/config/packages/doctrine.yaml';
+
+        // parse yaml doctrine config
+        $config = ca()->get( $yamlConfigCacheKey );
+        if ( $config === null ) {
+            $config = yaml_parse_file( $projectDir . '/config/packages/doctrine.yaml' );
+            ca()->set( $yamlConfigCacheKey, json_encode( $config ) );
+        } else {
+            $config = json_decode( $config, true );
+        }
+
+        $entityManagers = $config['doctrine']['orm']['entity_managers'];
+
+        // get full namespace of static class
+        $namespace = static::class;
+        // remove class name to leave only namespace
+        $namespace = substr( $namespace, 0, strrpos( $namespace, '\\' ) );
+
+        foreach ( $entityManagers as $connection => $entityManager ) {
+            foreach ( $entityManager['mappings'] as $mapping ) {
+                if ( $mapping['prefix'] === $namespace ) {
+                    self::$repositories[ static::class ] = em( $connection )->getRepository( static::class );
+
+                    return;
+                }
+            }
+        }
+
+        throw new InvalidConfigurationException( 'Entity repository not found' );
     }
 
 }

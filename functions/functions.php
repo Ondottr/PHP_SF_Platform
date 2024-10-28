@@ -14,6 +14,7 @@
 
 use App\Entity\User;
 use App\Kernel;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\Deprecated;
 use JetBrains\PhpStorm\ExpectedValues;
@@ -26,7 +27,6 @@ use PHP_SF\System\Core\Cache\MemcachedCacheAdapter;
 use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\Translator;
-use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\System\Database\Redis;
 use PHP_SF\System\Router;
 use Predis\Client;
@@ -37,9 +37,11 @@ use Symfony\Component\Routing\Exception\RouteNotFoundException;
 require_once __DIR__ . '/time_functions.php';
 require_once __DIR__ . '/view_functions.php';
 
-function em(): DoctrineEntityManager
+function em( string $connectionName = 'default' ): EntityManager
 {
-    return DoctrineEntityManager::getEntityManager();
+    $kernel = Kernel::getInstance();
+
+    return $kernel->getContainer()->get( 'doctrine.orm.' . $connectionName . '_entity_manager' );
 }
 
 function qb(): QueryBuilder

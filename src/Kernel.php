@@ -38,8 +38,6 @@ final class Kernel
 
         $this->addControllers( __DIR__ . '/../app/Http/Controller' );
 
-        $this->addEntities( ENTITY_DIRECTORY );
-
         $this->addTranslationFiles( __DIR__ . '/../lang' );
 
         $this->addTemplatesDirectory( 'Platform/templates', 'PHP_SF\Templates' );
@@ -55,17 +53,6 @@ final class Kernel
             throw new DirectoryNotFoundException("Controllers directory '$path' not found.");
 
         Router::addControllersDirectory($path);
-
-        return $this;
-    }
-
-    public function addEntities(string $path): self
-    {
-        if (file_exists($path) === false ) {
-            throw new DirectoryNotFoundException( "Entities directory '$path' could not be found." );
-        }
-
-        DoctrineEntityManager::addEntityDirectory($path);
 
         return $this;
     }
