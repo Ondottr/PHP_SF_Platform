@@ -5,7 +5,6 @@ namespace PHP_SF\System;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\Translator;
-use PHP_SF\System\Database\DoctrineEntityManager;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
 use ReflectionClass;
