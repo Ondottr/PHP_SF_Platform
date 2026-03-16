@@ -24,6 +24,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\VarDumper\VarDumper;
 use Throwable;
 
 use function apache_request_headers;
@@ -595,6 +596,7 @@ class Router
     protected static function sendRouteMethodResponse(): void
     {
         if ( self::$routeMethodResponse instanceof Response ) {
+            VarDumper::setHandler( null );
             ob_start(
                 function ( $b ) {
                     if ( TEMPLATES_CACHE_ENABLED )
