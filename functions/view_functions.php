@@ -373,10 +373,10 @@ function formTextarea(
     if ( empty( $name ) === false )
         $inputStr .= sprintf( ' name="%s" ', $name );
 
-    if ( $rows === null )
+    if ( $rows !== null )
         $inputStr .= sprintf( ' rows="%d" ', $rows );
 
-    if ( $cols === null )
+    if ( $cols !== null )
         $inputStr .= sprintf( ' cols="%s" ', $cols );
 
     $inputStr .= sprintf( ' wrap="%s" ', $wrap );
