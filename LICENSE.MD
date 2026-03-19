@@ -1,5 +1,5 @@
 ```
-Copyright © 2018-2023, Nations Original Sp. z o.o. <contact@nations-original.com>
+Copyright © 2018-2026, Nations Original Sp. z o.o. <contact@nations-original.com>
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
 ```
-Prawa autorskie © 2018-2023, Nations Original Sp. z o.o. <contact@nations-original.com>
+Prawa autorskie © 2018-2026, Nations Original Sp. z o.o. <contact@nations-original.com>
 Niniejszym udziela się zgody na używanie, kopiowanie, modyfikowanie i / lub rozpowszechnianie tego oprogramowania
 w jakimkolwiek celu, za opłatą lub bez, pod warunkiem, że powyższa informacja o prawach autorskich oraz niniejsza
 informacja o zezwoleniu pojawią się we wszystkich kopiach.
@@ -28,7 +28,7 @@ DZIAŁANIEM NINIEJSZEGO OPROGRAMOWANIA.
 ```
 
 ```
-Авторське право © 2018-2023, Nations Original Sp. z o.o. <contact@nations-original.com>
+Авторське право © 2018-2026, Nations Original Sp. z o.o. <contact@nations-original.com>
 
 Цим надається дозвіл на використання, копіювання, змінювання, і/або розповсюдження цього програмного продукту з 
 будь-якою ціллю з чи без оплати, за умови, що подана вище замітка про авторське право і ці довзоли наявні в усіх копіях.
