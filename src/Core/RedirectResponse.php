@@ -45,7 +45,7 @@ final class RedirectResponse extends Response
      */
     #[NoReturn] public function send(bool $flush = true): static
     {
-        $urlKey     = hash( 'xxh3', $this->getTargetUrl() );
+        $urlKey = hash( 'xxh3', $this->getTargetUrl() );
         $key = "$urlKey:{$this->getRequestDataId()}";
 
         $_SERVER['REQUEST_URI']    = $this->getTargetUrl();
