@@ -58,7 +58,7 @@ final class RedirectResponse extends Response
         $formData = ca()->get( ":FORM_DATA:$key" );
 
         if ($get === null || $post === null || $errors === null)
-            throw new HttpException(Response::HTTP_NOT_ACCEPTABLE, 'The page has expired, please return to the previous page!');
+            throw new HttpException(Response::HTTP_GONE, 'The page has expired, please return to the previous page!');
 
 
         $this->setQuery($get);

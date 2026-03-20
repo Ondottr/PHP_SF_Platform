@@ -154,7 +154,7 @@ trait RedirectTrait
         $errors     ??= [];
         $messages   ??= [];
         $formData   ??= [];
-        $urlKey     = hash( 'xxh3', $url );
+        $hashedUrl     = hash( 'xxh3', $url );
         $redirectId = hrtime( true );
 
         $this->validateParams( $get, $post );
@@ -162,11 +162,11 @@ trait RedirectTrait
         $this->validateMessages( $messages );
 
 
-        ca()->set( ":GET:$urlKey:$redirectId", j_encode( $get ), 5 );
-        ca()->set( ":POST:$urlKey:$redirectId", j_encode( $post ), 5 );
-        ca()->set( ":ERRORS:$urlKey:$redirectId", j_encode( $errors ), 5 );
-        ca()->set( ":MESSAGES:$urlKey:$redirectId", j_encode( $messages ), 5 );
-        ca()->set( ":FORM_DATA:$urlKey:$redirectId", j_encode( $formData ), 5 );
+        ca()->set( ":GET:$hashedUrl:$redirectId", j_encode( $get ), 300 );
+        ca()->set( ":POST:$hashedUrl:$redirectId", j_encode( $post ), 300 );
+        ca()->set( ":ERRORS:$hashedUrl:$redirectId", j_encode( $errors ), 300 );
+        ca()->set( ":MESSAGES:$hashedUrl:$redirectId", j_encode( $messages ), 300 );
+        ca()->set( ":FORM_DATA:$hashedUrl:$redirectId", j_encode( $formData ), 300 );
 
         return $redirectId;
     }
