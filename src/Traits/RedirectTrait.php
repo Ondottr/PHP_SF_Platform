@@ -155,7 +155,7 @@ trait RedirectTrait
         $errors ??= [];
         $messages ??= [];
         $formData ??= [];
-        $redirectId = mt_rand() * mt_rand() / mt_rand();
+        $redirectId = hrtime( true );
 
         $this->validateParams( $get, $post );
         $this->validateErrors( $errors );
