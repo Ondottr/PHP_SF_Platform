@@ -37,16 +37,16 @@ use Symfony\Component\Routing\Exception\RouteNotFoundException;
 require_once __DIR__ . '/time_functions.php';
 require_once __DIR__ . '/view_functions.php';
 
-function em( string $connectionName = 'default' ): EntityManager
+function em( string $connectionName ): EntityManager
 {
     $kernel = Kernel::getInstance();
 
     return $kernel->getContainer()->get( 'doctrine.orm.' . $connectionName . '_entity_manager' );
 }
 
-function qb(): QueryBuilder
+function qb( string $connectionName ): QueryBuilder
 {
-    return em()->createQueryBuilder();
+    return em( $connectionName )->createQueryBuilder();
 }
 
 
