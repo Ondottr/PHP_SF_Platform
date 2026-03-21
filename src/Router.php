@@ -212,7 +212,21 @@ class Router
 
     protected static function setRoute( object $data ): void
     {
-        preg_match_all( '/\{\$(.*?)}/', $data->url, $matches );
+        // Detect old-style {$param} and normalize to Symfony-style {param}
+        if ( preg_match( '/\{\$/', $data->url ) ) {
+            trigger_error(
+                sprintf(
+                    'Route "%s" uses deprecated {$param} URL parameter syntax. Use Symfony-style {param} instead.',
+                    $data->url
+                ),
+                E_USER_DEPRECATED
+            );
+            // Normalize: {$id} -> {id}
+            $data->url = preg_replace( '/\{\$([^}]+)}/', '{$1}', $data->url );
+        }
+
+        // Extract params - now always in {param} format
+        preg_match_all( '/\{([^}]+)}/', $data->url, $matches );
         $routeParams = [];
         foreach ( $matches[1] as $match )
             $routeParams[] = $match;
@@ -387,7 +401,7 @@ class Router
                 $match = true;
                 # Check if each component in the possible route URL matches the corresponding component in the current URL
                 foreach ( $routeUrlArray as $key => $value ) {
-                    if ( str_starts_with( $value, '{$' ) === false && $value !== $currentUrlArray[ $key ] ) {
+                    if ( str_starts_with( $value, '{' ) === false && $value !== $currentUrlArray[ $key ] ) {
                         $match = false;
                         # If a mismatch is found, break out of the loop
                         break;
@@ -398,7 +412,7 @@ class Router
                 if ( $match ) {
                     $possibleRoutes[ $possibleRouteUrl ] = 0;
                     foreach ( $routeUrlArray as $value )
-                        if ( str_starts_with( $value, '{$' ) )
+                        if ( str_starts_with( $value, '{' ) && str_ends_with( $value, '}' ) )
                             $possibleRoutes[ $possibleRouteUrl ]++;
 
                 }

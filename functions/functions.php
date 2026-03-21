@@ -206,11 +206,9 @@ function routeLink( string $routeName, array $pathParams = [], array $queryParam
 
         // Check if parameters are provided
         if ( empty( $pathParams ) === false ) {
-            $link = str_replace( [ '{', '}' ], '', $link );
-
             // Replace parameters in route link
             foreach ( $pathParams as $propertyName => $propertyValue )
-                $link = str_replace( sprintf( '$%s', $propertyName ), (string)$propertyValue, $link );
+                $link = str_replace( sprintf( '{%s}', $propertyName ), (string)$propertyValue, $link );
         }
 
         // Check if route exists in routes from {@link Route} attribute
