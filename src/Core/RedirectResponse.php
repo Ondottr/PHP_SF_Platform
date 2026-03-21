@@ -8,6 +8,7 @@ use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+
 use function function_exists;
 
 final class RedirectResponse extends Response
@@ -33,8 +34,7 @@ final class RedirectResponse extends Response
     public function __construct(
         #[Immutable] private readonly string $targetUrl,
         #[Immutable] private readonly float|null $requestDataId = null
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -45,7 +45,8 @@ final class RedirectResponse extends Response
      */
     #[NoReturn] public function send(bool $flush = true): static
     {
-        $key = "{$this->getTargetUrl()}:{$this->getRequestDataId()}";
+        $urlKey = hash( 'xxh3', $this->getTargetUrl() );
+        $key = "$urlKey:{$this->getRequestDataId()}";
 
         $_SERVER['REQUEST_URI']    = $this->getTargetUrl();
         $_SERVER['REQUEST_METHOD'] = Request::METHOD_GET;
@@ -57,7 +58,7 @@ final class RedirectResponse extends Response
         $formData = ca()->get( ":FORM_DATA:$key" );
 
         if ($get === null || $post === null || $errors === null)
-            throw new HttpException(Response::HTTP_NOT_ACCEPTABLE, 'The page has expired, please return to the previous page!');
+            throw new HttpException(Response::HTTP_GONE, 'The page has expired, please return to the previous page!');
 
 
         $this->setQuery($get);
@@ -65,6 +66,14 @@ final class RedirectResponse extends Response
         $this->setErrors($errors);
         $this->setMessages($messages);
         $this->setFormData($formData);
+
+        // delete the data after retrieving it
+        ca()->delete( ":GET:$key" );
+        ca()->delete( ":POST:$key" );
+        ca()->delete( ":ERRORS:$key" );
+        ca()->delete( ":MESSAGES:$key" );
+        ca()->delete( ":FORM_DATA:$key" );
+
 
         $replacedUrl = $this->getTargetUrl();
         if ( empty( $_GET ) === false )
