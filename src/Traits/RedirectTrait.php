@@ -154,7 +154,7 @@ trait RedirectTrait
         $errors     ??= [];
         $messages   ??= [];
         $formData   ??= [];
-        $hashedUrl     = hash( 'xxh3', $url );
+        $hashedUrl  = hash( 'xxh3', $url );
         $redirectId = hrtime( true );
 
         $this->validateParams( $get, $post );

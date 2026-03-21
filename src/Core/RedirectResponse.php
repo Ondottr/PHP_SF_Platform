@@ -8,6 +8,7 @@ use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+
 use function function_exists;
 
 final class RedirectResponse extends Response
@@ -33,8 +34,7 @@ final class RedirectResponse extends Response
     public function __construct(
         #[Immutable] private readonly string $targetUrl,
         #[Immutable] private readonly float|null $requestDataId = null
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -66,6 +66,14 @@ final class RedirectResponse extends Response
         $this->setErrors($errors);
         $this->setMessages($messages);
         $this->setFormData($formData);
+
+        // delete the data after retrieving it
+        ca()->delete( ":GET:$key" );
+        ca()->delete( ":POST:$key" );
+        ca()->delete( ":ERRORS:$key" );
+        ca()->delete( ":MESSAGES:$key" );
+        ca()->delete( ":FORM_DATA:$key" );
+
 
         $replacedUrl = $this->getTargetUrl();
         if ( empty( $_GET ) === false )
