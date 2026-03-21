@@ -160,6 +160,19 @@ trait JsonResponseHelperTrait
     }
 
     /**
+     * Shortcut to return a 410 Gone response.
+     *
+     * @param mixed|null $data    The response data.
+     * @param array      $headers Additional headers for the response.
+     *
+     * @return JsonResponse Returns a 410 Gone JsonResponse.
+     */
+    protected function gone( mixed $data = null, array $headers = [] ): JsonResponse
+    {
+        return $this->json( status: JsonResponse::HTTP_GONE );
+    }
+
+    /**
      * Shortcut to return a 422 Unprocessable Entity response.
      *
      * @param mixed|null $data    The response data.
@@ -171,5 +184,4 @@ trait JsonResponseHelperTrait
     {
         return $this->json( data: $data, status: JsonResponse::HTTP_UNPROCESSABLE_ENTITY, headers: $headers );
     }
-
 }
