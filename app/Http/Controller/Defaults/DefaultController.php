@@ -21,11 +21,14 @@ use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
+use PHP_SF\System\Traits\JsonResponseHelperTrait;
 use PHP_SF\Templates\base;
 
 
 final class DefaultController extends AbstractController
 {
+    use JsonResponseHelperTrait;
+
 
     #[Route( url: 'base', httpMethod: 'GET' )]
     public function base(): Response
@@ -43,8 +46,13 @@ final class DefaultController extends AbstractController
     /** @noinspection ForgottenDebugOutputInspection */
     #[NoReturn]
     #[Route( url: 'api/routes_list', httpMethod: 'GET' )]
-    final public function api_routes_list(): void
+    final public function api_routes_list(): Response
     {
+        // restrict to dev mode only
+        if ( DEV_MODE === false )
+            return $this->forbidden();
+
+
         dd(
             array_merge(
                 Router::getRoutesList(),
