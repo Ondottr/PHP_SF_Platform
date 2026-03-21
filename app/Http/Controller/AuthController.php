@@ -15,7 +15,6 @@ declare( strict_types=1 );
 
 namespace PHP_SF\Framework\Http\Controller;
 
-use App\Entity\UserGroup;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ObjectRepository;
 use PHP_SF\Framework\Http\Middleware\auth;
@@ -27,6 +26,7 @@ use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 use Symfony\Component\HttpFoundation\Request;
+
 use function strlen;
 
 
@@ -40,7 +40,7 @@ class AuthController extends AbstractController
     {
         parent::__construct( $request );
 
-        $this->userRepository = em()->getRepository( Kernel::getApplicationUserClassName() );
+        $this->userRepository = em( 'postgresql' )->getRepository( Kernel::getApplicationUserClassName() );
     }
 
 
@@ -131,13 +131,12 @@ class AuthController extends AbstractController
         $user->setLogin( $login );
         $user->setEmail( $email );
         $user->setPassword( $password );
-        $user->setUserGroup( UserGroup::find( 6 ) ); // TODO: Change to constant
 
         if ( $user->validate() !== true )
             return $this->redirectBack( errors: array_values( $user->getValidationErrors() ) );
 
 
-        em()
+        em( 'postgresql' )
             ->getRepository( Kernel::getApplicationUserClassName() )
             ->persist( $user );
 
@@ -145,4 +144,5 @@ class AuthController extends AbstractController
 
         return $this->redirectTo( 'welcome_page' );
     }
+
 }

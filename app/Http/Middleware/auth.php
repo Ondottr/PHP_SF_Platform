@@ -14,7 +14,6 @@
 
 namespace PHP_SF\Framework\Http\Middleware;
 
-use App\Entity\User;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Interface\UserInterface;
@@ -31,7 +30,7 @@ class auth extends Middleware
     final public static function user(): bool|UserInterface
     {
         if ( self::$user !== false )
-            return User::find( self::$user->getId() );
+            return ( Kernel::getApplicationUserClassName() )::find( self::$user->getId() );
 
         return self::$user;
     }
@@ -63,7 +62,7 @@ class auth extends Middleware
             $userId = s()->get( 'session_user_id' );
 
             if ( $userId !== null ) {
-                $user = ( em()
+                $user = ( em( 'postgresql' )
                     ->getRepository( Kernel::getApplicationUserClassName() ) )
                     ->find( $userId );
 

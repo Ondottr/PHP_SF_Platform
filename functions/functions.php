@@ -12,8 +12,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-use App\Entity\User;
 use App\Kernel;
+use PHP_SF\System\Interface\UserInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\Deprecated;
@@ -269,7 +269,7 @@ function j_encode( mixed $value, int $flags = JSON_THROW_ON_ERROR, int $depth = 
 }
 
 
-function user(): User|false
+function user(): UserInterface|false
 {
     return auth::user();
 }

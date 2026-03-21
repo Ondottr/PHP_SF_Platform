@@ -2,8 +2,8 @@
 
 namespace PHP_SF\Templates\Layout;
 
-use App\Entity\User;
 use App\Kernel;
+use PHP_SF\System\Kernel as FrameworkKernel;
 use PHP_SF\System\Classes\Abstracts\AbstractEventsDispatcher;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Core\Response;
@@ -39,7 +39,7 @@ final class footer extends AbstractView { public function show(): void { ?>
         </div>
       </div>
 
-      <?php if (User::isAdmin()) : ?>
+      <?php if (( FrameworkKernel::getApplicationUserClassName() )::isAdmin()) : ?>
         <div class="row">
           <div class="col-6">
             <?php dump(Router::$currentRoute, AbstractEventsDispatcher::getDispatchedListeners()) ?>

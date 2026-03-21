@@ -14,8 +14,8 @@
 
 namespace PHP_SF\Framework\Http\Middleware;
 
-use App\Entity\User;
 use PHP_SF\System\Classes\Abstracts\Middleware;
+use PHP_SF\System\Kernel;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -38,6 +38,6 @@ class admin extends Middleware
         }
 
 
-        return User::isAdmin();
+        return ( Kernel::getApplicationUserClassName() )::isAdmin();
     }
 }
