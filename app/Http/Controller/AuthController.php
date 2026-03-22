@@ -40,7 +40,7 @@ class AuthController extends AbstractController
         /**
          * @var \PHP_SF\System\Interface\UserInterface&\PHP_SF\System\Classes\Abstracts\AbstractEntity $userClass
          */
-        $userClass = ( Kernel::getApplicationUserClassName() );
+        $userClass            = ( Kernel::getApplicationUserClassName() );
         $this->userRepository = $userClass::rep();
     }
 
@@ -137,9 +137,7 @@ class AuthController extends AbstractController
             return $this->redirectBack( errors: array_values( $user->getValidationErrors() ) );
 
 
-        em( 'postgresql' )
-            ->getRepository( Kernel::getApplicationUserClassName() )
-            ->persist( $user );
+        $this->userRepository->persist( $user );
 
         auth::logInUser( $user );
 
