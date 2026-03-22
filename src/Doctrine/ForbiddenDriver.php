@@ -6,6 +6,7 @@ use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Driver\API\ExceptionConverter;
 use Doctrine\DBAL\Driver\Connection as DriverConnection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\ServerVersionProvider;
 use LogicException;
 use SensitiveParameter;
@@ -22,9 +23,8 @@ final class ForbiddenDriver implements Driver
 
     private const ERROR_MESSAGE =
         'Attempted to use the default (dummy) Doctrine connection. ' .
-        'You MUST explicitly use a named connection or entity manager: ' .
-        'invoices_uk, insurance_uk, billing_uk, etc. ' .
-        'See config/packages/doctrine.yaml for details.';
+        'You MUST explicitly use a named entity manager: em(\'name\') or --em=name. ' .
+        'See config/packages/doctrine.yaml for configured connections.';
 
 
     public function connect( #[SensitiveParameter] array $params ): DriverConnection
@@ -34,7 +34,10 @@ final class ForbiddenDriver implements Driver
 
     public function getDatabasePlatform( ServerVersionProvider $versionProvider ): AbstractPlatform
     {
-        throw new LogicException( self::ERROR_MESSAGE );
+        // Must return a valid platform so Doctrine ORM can initialize entity metadata
+        // and generate proxy classes without connecting. Actual connections still
+        // throw via connect().
+        return new SQLitePlatform();
     }
 
     public function getExceptionConverter(): ExceptionConverter
