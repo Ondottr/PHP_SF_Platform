@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 02/02/2023
- * Time: 6:16 PM
- */
 
 namespace PHP_SF\Tests\System\Core\Cache;
 

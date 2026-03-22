@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 04/02/2023
- * Time: 8:55 am
- */
 
 namespace PHP_SF\System\Core\Cache;
 
@@ -68,7 +62,7 @@ final class MemcachedCacheAdapter extends AbstractCacheAdapter
     public function set( string $key, mixed $value, DateInterval|int|null $ttl = self::DEFAULT_TTL ): bool
     {
         if ( is_scalar( $value ) === false )
-            throw new CacheValueException;
+            throw new CacheValueException();
 
         if ( $ttl instanceof DateInterval )
             $ttl = $ttl->s + $ttl->i * 60 + $ttl->h * 3600 + $ttl->days * 86400;

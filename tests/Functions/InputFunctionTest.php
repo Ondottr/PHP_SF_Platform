@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 03/02/2023
- * Time: 7:54 AM
- */
 
 namespace PHP_SF\Tests\Functions;
 use InvalidArgumentException;

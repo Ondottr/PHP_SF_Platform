@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 04/02/2023
- * Time: 8:55 am
- */
 
 namespace PHP_SF\System\Core\Cache;
 
@@ -70,7 +64,7 @@ final class APCuCacheAdapter extends AbstractCacheAdapter
             $ttl = self::DEFAULT_TTL;
 
         if ( is_scalar( $value ) === false )
-            throw new CacheValueException;
+            throw new CacheValueException();
 
         if ( $ttl instanceof DateInterval )
             $ttl = $ttl->s + $ttl->i * 60 + $ttl->h * 3600 + $ttl->days * 86400;
@@ -119,7 +113,7 @@ final class APCuCacheAdapter extends AbstractCacheAdapter
                 )
             );
 
-        if ( preg_match( "/^[^*].*[^*]$/", $keyPattern ) )
+        if ( preg_match( '/^[^*].*[^*]$/', $keyPattern ) )
             throw new CacheKeyExceptionCache(
                 sprintf(
                     'The key pattern "%s" is not valid. The "*" character must be at the beginning or at the end of the pattern, not in the middle.',

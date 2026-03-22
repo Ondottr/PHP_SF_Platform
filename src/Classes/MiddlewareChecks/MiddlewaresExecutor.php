@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 15/02/2023
- * Time: 9:10 am
- */
 
 namespace PHP_SF\System\Classes\MiddlewareChecks;
 
