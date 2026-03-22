@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 /**
  * Provide a custom logic to determine if the middleware must be executed or not <p>
  * Example: <p>
- * \#[{@link Route}( middleware: [ {@link MiddlewareAll::class} => [ {@link auth::class} ], {@link MiddlewareAny::class} => [ {@link admin::class}, {@link api::class} ] ] )]
+ * \#[{@link Route}( middleware: [ {@link MiddlewareAll::class} => [ {@link auth::class} ], {@link MiddlewareAny::class} => [ {@link admin_example::class}, {@link api_example::class} ] ] )]
  *
  * In this example, the route will be accepted if:
  * - The user is authenticated and the user is an admin

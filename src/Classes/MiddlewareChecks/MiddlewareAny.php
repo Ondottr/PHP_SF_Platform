@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 /**
  * MiddlewareAny: At least one middleware must be executed and return true <p>
  * Example: <p>
- * \#[{@link Route}( middleware: [ {@link MiddlewareAny::class} => [ {@link auth::class}, {@link api::class} ] ] )]
+ * \#[{@link Route}( middleware: [ {@link MiddlewareAny::class} => [ {@link auth::class}, {@link api_example::class} ] ] )]
  *
  * In this example, the route will be accepted if:
  * - The user is authenticated
