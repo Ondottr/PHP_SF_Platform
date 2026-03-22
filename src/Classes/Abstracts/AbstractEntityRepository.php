@@ -27,18 +27,18 @@ abstract class AbstractEntityRepository extends EntityRepository
 
     final public function persist( AbstractEntity $entity, bool $flush = true ): void
     {
-        em()->persist( $entity );
+        $this->getEntityManager()->persist( $entity );
 
         if ( $flush )
-            em()->flush( $entity );
+            $this->getEntityManager()->flush( $entity );
     }
 
     final public function remove( AbstractEntity $entity, bool $flush = true ): void
     {
-        em()->remove( $entity );
+        $this->getEntityManager()->remove( $entity );
 
         if ( $flush )
-            em()->flush( $entity );
+            $this->getEntityManager()->flush( $entity );
     }
 
 }
