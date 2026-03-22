@@ -14,6 +14,7 @@
 
 namespace PHP_SF\Framework\Http\Middleware;
 
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Interface\UserInterface;
@@ -39,6 +40,8 @@ class auth extends Middleware
 
     /**
      * Holds the currently authenticated user, or {@see false} when no session is active.
+     *
+     * @type false|UserInterface&AbstractEntity
      */
     public static false|UserInterface $user = false;
 
@@ -49,8 +52,14 @@ class auth extends Middleware
      */
     final public static function user(): false|UserInterface
     {
-        if ( self::$user !== false )
-            return ( Kernel::getApplicationUserClassName() )::find( self::$user->getId() );
+        if ( self::$user !== false ) {
+            /**
+             * @var UserInterface&AbstractEntity $userClass
+             */
+            $userClass = ( Kernel::getApplicationUserClassName() );
+
+            return $userClass::find( self::$user->getId() );
+        }
 
         return self::$user;
     }
@@ -103,9 +112,11 @@ class auth extends Middleware
             $userId = s()->get( 'session_user_id' );
 
             if ( $userId !== null ) {
-                $user = ( em( 'postgresql' )
-                    ->getRepository( Kernel::getApplicationUserClassName() ) )
-                    ->find( $userId );
+                /**
+                 * @var UserInterface&AbstractEntity $userClass
+                 */
+                $userClass = ( Kernel::getApplicationUserClassName() );
+                $user      = $userClass::find( $userId );
 
                 if ( $user === null )
                     return;
@@ -127,4 +138,5 @@ class auth extends Middleware
     {
         return self::$user instanceof ( Kernel::getApplicationUserClassName() );
     }
+
 }
