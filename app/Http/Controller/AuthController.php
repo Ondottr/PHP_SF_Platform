@@ -27,9 +27,6 @@ use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 use Symfony\Component\HttpFoundation\Request;
 
-use function strlen;
-
-
 class AuthController extends AbstractController
 {
 
@@ -40,7 +37,11 @@ class AuthController extends AbstractController
     {
         parent::__construct( $request );
 
-        $this->userRepository = em( 'postgresql' )->getRepository( Kernel::getApplicationUserClassName() );
+        /**
+         * @var \PHP_SF\System\Interface\UserInterface&\PHP_SF\System\Classes\Abstracts\AbstractEntity $userClass
+         */
+        $userClass = ( Kernel::getApplicationUserClassName() );
+        $this->userRepository = $userClass::rep();
     }
 
 
