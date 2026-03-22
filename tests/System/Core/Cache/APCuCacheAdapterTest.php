@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 02/02/2023
- * Time: 6:16 PM
- */
 
 namespace PHP_SF\Tests\System\Core\Cache;
 
@@ -18,20 +12,10 @@ use PHPUnit\Framework\TestCase;
 final class APCuCacheAdapterTest extends TestCase
 {
 
-    private bool $isAPCuEnabled = false;
-
-    public function __construct(string $methodName)
-    {
-        $this->isAPCuEnabled = function_exists( 'apcu_enabled' ) && apcu_enabled();
-
-        parent::__construct($methodName);
-    }
-
     protected function setUp(): void
     {
-        if ( $this->isAPCuEnabled === false )
+        if ( !function_exists( 'apcu_enabled' ) || !apcu_enabled() )
             $this->markTestSkipped( 'APCu is not enabled' );
-
     }
 
     protected function tearDown(): void

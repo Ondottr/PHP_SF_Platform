@@ -15,7 +15,6 @@ declare( strict_types=1 );
 
 namespace PHP_SF\Framework\Http\Controller;
 
-use App\Entity\UserGroup;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\Persistence\ObjectRepository;
 use PHP_SF\Framework\Http\Middleware\auth;
@@ -27,8 +26,6 @@ use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 use Symfony\Component\HttpFoundation\Request;
-use function strlen;
-
 
 class AuthController extends AbstractController
 {
@@ -40,7 +37,11 @@ class AuthController extends AbstractController
     {
         parent::__construct( $request );
 
-        $this->userRepository = em()->getRepository( Kernel::getApplicationUserClassName() );
+        /**
+         * @var \PHP_SF\System\Interface\UserInterface&\PHP_SF\System\Classes\Abstracts\AbstractEntity $userClass
+         */
+        $userClass            = ( Kernel::getApplicationUserClassName() );
+        $this->userRepository = $userClass::rep();
     }
 
 
@@ -131,18 +132,16 @@ class AuthController extends AbstractController
         $user->setLogin( $login );
         $user->setEmail( $email );
         $user->setPassword( $password );
-        $user->setUserGroup( UserGroup::find( 6 ) ); // TODO: Change to constant
 
         if ( $user->validate() !== true )
             return $this->redirectBack( errors: array_values( $user->getValidationErrors() ) );
 
 
-        em()
-            ->getRepository( Kernel::getApplicationUserClassName() )
-            ->persist( $user );
+        $this->userRepository->persist( $user );
 
         auth::logInUser( $user );
 
         return $this->redirectTo( 'welcome_page' );
     }
+
 }

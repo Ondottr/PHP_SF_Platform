@@ -3,10 +3,6 @@
 namespace PHP_SF\System\Classes\Abstracts;
 
 use ArgumentCountError;
-use PHP_SF\Framework\Http\Middleware\admin;
-use PHP_SF\Framework\Http\Middleware\api;
-use PHP_SF\Framework\Http\Middleware\auth;
-use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Core\MiddlewareEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Interface\EventSubscriberInterface;
@@ -17,8 +13,6 @@ use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-
-use function array_key_exists;
 
 abstract class Middleware implements EventSubscriberInterface
 {

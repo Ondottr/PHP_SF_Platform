@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 21/01/2023
- * Time: 12:52 PM
- */
 
 namespace PHP_SF\System\Interface;
 

@@ -1,10 +1,4 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 15/02/2023
- * Time: 8:13 am
- */
 
 namespace PHP_SF\System\Classes\MiddlewareChecks;
 
@@ -17,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 /**
  * MiddlewareAll: All middlewares must be executed and return true <p>
  * Example: <p>
- * \#[{@link Route}( middleware: [ {@link MiddlewareAll::class} => [ {@link auth::class}, {@link api::class} ] ] )]
+ * \#[{@link Route}( middleware: [ {@link MiddlewareAll::class} => [ {@link auth::class}, {@link api_example::class} ] ] )]
  *
  * In this example, the route will be accepted only if:
  * - The user is authenticated and the request is an API request

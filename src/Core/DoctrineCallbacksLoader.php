@@ -18,6 +18,7 @@ namespace PHP_SF\System\Core;
 use Doctrine\Common\EventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
+use JetBrains\PhpStorm\ArrayShape;
 use PHP_SF\System\Classes\Abstracts\AbstractDoctrineLifecycleCallback;
 use PHP_SF\System\Interface\DoctrineCallbacksLoaderInterface;
 
@@ -38,6 +39,20 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
         Events::postUpdate,
     ];
 
+    #[ArrayShape( [
+        Events::postRemove  => 'string',
+        Events::postUpdate  => 'string',
+        Events::postPersist => 'string',
+        Events::preRemove   => 'string',
+        Events::postLoad    => 'string',
+        Events::preFlush    => 'string',
+        Events::prePersist  => 'string',
+        Events::preUpdate   => 'string',
+    ] )]
+    public function getLifecycleCallbacks(): array
+    {
+        return [];
+    }
 
     final public function getCallbackClass( string $callback, EventArgs $args ): AbstractDoctrineLifecycleCallback|null
     {

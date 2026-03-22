@@ -30,7 +30,8 @@ final class Kernel
             if ( function_exists( 'apcu_clear_cache' ) )
                 apcu_clear_cache();
 
-            Debug::enable();
+            if ( PHP_SAPI !== 'cli' )
+                Debug::enable();
         }
 
         $this->setDefaultLocale();

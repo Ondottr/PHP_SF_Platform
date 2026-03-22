@@ -1,14 +1,8 @@
 <?php declare( strict_types=1 );
-/**
- * Created by PhpStorm.
- * User: ondottr
- * Date: 15/02/2023
- * Time: 10:19 am
- */
 
 namespace PHP_SF\Tests\System\Classes\MiddlewareChecks;
 
-use PHP_SF\Framework\Http\Middleware\api;
+use PHP_SF\Framework\Http\Middleware\api_example;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
@@ -57,15 +51,15 @@ final class MiddlewaresExecutorTest extends TestCase
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    public function __construct(string $methodName)
+    protected function setUp(): void
     {
         $this->kernel = $GLOBALS['kernel'];
 
-        $this->request = new Request;
+        $this->request = new Request();
 
         $this->controller = new class( $this->request ) extends AbstractController {
             /** @noinspection PhpParamsInspection */
-            #[Route( middleware: [ [ MiddlewareAll::class => [ auth::class, api::class ] ] ])]
+            #[Route( middleware: [ [ MiddlewareAll::class => [ auth::class, api_example::class ] ] ])]
             public function custom_test_page(): Response|RedirectResponse|JsonResponse
             {
                 return $this->render( base::class, ['title' => 'Test'] );
@@ -75,8 +69,6 @@ final class MiddlewaresExecutorTest extends TestCase
                 // return new RedirectResponse( 'welcome_page' );
             }
         };
-
-        parent::__construct($methodName);
     }
 
 

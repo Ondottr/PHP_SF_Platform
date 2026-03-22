@@ -12,8 +12,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-use App\Entity\User;
 use App\Kernel;
+use PHP_SF\System\Interface\UserInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\Deprecated;
@@ -37,16 +37,16 @@ use Symfony\Component\Routing\Exception\RouteNotFoundException;
 require_once __DIR__ . '/time_functions.php';
 require_once __DIR__ . '/view_functions.php';
 
-function em( string $connectionName = 'default' ): EntityManager
+function em( string $connectionName ): EntityManager
 {
     $kernel = Kernel::getInstance();
 
     return $kernel->getContainer()->get( 'doctrine.orm.' . $connectionName . '_entity_manager' );
 }
 
-function qb(): QueryBuilder
+function qb( string $connectionName ): QueryBuilder
 {
-    return em()->createQueryBuilder();
+    return em( $connectionName )->createQueryBuilder();
 }
 
 
@@ -269,7 +269,7 @@ function j_encode( mixed $value, int $flags = JSON_THROW_ON_ERROR, int $depth = 
 }
 
 
-function user(): User|false
+function user(): UserInterface|false
 {
     return auth::user();
 }
