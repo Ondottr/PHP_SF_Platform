@@ -16,8 +16,6 @@ use SensitiveParameter;
  * Used as the default connection driver to prevent accidental usage of an
  * unnamed database connection. Every method throws a LogicException with a
  * clear, actionable message pointing developers to the correct named connection.
- *
- * @author Dmytro Dyvulskyi <dmytro.dyvulskyi@medserv.ie>
  */
 final class ForbiddenDriver implements Driver
 {

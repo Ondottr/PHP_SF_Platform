@@ -13,8 +13,6 @@ use Symfony\Component\DependencyInjection\Reference;
  *
  * Fails fast at container build time (cache:warmup) rather than at runtime,
  * preventing accidental cross-database data access in a multi-database setup.
- *
- * @author Dmytro Dyvulskyi <dmytro.dyvulskyi@medserv.ie>
  */
 final class ForbidDefaultDoctrinePass implements CompilerPassInterface
 {
