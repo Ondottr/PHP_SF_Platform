@@ -63,6 +63,19 @@ class Router
 
     private function __construct() {}
 
+    /**
+     * Parses routes from all registered controller directories without dispatching any request.
+     * Pass a Kernel to bind it for later use by {@see init()}; omit if only route parsing is needed
+     * (controller directories must already be registered via {@see addControllersDirectory()}).
+     */
+    public static function loadRoutesOnly( Kernel $kernel = null ): void
+    {
+        if ( $kernel !== null )
+            self::$kernel = $kernel;
+
+        static::parseRoutes();
+    }
+
     public static function init( Kernel $kernel = null ): void
     {
         self::$kernel = $kernel
@@ -354,9 +367,9 @@ class Router
         $currentUrl = static::getCurrentRequestUrl();
         $urlHash = hash( 'sha256', $currentUrl );
 
-        if ( ca()->get( sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) ) ) {
-            static::$currentRoute = j_decode( ca()->get( sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) ) );
-            static::$routeParams = j_decode( ca()->get( sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) ), true );
+        if ( ca()->get( sprintf( 'parsed_url:%s:%s', $httpMethod, $urlHash ) ) ) {
+            static::$currentRoute = j_decode( ca()->get( sprintf( 'parsed_url:%s:route:%s', $httpMethod, $urlHash ) ) );
+            static::$routeParams = j_decode( ca()->get( sprintf( 'parsed_url:%s:route_params:%s', $httpMethod, $urlHash ) ), true );
 
             return true;
         }
@@ -377,9 +390,9 @@ class Router
                 static::$currentRoute = (object)static::$routesByUrl[ $httpMethod ][ $currentUrl ];
 
                 ca()->setMultiple( [
-                    sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
-                    sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
-                    sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) => j_encode( [] )
+                    sprintf( 'parsed_url:%s:%s', $httpMethod, $urlHash )              => $currentUrl,
+                    sprintf( 'parsed_url:%s:route:%s', $httpMethod, $urlHash )        => j_encode( static::$currentRoute ),
+                    sprintf( 'parsed_url:%s:route_params:%s', $httpMethod, $urlHash ) => j_encode( [] )
                 ] );
 
                 return true;
@@ -438,14 +451,14 @@ class Router
 
             # Save the parameters of the route
             foreach ( $routeUrlArray as $key => $str )
-                if ( str_starts_with( $str, '{$' ) )
-                    static::$routeParams[ str_replace( [ '{$', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
+                if ( str_starts_with( $str, '{' ) && str_ends_with( $str, '}' ) )
+                    static::$routeParams[ str_replace( [ '{', '}' ], '', $str ) ] = $currentUrlArray[ $key ];
 
             # Store the selected URL, route and its parameters in a cache
             ca()->setMultiple( [
-                sprintf( "parsed_url:%s:%s", $httpMethod, $urlHash ) => $currentUrl,
-                sprintf( "parsed_url:%s:route:%s", $httpMethod, $urlHash ) => j_encode( static::$currentRoute ),
-                sprintf( "parsed_url:%s:route_params:%s", $httpMethod, $urlHash ) => j_encode( static::$routeParams )
+                sprintf( 'parsed_url:%s:%s', $httpMethod, $urlHash )              => $currentUrl,
+                sprintf( 'parsed_url:%s:route:%s', $httpMethod, $urlHash )        => j_encode( static::$currentRoute ),
+                sprintf( 'parsed_url:%s:route_params:%s', $httpMethod, $urlHash ) => j_encode( static::$routeParams )
             ] );
         }
 
