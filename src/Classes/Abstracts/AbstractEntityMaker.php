@@ -73,7 +73,7 @@ abstract class AbstractEntityMaker extends AbstractMaker
         // otherwise → generate from our skeletons
         $generator->generateFile(
             $entityPath,
-            __DIR__ . '/../../Resources/skeleton/entity.tpl.php',
+            __DIR__ . '/../../../Resources/skeleton/entity.tpl.php',
             [
                 'namespace'           => $this->entityNamespace,
                 'class_name'          => $className,
@@ -89,7 +89,7 @@ abstract class AbstractEntityMaker extends AbstractMaker
         if ( !file_exists( $repositoryPath ) ) {
             $generator->generateFile(
                 $repositoryPath,
-                __DIR__ . '/../../Resources/skeleton/repository.tpl.php',
+                __DIR__ . '/../../../Resources/skeleton/repository.tpl.php',
                 [
                     'namespace'    => $this->repositoryNamespace,
                     'class_name'   => $className,
