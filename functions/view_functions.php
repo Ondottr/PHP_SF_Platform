@@ -12,6 +12,21 @@ function asset( string $path ): string
     return "/$path";
 }
 
+function manifest_asset( string $filename ): string
+{
+    static $manifest = null;
+    if ( $manifest === null ) {
+        $manifestPath = project_dir() . '/public/build/manifest.json';
+        $manifest = file_exists( $manifestPath )
+            ? json_decode( file_get_contents( $manifestPath ), true )
+            : [];
+    }
+
+    $resolved = $manifest[ $filename ] ?? "build/$filename";
+
+    return asset( ltrim( $resolved, '/' ) );
+}
+
 function pageTitle(): string
 {
     return s()->get( 'page_title', APPLICATION_NAME );
