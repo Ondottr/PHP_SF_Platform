@@ -21,8 +21,8 @@ use PHP_SF\System\Classes\Helpers\Locale;
 final class change_language_page extends AbstractView { public function show(): void { ?>
   <!--@formatter:on-->
 
-  <?php showErrors() ?>
-  <?php showMessages() ?>
+<!--  --><?php //showErrors() ?>
+<!--  --><?php //showMessages() ?>
 
   <form method="POST">
 
