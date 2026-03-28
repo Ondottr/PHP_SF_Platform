@@ -134,12 +134,12 @@ final class TemplatesCache
     #[ArrayShape( ['className' => 'string', 'fileContent' => 'string'] )]
     public function getCachedTemplateClass( string $className ): array|false
     {
-        if ( TEMPLATES_CACHE_ENABLED === false || strpos( $className, self::TEMPLATES_NAMESPACE ) )
+        if ( TEMPLATES_CACHE_ENABLED === false || str_contains( $className, self::TEMPLATES_NAMESPACE ) )
             return false;
 
         $cacheKey = sprintf( 'cached_template_class_%s', $className );
 
-        if ( ca()->has( $cacheKey ) )
+        if ( DEV_MODE === false && ca()->has( $cacheKey ) )
             return j_decode( ca()->get( $cacheKey ), true );
 
 
@@ -189,8 +189,8 @@ final class TemplatesCache
 
         //remove redundant characters
         $replace = [
-            // Remove JS inline comments
-            '/\/\/.*$/m' => '',
+            // Remove JS inline comments (negative lookbehind skips URLs like http://)
+            '/(?<!:)\/\/.*$/m' => '',
             //remove HTML comments
             '/<!--(.|\s)*?-->/' => '',
             //remove HTML comments
@@ -216,7 +216,7 @@ final class TemplatesCache
             '/\),[\r\n\t ]+/s' => '),',
             //remove quotes from HTML attributes that does not contain spaces; keep quotes around URLs!
             //$1 and $4 insert first white-space character found before/after attribute
-            '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"([\r\n\t ])?~s' => '$1$2=$3$4',
+            '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"(?=[\r\n\t >])~s' => '$1$2=$3',
             '/<!--.*?-->/' => '',
             '/(\x20+|\t)/' => ' ', # Delete multispace (Without \n)
             '/(["\'])\s+>/' => "$1>", # strip whitespaces between quotation ("') and end tags
@@ -262,16 +262,14 @@ final class TemplatesCache
         $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
         $fileContent = trim( str_ireplace( $remove, '', $fileContent ) );
 
-        if ( DEV_MODE === true || ca()->has( $cacheKey ) === false ) {
-            $result = [
-                'className' => $newClassName,
-                'fileContent' => substr( $fileContent, 5 ),
-            ];
+        $result = [
+            'className' => $newClassName,
+            'fileContent' => substr( $fileContent, 5 ),
+        ];
 
-            ca()->set( $cacheKey, j_encode( $result ) );
-        }
+        ca()->set( $cacheKey, j_encode( $result ) );
 
-        return j_decode( ca()->get( $cacheKey ), true );
+        return $result;
     }
 
     /**
