@@ -134,7 +134,11 @@ final class TemplatesCache
     #[ArrayShape( ['className' => 'string', 'fileContent' => 'string'] )]
     public function getCachedTemplateClass( string $className ): array|false
     {
-        if ( TEMPLATES_CACHE_ENABLED === false || str_contains( $className, self::TEMPLATES_NAMESPACE ) )
+        if (
+            TEMPLATES_CACHE_ENABLED === false
+            || str_starts_with( $className, self::TEMPLATES_NAMESPACE . '\\' )
+            || $className === self::TEMPLATES_NAMESPACE
+        )
             return false;
 
         $cacheKey = sprintf( 'cached_template_class_%s', $className );
