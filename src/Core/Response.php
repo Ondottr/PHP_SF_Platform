@@ -36,7 +36,8 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             if ( TEMPLATES_CACHE_ENABLED ) {
                 $result = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() );
                 if ( $result !== false ) {
-                    eval( $result['fileContent'] );
+                    if ( class_exists( $result['className'] ) === false )
+                        eval( $result['fileContent'] );
                     $headerClassName = $result['className'];
                 }
             }
@@ -62,7 +63,8 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             if ( TEMPLATES_CACHE_ENABLED ) {
                 $result = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() );
                 if ( $result !== false ) {
-                    eval( $result['fileContent'] );
+                    if ( class_exists( $result['className'] ) === false )
+                        eval( $result['fileContent'] );
                     $footerClassName = $result['className'];
                 }
             }
