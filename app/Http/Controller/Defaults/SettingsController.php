@@ -47,7 +47,7 @@ final class SettingsController extends AbstractController
     }
 
 
-    #[Route( url: 'settings/change_language/{$lang}', httpMethod: 'GET' )]
+    #[Route( url: 'settings/change_language/{lang}', httpMethod: 'GET' )]
     public function change_language_get_handler( string $lang ): RedirectResponse
     {
         Lang::setCurrentLocale( $lang );
