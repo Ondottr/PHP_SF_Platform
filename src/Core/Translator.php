@@ -24,7 +24,6 @@ use function array_key_exists;
  * to locale files.
  *
  * @package PHP_SF\System\Core
- * @author  Dmytro Dyvulskyi <dmytro.dyvulskyi@nations-original.com>
  */
 #[AllowDynamicProperties]
 final class Translator

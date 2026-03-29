@@ -24,9 +24,6 @@ use function is_array;
  * you will need to delete the cached version of the file using the {@link AppCacheClearCommand}(a:c:c).
  * To use the class, simply pass the path to the template file to the getTemplate method.
  * The method will return the compiled HTML, which can then be used in your application.
- *
- * @author Dmytro Dyvulskyi
- * @copyright 2022 Nations Original sp. z o.o.
  */
 final class TemplatesCache
 {
