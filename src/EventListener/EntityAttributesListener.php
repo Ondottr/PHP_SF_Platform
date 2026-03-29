@@ -14,6 +14,7 @@
 
 namespace PHP_SF\System\EventListener;
 
+use Doctrine\DBAL\Driver\AbstractPostgreSQLDriver;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
@@ -50,7 +51,10 @@ final class EntityAttributesListener
                 sprintf( 'Entity "%s" must declare repositoryClass in #[ORM\\Entity].', $class )
             );
 
-        if ( empty( $metadata->table['schema'] ?? null ) )
+        if (
+            empty( $metadata->table['schema'] ?? null )
+            && $args->getObjectManager()->getConnection()->getDriver() instanceof AbstractPostgreSQLDriver
+        )
             throw new InvalidEntityConfigurationException(
                 sprintf( 'Entity "%s" must declare schema in #[ORM\\Table].', $class )
             );
