@@ -143,12 +143,12 @@ final class TemplatesCache
 
         $cacheKey = sprintf( 'cached_template_class_%s', $className );
 
-        if ( DEV_MODE === false && ca()->has( $cacheKey ) )
-            return j_decode( ca()->get( $cacheKey ), true );
+        if ( DEV_MODE === false && rca()->has( $cacheKey ) )
+            return j_decode( rca()->get( $cacheKey ), true );
 
 
         foreach ( $this->getTemplatesDefinition() as $directory => $namespace ) {
-            if ( strpos( $className, $namespace ) === false )
+            if ( !str_contains( $className, $namespace ) )
                 continue;
 
 
@@ -179,8 +179,8 @@ final class TemplatesCache
             foreach ( $imports as $str ) {
                 $importedView = trim( explode( '::class', $str )[0] );
 
-                if ( strpos( $importedView, '\\' ) === false &&
-                    strpos( $fileContent, sprintf( '\%s;', $importedView ) ) === false
+                if ( !str_contains( $importedView, '\\' ) &&
+                    !str_contains( $fileContent, sprintf( '\%s;', $importedView ) )
                 ) {
                     $fileContent = str_replace(
                         [ sprintf( '$this->import(%s', $importedView ), sprintf( '$this->import( %s', $importedView ) ],
@@ -245,7 +245,7 @@ final class TemplatesCache
             // If there are multiple elements, iterate through each element in $parts.
             foreach ( $parts as $key => $part ) {
                 // Check if the last two characters of the current element are equal to "</".
-                if ( substr( $part, -2 ) !== '</' )
+                if ( !str_ends_with( $part, '</' ) )
                     // If they are not equal, replace all newline characters in the current element with spaces.
                     $fileContent .= str_replace( "\n", ' ', $part );
 
@@ -271,7 +271,7 @@ final class TemplatesCache
             'fileContent' => substr( $fileContent, 5 ),
         ];
 
-        ca()->set( $cacheKey, j_encode( $result ) );
+        rca()->set( $cacheKey, j_encode( $result ) );
 
         return $result;
     }
