@@ -11,6 +11,7 @@ use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+
 use function array_key_exists;
 use function define;
 use function in_array;
@@ -40,7 +41,7 @@ final class Kernel
 
         $this->addTranslationFiles( __DIR__ . '/../lang' );
 
-        $this->addTemplatesDirectory( 'Platform/templates', 'PHP_SF\Templates' );
+        $this->addTemplatesDirectory( 'vendor/nations-original/php-simple-framework/templates', 'PHP_SF\Templates' );
 
         register_shutdown_function( function () {
             rp()->execute();

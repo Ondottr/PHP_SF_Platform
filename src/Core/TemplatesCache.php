@@ -51,7 +51,7 @@ final class TemplatesCache
     private function __construct()
     {
         foreach ( $this->getTemplatesDirectories() as $dir )
-            if ( file_exists( ( $path = __DIR__ . '/../../../' . $dir ) ) === false || is_dir( $path ) === false )
+            if ( file_exists( ( $path = project_dir() . '/' . $dir ) ) === false || is_dir( $path ) === false )
                 throw new InvalidConfigurationException( sprintf( 'Invalid template directory “%s”', $dir ) );
 
 
@@ -122,7 +122,7 @@ final class TemplatesCache
      */
     private static function setInstance(): void
     {
-        self::$instance = new self;
+        self::$instance = new self();
     }
 
     /**
@@ -158,8 +158,8 @@ final class TemplatesCache
             $newClassName = str_replace( $namespace, self::TEMPLATES_NAMESPACE, $className );
 
             $currentClassDirectory = sprintf(
-                '%s/../../../%s/%s.php',
-                __DIR__,
+                '%s/%s/%s.php',
+                project_dir(),
                 $directory,
                 str_replace( [ $namespace, '\\' ], [ '', '/' ], $className )
             );
@@ -222,13 +222,13 @@ final class TemplatesCache
             //$1 and $4 insert first white-space character found before/after attribute
             '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"(?=[\r\n\t >])~s' => '$1$2=$3',
             '/<!--.*?-->/' => '',
-            '/(\x20+|\t)/' => ' ', # Delete multispace (Without \n)
-            '/(["\'])\s+>/' => "$1>", # strip whitespaces between quotation ("') and end tags
-            '/=\s+(["\'])/' => "=$1", # strip whitespaces between = "'
-            '/ {2,}/' => ' ', # Shorten multiple whitespace sequences
-            '/>[^\S ]+/' => '>', # strip whitespaces after tags, except space
-            '/[^\S ]+</' => '<', # strip whitespaces before tags, except space
-            '/(\s)+/' => '\\1', # shorten multiple whitespace sequences
+            '/(\x20+|\t)/' => ' ',    # Delete multispace (Without \n)
+            '/(["\'])\s+>/' => '$1>', # strip whitespaces between quotation ("') and end tags
+            '/=\s+(["\'])/' => '=$1', # strip whitespaces between = "'
+            '/ {2,}/' => ' ',         # Shorten multiple whitespace sequences
+            '/>[^\S ]+/' => '>',      # strip whitespaces after tags, except space
+            '/[^\S ]+</' => '<',      # strip whitespaces before tags, except space
+            '/(\s)+/' => '\\1',       # shorten multiple whitespace sequences
         ];
         $fileContent = preg_replace( array_keys( $replace ), array_values( $replace ), $fileContent );
 
@@ -236,7 +236,7 @@ final class TemplatesCache
          * Replace all newline characters with spaces, but only if they are not within the <script> and </script> HTML tags.
          */
         // Split the input string $fileContent into an array of substrings using the string "script>" as the delimiter.
-        $parts = explode( "script>", $fileContent );
+        $parts = explode( 'script>', $fileContent );
         // Initialize $fileContent as an empty string.
         $fileContent = '';
 
@@ -247,7 +247,7 @@ final class TemplatesCache
                 // Check if the last two characters of the current element are equal to "</".
                 if ( substr( $part, -2 ) !== '</' )
                     // If they are not equal, replace all newline characters in the current element with spaces.
-                    $fileContent .= str_replace( "\n", " ", $part );
+                    $fileContent .= str_replace( "\n", ' ', $part );
 
                 else
                     // If the last two characters are equal to "</", concatenate the unmodified current element to $fileContent.
@@ -260,7 +260,7 @@ final class TemplatesCache
             }
         } else
             // If there is only one element in the $parts array, replace all newline characters in $parts[0] with spaces and store the result in $fileContent.
-            $fileContent = str_replace( "\n", " ", $parts[0] );
+            $fileContent = str_replace( "\n", ' ', $parts[0] );
 
         // remove optional ending tags {@link http://www.w3.org/TR/html5/syntax.html#syntax-tag-omission}
         $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
