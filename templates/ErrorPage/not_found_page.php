@@ -1,6 +1,5 @@
 <?php
 
-
 namespace PHP_SF\Templates\ErrorPage;
 
 use PHP_SF\System\Classes\Abstracts\AbstractView;

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://wiki.nations-original.com/en/framework
+    about: Full framework documentation
+  - name: Security vulnerability
+    url: https://github.com/Ondottr/PHP_SF_Platform/blob/master/SECURITY.md
+    about: Please report security issues by email, not as a public issue
+  - name: Template project issues
+    url: https://github.com/Ondottr/PHP_SF_Template/issues
+    about: Issues specific to the template project (not the framework core)
