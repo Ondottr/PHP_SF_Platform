@@ -79,7 +79,8 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
                 $pValue = $this->{$pName};
 
-                $query = qb()
+                $connectionName = strtolower( explode( '\\', static::class )[2] );
+                $query          = qb( $connectionName )
                     ->select( 'e' )
                     ->from( static::class, 'e' )
                     ->where( 'e.' . $pName . ' = :pValue' )
