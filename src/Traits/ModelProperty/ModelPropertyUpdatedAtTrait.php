@@ -3,11 +3,13 @@
 namespace PHP_SF\System\Traits\ModelProperty;
 
 use DateTimeInterface;
+use Doctrine\DBAL\Schema\DefaultExpression\CurrentTimestamp;
 use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Attributes\Validator\Constraints as Validate;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Core\DateTime;
 use Symfony\Component\Serializer\Attribute\Groups;
+
 use function is_string;
 
 trait ModelPropertyUpdatedAtTrait
@@ -15,7 +17,7 @@ trait ModelPropertyUpdatedAtTrait
 
     #[Validate\DateTime]
     #[TranslatablePropertyName( 'Updated At' )]
-    #[ORM\Column( name: 'updated_at', type: 'datetime', nullable: true, options: [ 'default' => 'CURRENT_TIMESTAMP' ] )]
+    #[ORM\Column( name: 'updated_at', type: 'datetime', nullable: true, options: [ 'default' => CurrentTimestamp::class ] )]
     #[Groups( [ 'read', 'write' ] )]
     protected string|DateTimeInterface|null $updatedAt = null;
 
