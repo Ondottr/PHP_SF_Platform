@@ -3,9 +3,6 @@
 namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Mapping\Column;
-use Doctrine\ORM\Mapping\JoinColumn;
-use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
@@ -15,9 +12,7 @@ use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
 use ReflectionProperty;
-use function array_key_exists;
-use function assert;
-use function count;
+use Symfony\Component\Validator\Validation;
 
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
@@ -34,7 +29,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final public static function new(): static
     {
-        return new static;
+        return new static();
     }
 
 
@@ -43,130 +38,24 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
         ca()->deleteByKeyPattern( '*doctrine_result_cache:*' );
     }
 
-    /**
-     * @throws NonUniqueResultException
-     *
-     * @return bool
-     */
     final public function validate(): bool
     {
-        $rc                   = new ReflectionClass( static::class );
-        $reflectionProperties = $rc->getProperties( ReflectionProperty::IS_PROTECTED );
+        $this->validationErrors = [];
 
-        $attributes = new ORM\Driver\AttributeReader();
+        $violations = Validation::createValidatorBuilder()
+            ->enableAttributeMapping()
+            ->getValidator()
+            ->validate( $this );
 
-        // Validate nullable and unique fields
-        foreach ( $reflectionProperties as $rp ) {
-            $pName = $rp->getName();
+        foreach ( $violations as $violation ) {
+            $pName = $violation->getPropertyPath();
 
-            $ap = $attributes->getPropertyAttribute( $rp, ORM\Column::class );
-            if ( $ap === null )
-                $ap = $attributes->getPropertyAttributeCollection( $rp, ORM\JoinColumn::class )->getIterator()->current();
-
-            if ( $ap !== null && $ap->unique !== false ) {
-                if ( isset( $this->{$pName} ) === false ) {
-                    if ( $ap->nullable === true )
-                        continue;
-
-
-                    $this->validationErrors[ $pName ] =
-                        _t( 'Field `%s` cannot be null.',
-                            _t( $this->getTranslatablePropertyName( $pName ) )
-                        );
-
-                    return false;
-                }
-
-                $pValue = $this->{$pName};
-
-                $connectionName = strtolower( explode( '\\', static::class )[2] );
-                $query          = qb( $connectionName )
-                    ->select( 'e' )
-                    ->from( static::class, 'e' )
-                    ->where( 'e.' . $pName . ' = :pValue' )
-                    ->setParameter( 'pValue', $pValue );
-
-                if ( isset( $this->id ) )
-                    $query->andWhere( 'e.id != :id' )
-                        ->setParameter( 'id', $this->id );
-
-                $entity = $query->getQuery()
-                    ->getOneOrNullResult();
-
-                if ( $entity instanceof ( static::class ) ) {
-                    $this->validationErrors[ $pName ] = _t(
-                        'Field `%s` with value "%s" already exists!',
-                        _t( $this->getTranslatablePropertyName( $pName ) ),
-                        $pValue
-                    );
-
-                    return false;
-                }
-            }
+            $this->validationErrors[ $pName ] = sprintf(
+                'Field `%s`: %s',
+                _t( $this->getTranslatablePropertyName( $pName ) ),
+                rtrim( (string) $violation->getMessage(), '.' )
+            );
         }
-
-        // Run validator constraints
-        foreach ( $reflectionProperties as $rp ) {
-            $pName = $rp->getName();
-            if ( $pName === 'id' )
-                continue;
-
-            if ( count( $reflectionAttributes = $rp->getAttributes() ) === 0 )
-                continue;
-
-
-            unset( $ap );
-            foreach ( $rp->getAttributes() as $ra )
-                if ( $ra->getName() === Column::class )
-                    $ap = $ra;
-
-            if ( isset( $ap ) === false )
-                foreach ( $rp->getAttributes() as $ra )
-                    if ( $ra->getName() === JoinColumn::class )
-                        $ap = $ra;
-
-
-            foreach ( $reflectionAttributes as $reflectionAttribute ) {
-                $validationConstraint = new ( $reflectionAttribute->getName() )(
-                    ...$reflectionAttribute->getArguments()
-                );
-
-                if ( isset( $this->$pName ) ) {
-                    if ( $validationConstraint instanceof AbstractConstraint === false )
-                        continue;
-
-                    $validationConstraint->setPropertyName( $pName );
-
-                    $validator = new ( $reflectionAttribute->getName() . 'Validator' )(
-                        $this->$pName, $validationConstraint, $this
-                    );
-                    assert( $validator instanceof AbstractConstraintValidator );
-
-                    $validator->validate();
-                    if ( ( $err = $validator->getError() ) !== false )
-                        $this->validationErrors[ $pName ] = $err;
-
-                } elseif ( $ap !== null ) {
-                    if ( array_key_exists( 'nullable', $ap->getArguments() ) ) {
-                        if ( $ap->getArguments()['nullable'] === false )
-                            $this->validationErrors[ $pName ] =
-                                _t(
-                                    'Field `%s` cannot be null.',
-                                    _t( $this->getTranslatablePropertyName( $pName ) )
-                                );
-
-                    } else
-                        $this->validationErrors[ $pName ] =
-                            _t(
-                                'Field `%s` cannot be null.',
-                                _t( $this->getTranslatablePropertyName( $pName ) )
-                            );
-
-                    return $this->getValidationErrors();
-                }
-            }
-        }
-
 
         return empty( $this->validationErrors );
     }
