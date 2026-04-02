@@ -30,7 +30,8 @@ abstract class AbstractController
         if ( TEMPLATES_CACHE_ENABLED ) {
             $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
             if ( $result !== false ) {
-                eval( $result['fileContent'] );
+                if ( class_exists( $result['className'], false ) === false )
+                    eval( $result['fileContent'] );
                 $view = $result['className'];
             }
         }
