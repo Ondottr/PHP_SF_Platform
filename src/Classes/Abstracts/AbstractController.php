@@ -20,7 +20,7 @@ abstract class AbstractController
     private string $generatedUrl;
 
 
-    public function __construct( protected Request|null $request ) {}
+    public function __construct( protected Request|null $request = null ) {}
 
 
     final protected function render( string $view, array $data = [], string $pageTitle = null ): Response

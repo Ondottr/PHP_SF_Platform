@@ -8,12 +8,10 @@ use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
 use PHP_SF\System\Core\DateTime;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 trait ModelPropertyCreatedAtTrait
 {
 
-    #[Assert\DateTime]
     #[TranslatablePropertyName('Created At')]
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false, options: ['default' => new CurrentTimestamp()])]
     #[Groups(['read'])]
