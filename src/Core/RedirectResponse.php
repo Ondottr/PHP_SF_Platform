@@ -33,7 +33,7 @@ final class RedirectResponse extends Response
 
     public function __construct(
         #[Immutable] private readonly string $targetUrl,
-        #[Immutable] private readonly float|null $requestDataId = null
+        #[Immutable] private readonly string|null $requestDataId = null
     ) {
         parent::__construct();
     }
@@ -109,7 +109,7 @@ final class RedirectResponse extends Response
         return $this->targetUrl;
     }
 
-    public function getRequestDataId(): float|null
+    public function getRequestDataId(): string|null
     {
         return $this->requestDataId;
     }

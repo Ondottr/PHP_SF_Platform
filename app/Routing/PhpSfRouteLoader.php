@@ -44,7 +44,11 @@ final class PhpSfRouteLoader extends Loader
                 $routeName,
                 ( new Route( $route['url'] ) )
                     ->setMethods( [ $route['httpMethod'] ] )
-                    ->addDefaults( [ '_controller' => $route['class'] . '::' . $route['method'] ] )
+                    ->addDefaults( [
+                        '_controller'        => $route['class'] . '::' . $route['method'],
+                        '_php_sf_url'        => $route['url'],
+                        '_php_sf_middleware' => $route['middleware'] ?? [],
+                    ] )
             );
         }
 

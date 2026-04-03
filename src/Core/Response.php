@@ -27,6 +27,38 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     }
 
     /**
+     * Renders the full page (header + view + footer) into a string and stores it
+     * via {@see setContent()} so that Symfony's KernelBrowser can read it in tests.
+     * Unlike {@see send()}, this method does NOT flush the output buffer or call exit().
+     */
+    public function captureContent( string $routeUrl ): void
+    {
+        ob_start();
+
+        try {
+            $isApi = str_starts_with( $routeUrl, '/api/' );
+
+            if ( !$isApi )
+                ( new ( Kernel::getHeaderTemplateClassName() )( $this->dataFromController ) )->show();
+
+            if ( $this->view instanceof AbstractView ) {
+                $array = explode( '\\', $this->view::class );
+                echo '<div class="' . array_pop( $array ) . '">';
+                $this->view->show();
+                echo '</div>';
+            }
+
+            if ( !$isApi )
+                ( new ( Kernel::getFooterTemplateClassName() )( $this->dataFromController ) )->show();
+
+            $this->setContent( (string) ob_get_clean() );
+        } catch ( \Throwable $e ) {
+            ob_end_clean();
+            throw $e;
+        }
+    }
+
+    /**
      * @noinspection PhpMissingParentCallCommonInspection
      * @noinspection OffsetOperationsInspection
      * @noinspection MissingParentCallInspection

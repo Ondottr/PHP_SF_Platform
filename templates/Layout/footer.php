@@ -38,7 +38,7 @@ final class footer extends AbstractView { public function show(): void { ?>
         </div>
       </div>
 
-      <?php if ( DEV_MODE === true ) : ?>
+      <?php if ( DEV_MODE === true && env('APP_ENV') !== 'test' ) : ?>
         <div class="row">
           <div class="col-6">
             <?php dump(Router::$currentRoute, AbstractEventsDispatcher::getDispatchedListeners()) ?>
