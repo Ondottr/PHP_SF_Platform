@@ -35,22 +35,27 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     {
         ob_start();
 
-        $isApi = str_starts_with( $routeUrl, '/api/' );
+        try {
+            $isApi = str_starts_with( $routeUrl, '/api/' );
 
-        if ( !$isApi )
-            ( new ( Kernel::getHeaderTemplateClassName() )( $this->dataFromController ) )->show();
+            if ( !$isApi )
+                ( new ( Kernel::getHeaderTemplateClassName() )( $this->dataFromController ) )->show();
 
-        if ( $this->view instanceof AbstractView ) {
-            $array = explode( '\\', $this->view::class );
-            echo '<div class="' . array_pop( $array ) . '">';
-            $this->view->show();
-            echo '</div>';
+            if ( $this->view instanceof AbstractView ) {
+                $array = explode( '\\', $this->view::class );
+                echo '<div class="' . array_pop( $array ) . '">';
+                $this->view->show();
+                echo '</div>';
+            }
+
+            if ( !$isApi )
+                ( new ( Kernel::getFooterTemplateClassName() )( $this->dataFromController ) )->show();
+
+            $this->setContent( (string) ob_get_clean() );
+        } catch ( \Throwable $e ) {
+            ob_end_clean();
+            throw $e;
         }
-
-        if ( !$isApi )
-            ( new ( Kernel::getFooterTemplateClassName() )( $this->dataFromController ) )->show();
-
-        $this->setContent( (string) ob_get_clean() );
     }
 
     /**

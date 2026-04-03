@@ -147,7 +147,7 @@ trait RedirectTrait
     }
 
 
-    private function generateData( string $url, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): float
+    private function generateData( string $url, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): string
     {
         $get        ??= [];
         $post       ??= [];
@@ -155,7 +155,7 @@ trait RedirectTrait
         $messages   ??= [];
         $formData   ??= [];
         $hashedUrl  = hash( 'xxh3', $url );
-        $redirectId = hrtime( true );
+        $redirectId = (string)hrtime( true );
 
         $this->validateParams( $get, $post );
         $this->validateErrors( $errors );
