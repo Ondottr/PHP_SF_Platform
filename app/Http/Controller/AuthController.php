@@ -53,16 +53,16 @@ class AuthController extends AbstractController
 
 
         if ( empty( $email ) || empty( $password ) )
-            $errors[] = _t( 'email_and_password_cannot_be_empty' );
+            $errors[] = _t( 'auth.login_form.empty_credentials_error' );
 
         if ( ( $user = $this->userRepository->findOneBy( [ 'email' => $email ] ) ) === null )
             if ( ( $user = $this->userRepository->findOneBy( [ 'login' => $email ] ) ) === null )
-                $errors[] = _t( 'User with this email not found.' );
+                $errors[] = _t( 'auth.login_form.user_not_found_error' );
 
 
         if ( $user !== null )
             if ( password_verify( $password, $user->getPassword() ) === false )
-                $errors[] = _t( 'wrong_password' );
+                $errors[] = _t( 'auth.login_form.wrong_password_error' );
 
 
         if ( isset( $errors ) )
@@ -97,19 +97,19 @@ class AuthController extends AbstractController
         $accept   = trim( htmlspecialchars( $this->request->request->get( 'accept', '' ) ) );
 
         if ( empty( $password ) || empty( $email ) )
-            $errors[] = _t( 'email_and_password_cannot_be_empty' );
+            $errors[] = _t( 'auth.login_form.empty_credentials_error' );
 
         if ( ( $passwordLength = strlen( $password ) ) < 6 || $passwordLength > 50 )
-            $errors[] = _t( 'Field `%s` should be between `%s` and `%s`!', 'password', 6, 50 );
+            $errors[] = _t( 'auth.register_form.password_length_error', [ 'min' => 6, 'max' => 50 ] );
 
         if ( $accept !== 'on' )
-            $errors[] = _t( 'accept_checkbox_error' );
+            $errors[] = _t( 'auth.register_form.accept_terms_error' );
 
         if ( $this->userRepository->findOneBy( [ 'email' => $email ] ) !== null )
-            $errors[] = _t( 'user_email_property_with_this_value_already_exists' );
+            $errors[] = _t( 'auth.register_form.email_taken_error' );
 
         if ( $this->userRepository->findOneBy( [ 'login' => $login ] ) !== null )
-            $errors[] = _t( 'user_login_property_with_this_value_already_exists' );
+            $errors[] = _t( 'auth.register_form.login_taken_error' );
 
 
         if ( isset( $errors ) )

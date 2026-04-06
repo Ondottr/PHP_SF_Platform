@@ -1,0 +1,100 @@
+# Framework translations — English
+# ICU message format: use {param} for placeholders
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+auth.login_form.email_label: 'E-mail'
+auth.login_form.email_placeholder: 'E-mail'
+auth.login_form.submit_button: 'Sign in'
+auth.login_form.forgot_password: 'Forgot password?'
+auth.login_form.empty_credentials_error: 'Email and password cannot be empty.'
+auth.login_form.user_not_found_error: 'User with this email not found.'
+auth.login_form.wrong_password_error: 'Wrong password.'
+
+auth.register_form.password_length_error: 'Password must be between {min} and {max} characters.'
+auth.register_form.accept_terms_error: 'You must accept the terms and conditions.'
+auth.register_form.email_taken_error: 'A user with this email already exists.'
+auth.register_form.login_taken_error: 'A user with this login already exists.'
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+settings.language_form.select_label: 'Select Language'
+
+# ── Common — buttons ──────────────────────────────────────────────────────────
+
+common.buttons.change: 'Change'
+
+# ── Common — errors ───────────────────────────────────────────────────────────
+
+common.errors.access_denied: 'Access Denied!'
+common.errors.generic: 'Something went wrong, please try again.'
+
+# ── Common — field labels (used in forms and validation messages) ──────────────
+
+common.fields.email: 'E-mail'
+common.fields.name: 'Name'
+common.fields.password: 'Password'
+common.fields.user_group: 'User Group'
+common.fields.created_at: 'Created At'
+common.fields.updated_at: 'Updated At'
+
+# ── Common — validation ───────────────────────────────────────────────────────
+
+common.validation.field_too_long: 'Field {field} is too long. It should have {max} character or less.'
+common.validation.field_too_short: 'Field {field} is too short. It should have {min} character or more.'
+common.validation.field_null: 'Field {field} cannot be null.'
+common.validation.field_invalid_email: 'Field {field} is not a valid email address.'
+common.validation.field_invalid_numbers: 'Field {field} must be one of these numbers: ({values})'
+common.validation.field_between: 'Field {field} should be between {min} and {max}!'
+
+# ── Common — time ─────────────────────────────────────────────────────────────
+
+common.time.years: >-
+  {count, plural,
+    one   {# yr}
+    few   {# yrs}
+    many  {# yrs}
+    other {# yrs}
+  }
+
+common.time.months: >-
+  {count, plural,
+    one   {# mo}
+    few   {# mos}
+    many  {# mos}
+    other {# mos}
+  }
+
+common.time.days: >-
+  {count, plural,
+    one   {# d}
+    few   {# d}
+    many  {# d}
+    other {# d}
+  }
+
+common.time.hours: >-
+  {count, plural,
+    one   {# hr}
+    few   {# hrs}
+    many  {# hrs}
+    other {# hrs}
+  }
+
+common.time.minutes: >-
+  {count, plural,
+    one   {# min}
+    few   {# min}
+    many  {# min}
+    other {# min}
+  }
+
+common.time.seconds: >-
+  {count, plural,
+    one   {# sec}
+    few   {# sec}
+    many  {# sec}
+    other {# sec}
+  }
+
+common.time.moment_ago: 'a moment ago'

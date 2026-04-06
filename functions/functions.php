@@ -1,9 +1,9 @@
 <?php declare( strict_types=1 );
 
 use App\Kernel;
-use PHP_SF\System\Interface\UserInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
+use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Deprecated;
 use JetBrains\PhpStorm\ExpectedValues;
 use PHP_SF\Framework\Http\Middleware\auth;
@@ -16,6 +16,7 @@ use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\Translator;
 use PHP_SF\System\Database\Redis;
+use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Router;
 use Predis\Client;
 use Predis\Pipeline\Pipeline;
@@ -234,15 +235,150 @@ function routeLink( string $routeName, array $pathParams = [], array $queryParam
     }
 }
 
+/**
+ * Translates a message key to the **current session locale** using Symfony's translator
+ * with the `messages+intl-icu` domain (ICU MessageFormat).
+ *
+ * **Key naming convention:** semantic dot-notation in 3–4 parts:
+ * ```
+ * <domain>.<feature>.<element>
+ * ```
+ *
+ * **Simple translation:**
+ * ```php
+ * _t( 'auth.login_form.title' )              // → 'Sign in'
+ * _t( 'common.buttons.cancel' )              // → 'Cancel'
+ * ```
+ *
+ * **Named ICU parameters** (`{param}` syntax — never positional `%s`):
+ * ```php
+ * _t( 'auth.register_form.welcome', [ 'name' => $user->getLogin() ] )
+ * // YAML: 'auth.register_form.welcome': 'Welcome, {name}!'
+ * ```
+ *
+ * **Pluralization** (`{count, plural, ...}`):
+ * ```php
+ * _t( 'notifications.unread_count', [ 'count' => 5 ] )
+ * // YAML:
+ * // notifications.unread_count: >-
+ * //   {count, plural,
+ * //     =0    {No notifications}
+ * //     one   {# notification}
+ * //     few   {# notifications}
+ * //     many  {# notifications}
+ * //     other {# notifications}
+ * //   }
+ * ```
+ *
+ * **Gender / declension** (`{field, select, ...}`):
+ * ```php
+ * _t( 'user.greeting', [ 'gender' => $user->getGender(), 'name' => $user->getName() ] )
+ * // YAML:
+ * // user.greeting: >-
+ * //   {gender, select,
+ * //     male   {Welcome, Mr. {name}}
+ * //     female {Welcome, Ms. {name}}
+ * //     other  {Welcome, {name}}
+ * //   }
+ * ```
+ *
+ * Output is wrapped in {@link nl2br()} — newlines in translations become `<br>` tags.
+ *
+ * Falls back to the raw `$key` string if no translation is found (no exception thrown).
+ *
+ * @param non-empty-string                                        $key        Translation key in dot-notation (e.g. `'auth.login_form.title'`)
+ * @param array<non-empty-string, string|int|float|\DateTimeInterface> $parameters Named ICU parameters keyed by placeholder name (e.g. `['name' => 'John', 'count' => 5]`)
+ *
+ * @return string Translated and nl2br-wrapped string
+ *
+ * @see _tt() To translate to a specific locale regardless of current session
+ * @see \PHP_SF\System\Core\Lang::getCurrentLocale()
+ * @see \PHP_SF\System\Core\Lang::setCurrentLocale()
+ */
+function _t( string $key,
+    #[ArrayShape( [
+        // Keys are dynamic — they match the {placeholder} names defined in the translation YAML.
+        // The types below cover all values accepted by PHP's IntlMessageFormatter:
 
-function _t( string $stringName, ...$values ): string
+        // --- ICU plural rule selector ({count, plural, one {...} other {...}}) ---
+        'count'  => 'int',
+
+        // --- ICU select/gender selector ({gender, select, male {...} female {...} other {...}}) ---
+        'gender' => 'string',
+
+        // --- ICU date/time formatting ({date, date, long}) ---
+        'date'   => DateTimeInterface::class,
+
+        // --- Generic named substitution ({name}, {field}, {value}, …) ---
+        'string' => 'string|int|float',
+    ] )]
+    array $parameters = []
+): string
 {
-    return nl2br( Translator::getInstance()->translate( $stringName, ...$values ) );
+    return nl2br( Translator::getInstance()->translate( $key, $parameters ) );
 }
 
-function _tt( string $stringName, string $translateTo, ...$values ): string
+/**
+ * Translates a message key to a **specific locale** using Symfony's translator
+ * with the `messages+intl-icu` domain (ICU MessageFormat).
+ *
+ * Identical to {@link _t()} in every way except the locale is explicit rather than
+ * read from the current session. Useful for generating content in the recipient's
+ * language (e.g. emails, notifications) regardless of the current user's locale.
+ *
+ * **Simple translation to a specific locale:**
+ * ```php
+ * _tt( 'common.buttons.confirm', 'pl' )      // → Polish translation
+ * _tt( 'auth.login_form.title', 'uk' )       // → Ukrainian translation
+ * ```
+ *
+ * **With named ICU parameters:**
+ * ```php
+ * _tt( 'notifications.unread_count', $recipient->getLocale(), [ 'count' => 3 ] )
+ * ```
+ *
+ * **Typical use case — email subject in recipient's language:**
+ * ```php
+ * $subject = _tt( 'mail.new_message.subject', $recipient->getLocale(), [
+ *     'sender' => $sender->getName(),
+ * ] );
+ * ```
+ *
+ * Output is wrapped in {@link nl2br()} — newlines in translations become `<br>` tags.
+ *
+ * Falls back to the raw `$key` string if no translation is found for `$locale`.
+ *
+ * @param non-empty-string                                             $key        Translation key in dot-notation (e.g. `'mail.new_message.subject'`)
+ * @param non-empty-string                                             $locale     Target locale key — must be a value present in {@link LANGUAGES_LIST} (e.g. `'en'`, `'pl'`, `'uk'`)
+ * @param array<non-empty-string, string|int|float|\DateTimeInterface> $parameters Named ICU parameters keyed by placeholder name
+ *
+ * @return string Translated and nl2br-wrapped string
+ *
+ * @see _t() To translate to the current session locale
+ * @see \PHP_SF\System\Core\Lang::getCurrentLocale()
+ * @see \PHP_SF\System\Classes\Helpers\Locale For all available locale keys
+ */
+function _tt( string $key, string $locale,
+    #[ArrayShape( [
+        // Keys are dynamic — they match the {placeholder} names defined in the translation YAML.
+        // The types below cover all values accepted by PHP's IntlMessageFormatter:
+
+        // --- ICU plural rule selector ({count, plural, one {...} other {...}}) ---
+        'count'  => 'int',
+
+        // --- ICU select/gender selector ({gender, select, male {...} female {...} other {...}}) ---
+        'gender' => 'string',
+
+        // --- ICU date/time formatting ({date, date, long}) ---
+        'date'   => DateTimeInterface::class,
+
+        // --- Generic named substitution ({name}, {field}, {value}, …) ---
+        'string' => 'string|int|float',
+    ] )]
+    array $parameters = []
+): string
 {
-    return nl2br( Translator::getInstance()->translateTo( $stringName, $translateTo, ...$values ) );
+    return nl2br( Translator::getInstance()->translateTo( $key, $locale, $parameters ) );
 }
 
 

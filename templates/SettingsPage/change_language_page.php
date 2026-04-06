@@ -14,7 +14,7 @@ final class change_language_page extends AbstractView { public function show(): 
 
   <form method="POST">
 
-    <label for="language"> <?= _t( 'Select Language' ) ?> <br /><br />
+    <label for="language"> <?= _t( 'settings.language_form.select_label' ) ?> <br /><br />
       <select name="lang" id="language">
         <?php foreach ( LANGUAGES_LIST as $lang ) : ?>
           <option value="<?= $lang ?>"><?= Locale::getLocaleName( $lang ) ?></option>
@@ -24,7 +24,7 @@ final class change_language_page extends AbstractView { public function show(): 
 
     <br /><br />
 
-    <input type="submit" value="<?= _t( 'Change' ) ?>">
+    <input type="submit" value="<?= _t( 'common.buttons.change' ) ?>">
 
   </form>
 

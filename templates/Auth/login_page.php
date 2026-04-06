@@ -18,8 +18,8 @@ final class login_page extends AbstractView { public function show(): void { ?>
         <tbody>
 
         <tr>
-          <td><?= _t( 'E-mail' ) ?>:</td>
-          <td><?php formInput( 'E-mail', [ 6, 50 ], _t( 'E-mail' ) ) ?></td>
+          <td><?= _t( 'auth.login_form.email_label' ) ?>:</td>
+          <td><?php input( 'E-mail', [ 6, 50 ], _t( 'auth.login_form.email_placeholder' ) ) ?></td>
         </tr>
 
         <tr>
@@ -28,8 +28,8 @@ final class login_page extends AbstractView { public function show(): void { ?>
         </tr>
 
         <tr>
-          <td><input type="submit" value="<?= _t( 'Sign In' ) ?>"></td>
-          <td><a href="<?= routeLink( 'password_recovery' ) ?>">Forgot password?</a></td>
+          <td><input type="submit" value="<?= _t( 'auth.login_form.submit_button' ) ?>"></td>
+          <td><a href="<?= routeLink( 'password_recovery' ) ?>"><?= _t( 'auth.login_form.forgot_password' ) ?></a></td>
         </tr>
 
         </tbody>

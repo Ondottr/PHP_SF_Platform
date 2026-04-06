@@ -192,13 +192,13 @@ Global helper functions cover the most common framework operations without requi
 | `rc()`                                   | Get the Redis client                            |
 | `s()`                                    | Get the current Session                         |
 | `routeLink(string $name, array $params)` | Generate a URL from a named route               |
-| `_t(string $key)`                        | Translate a string                              |
+| `_t(string $key, array $parameters = [])` | Translate a string (ICU `{param}` placeholders) |
 
 Full reference: [Helper Functions](https://wiki.nations-original.com/framework/supporting/helpers).
 
 ### Translation
 
-Translation files live in `lang/` and are loaded during kernel boot. Use `_t('key')` anywhere in templates or controllers.
+Translation files are YAML in `translations/` (app) and `Platform/translations/` (framework), using ICU `{param}` syntax. Use `_t('key')` or `_t('key', ['param' => $value])` anywhere in templates or controllers.
 
 Full reference: [Translation](https://wiki.nations-original.com/framework/supporting/translation).
 

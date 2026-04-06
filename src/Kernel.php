@@ -1,10 +1,11 @@
-<?php declare( strict_types=1 );
+<?php
+declare(strict_types=1);
 
 namespace PHP_SF\System;
 
+use JetBrains\PhpStorm\Deprecated;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\TemplatesCache;
-use PHP_SF\System\Core\Translator;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
 use ReflectionClass;
@@ -25,45 +26,54 @@ final class Kernel
 
     public function __construct()
     {
-        require_once __DIR__ . '/../functions/functions.php';
+        require_once __DIR__.'/../functions/functions.php';
 
-        if ( DEV_MODE === true ) {
-            if ( function_exists( 'apcu_clear_cache' ) )
+        if (DEV_MODE === true) {
+            if (function_exists('apcu_clear_cache')) {
                 apcu_clear_cache();
+            }
 
-            if ( PHP_SAPI !== 'cli' )
+            if (PHP_SAPI !== 'cli') {
                 Debug::enable();
+            }
         }
 
         $this->setDefaultLocale();
 
-        $this->addControllers( __DIR__ . '/../app/Http/Controller' );
+        $this->addControllers(__DIR__.'/../app/Http/Controller');
 
-        $this->addTranslationFiles( __DIR__ . '/../lang' );
+        $this->addTemplatesDirectory('vendor/nations-original/php-simple-framework/templates', 'PHP_SF\Templates');
 
-        $this->addTemplatesDirectory( 'vendor/nations-original/php-simple-framework/templates', 'PHP_SF\Templates' );
-
-        register_shutdown_function( function () {
+        register_shutdown_function(function () {
             rp()->execute();
-        } );
+        });
     }
 
     public function addControllers(string $path): self
     {
-        if ( file_exists($path) === false )
+        if (file_exists($path) === false) {
             throw new DirectoryNotFoundException("Controllers directory '$path' not found.");
+        }
 
         Router::addControllersDirectory($path);
 
         return $this;
     }
 
+    /** @deprecated No-op. Translation paths are now configured in config/packages/translation.yaml. */
+    #[Deprecated(
+        reason: 'No-op. Translation paths are now configured in config/packages/translation.yaml.',
+        replacement: 'No direct replacement, translation paths should be configured in config/packages/translation.yaml.'
+    )]
     public function addTranslationFiles(string $path): self
     {
-        if (file_exists($path) === false)
-            throw new DirectoryNotFoundException( "Translation directory '$path' could not be found." );
-
-        Translator::addTranslationDirectory($path);
+        trigger_deprecation(
+            'php-simple-framework',
+            '1.1.9',
+            'The method %s is deprecated since version 1.1.9 and will be removed in the next major release. '.
+            'Translation paths are now configured in config/packages/translation.yaml.',
+            __METHOD__
+        );
 
         return $this;
     }
@@ -90,7 +100,7 @@ final class Kernel
     {
         if (empty(self::$applicationUserClassName)) {
             throw new InvalidConfigurationException(
-                'Application user class name not specified, you need to specify it here: ' .
+                'Application user class name not specified, you need to specify it here: '.
                 '`Kernel->setApplicationUserClassName(User::class)`'
             );
         }
@@ -100,17 +110,18 @@ final class Kernel
 
     public function setApplicationUserClassName(string $className): self
     {
-        if (class_exists($className) === false)
-            throw new InvalidConfigurationException(sprintf( "User Class '%s' does not exist", $className));
+        if (class_exists($className) === false) {
+            throw new InvalidConfigurationException(sprintf("User Class '%s' does not exist", $className));
+        }
 
         self::$applicationUserClassName = $className;
 
         return $this;
     }
 
-    public function setHeaderTemplateClassName( string $headerTemplateClassName ): self
+    public function setHeaderTemplateClassName(string $headerTemplateClassName): self
     {
-        if ( class_exists( $headerTemplateClassName ) === false ) {
+        if (class_exists($headerTemplateClassName) === false) {
             throw new InvalidConfigurationException(
                 "Header template class '$headerTemplateClassName' does not exist"
             );
@@ -121,9 +132,9 @@ final class Kernel
         return $this;
     }
 
-    public function setFooterTemplateClassName( string $footerTemplateClassName ): self
+    public function setFooterTemplateClassName(string $footerTemplateClassName): self
     {
-        if ( class_exists( $footerTemplateClassName ) === false ) {
+        if (class_exists($footerTemplateClassName) === false) {
             throw new InvalidConfigurationException(
                 "Footer template class '$footerTemplateClassName' does not exist"
             );
@@ -137,32 +148,33 @@ final class Kernel
 
     private function setDefaultLocale(): void
     {
-        if ( s()->has( 'locale' ) ) {
-            define( 'DEFAULT_LOCALE', s()->get( 'locale' ) );
+        if (s()->has('locale')) {
+            define('DEFAULT_LOCALE', s()->get('locale'));
 
             return;
         }
 
         /** @noinspection GlobalVariableUsageInspection */
-        if ( array_key_exists( 'HTTP_ACCEPT_LANGUAGE', $_SERVER ) === false ) {
-            define( 'DEFAULT_LOCALE', Locale::getLocaleKey( Locale::en ) );
+        if (array_key_exists('HTTP_ACCEPT_LANGUAGE', $_SERVER) === false) {
+            define('DEFAULT_LOCALE', Locale::getLocaleKey(Locale::en));
 
             return;
         }
 
-        $rc = new ReflectionClass( Locale::class );
+        $rc = new ReflectionClass(Locale::class);
         /** @noinspection GlobalVariableUsageInspection */
-        $acceptLanguages = explode( ',', $_SERVER['HTTP_ACCEPT_LANGUAGE'] );
+        $acceptLanguages = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
 
-        foreach ( $acceptLanguages as $langCode )
-            if ( $rc->hasConstant( $langCode ) && in_array( $langCode, LANGUAGES_LIST, true ) ) {
-                define( 'DEFAULT_LOCALE', Locale::getLocaleKey( $rc->getConstant( $langCode ) ) );
-                s()->set( 'locale', DEFAULT_LOCALE );
+        foreach ($acceptLanguages as $langCode) {
+            if ($rc->hasConstant($langCode) && in_array($langCode, LANGUAGES_LIST, true)) {
+                define('DEFAULT_LOCALE', Locale::getLocaleKey($rc->getConstant($langCode)));
+                s()->set('locale', DEFAULT_LOCALE);
 
                 return;
             }
+        }
 
-        define( 'DEFAULT_LOCALE', LANGUAGES_LIST[0] );
+        define('DEFAULT_LOCALE', LANGUAGES_LIST[0]);
     }
 
 }

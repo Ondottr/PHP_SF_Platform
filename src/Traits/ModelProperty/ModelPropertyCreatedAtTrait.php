@@ -12,7 +12,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 trait ModelPropertyCreatedAtTrait
 {
 
-    #[TranslatablePropertyName('Created At')]
+    #[TranslatablePropertyName('common.fields.created_at')]
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false, options: ['default' => new CurrentTimestamp()])]
     #[Groups(['read'])]
     protected string|DateTimeInterface|null $createdAt;

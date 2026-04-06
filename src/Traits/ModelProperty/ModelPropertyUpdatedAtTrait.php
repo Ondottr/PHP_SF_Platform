@@ -12,7 +12,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 trait ModelPropertyUpdatedAtTrait
 {
 
-    #[TranslatablePropertyName('Updated At')]
+    #[TranslatablePropertyName('common.fields.updated_at')]
     #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: true, options: ['default' => new CurrentTimestamp()])]
     #[Groups(['read', 'write'])]
     protected string|DateTimeInterface|null $updatedAt = null;

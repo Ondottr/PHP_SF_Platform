@@ -22,7 +22,7 @@ final class register_page extends AbstractView { public function show(): void { 
       <div class="line"></div>
 
       <label for="email">
-        <?= _t( 'E-mail' ) ?>: [6-50] <?php formInput( 'email', [ 6, 50 ], 'email' ) ?><br />
+        <?= _t( 'common.fields.email' ) ?>: [6-50] <?php formInput( 'email', [ 6, 50 ], 'email' ) ?><br />
         Enter your email address
       </label>
 
