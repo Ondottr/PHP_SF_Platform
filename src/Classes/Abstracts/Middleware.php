@@ -79,6 +79,7 @@ abstract class Middleware implements EventSubscriberInterface
             try {
                 $listener->invoke( $eventListener, ...$parameters );
             } catch ( ArgumentCountError $e ) {
+                $availableArguments = [];
                 foreach ( $args as $argument )
                     $availableArguments[] = $argument::class;
 
