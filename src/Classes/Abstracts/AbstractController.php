@@ -27,14 +27,8 @@ abstract class AbstractController
     {
         s()->set( 'page_title', $pageTitle ?? APPLICATION_NAME );
 
-        if ( TEMPLATES_CACHE_ENABLED ) {
-            $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
-            if ( $result !== false ) {
-                if ( class_exists( $result['className'], false ) === false )
-                    eval( $result['fileContent'] );
-                $view = $result['className'];
-            }
-        }
+        if ( TEMPLATES_CACHE_ENABLED )
+            $view = TemplatesCache::getInstance()->getCachedTemplateClass( $view ) ?: $view;
 
         $view = new $view( $data );
 
