@@ -2,9 +2,7 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-use Exception;
-
-final class UndefinedLocaleKeyException extends Exception
+final class UndefinedLocaleKeyException extends FrameworkException
 {
     public function __construct( $localeKey )
     {

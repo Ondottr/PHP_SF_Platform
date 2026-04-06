@@ -2,10 +2,9 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-use Exception;
 use Throwable;
 
-class RouteParameterException extends Exception
+class RouteParameterException extends FrameworkException
 {
 
     public function __construct( $message = "", $code = 0, Throwable|null $previous = null )

@@ -225,18 +225,14 @@ class Router
 
     protected static function setRoute( object $data ): void
     {
-        // Detect old-style {$param} and normalize to Symfony-style {param}
-        if ( preg_match( '/\{\$/', $data->url ) ) {
-            trigger_error(
+        // Reject old-style {$param} syntax — use Symfony-style {param} instead
+        if ( preg_match( '/\{\$/', $data->url ) )
+            throw new RouteParameterException(
                 sprintf(
                     'Route "%s" uses deprecated {$param} URL parameter syntax. Use Symfony-style {param} instead.',
                     $data->url
-                ),
-                E_USER_DEPRECATED
+                )
             );
-            // Normalize: {$id} -> {id}
-            $data->url = preg_replace( '/\{\$([^}]+)}/', '{$1}', $data->url );
-        }
 
         // Extract params - now always in {param} format
         preg_match_all( '/\{([^}]+)}/', $data->url, $matches );
@@ -637,7 +633,7 @@ class Router
                 static::$routeMethodResponse->send();
             } catch ( Throwable $e ) {
                 ob_end_clean();
-                throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
+                throw new ViewException( $e->getMessage(), $e->getCode(), $e );
             }
         }
 
