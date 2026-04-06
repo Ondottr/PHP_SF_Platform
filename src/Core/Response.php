@@ -66,17 +66,10 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     #[NoReturn] public function send(bool $flush = true): static
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
-            if ( TEMPLATES_CACHE_ENABLED ) {
-                $result = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() );
-                if ( $result !== false ) {
-                    if ( class_exists( $result['className'], false ) === false )
-                        eval( $result['fileContent'] );
-                    $headerClassName = $result['className'];
-                }
-            }
-
-            if ( isset( $headerClassName ) === false )
-                $headerClassName = Kernel::getHeaderTemplateClassName();
+            $headerClassName = ( TEMPLATES_CACHE_ENABLED
+                ? TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getHeaderTemplateClassName() )
+                : false
+            ) ?: Kernel::getHeaderTemplateClassName();
 
             ( new $headerClassName( $this->dataFromController ) )->show();
 
@@ -93,17 +86,10 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         }
 
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
-            if ( TEMPLATES_CACHE_ENABLED ) {
-                $result = TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() );
-                if ( $result !== false ) {
-                    if ( class_exists( $result['className'], false ) === false )
-                        eval( $result['fileContent'] );
-                    $footerClassName = $result['className'];
-                }
-            }
-
-            if ( isset( $footerClassName ) === false )
-                $footerClassName = Kernel::getFooterTemplateClassName();
+            $footerClassName = ( TEMPLATES_CACHE_ENABLED
+                ? TemplatesCache::getInstance()->getCachedTemplateClass( Kernel::getFooterTemplateClassName() )
+                : false
+            ) ?: Kernel::getFooterTemplateClassName();
 
             ( new $footerClassName( $this->dataFromController ) )->show();
         }

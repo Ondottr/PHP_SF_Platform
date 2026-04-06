@@ -2,12 +2,11 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use InvalidArgumentException;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\HeaderComponents\head;
-
-use function array_key_exists;
 
 abstract class AbstractView
 {
@@ -29,14 +28,8 @@ abstract class AbstractView
 
     final protected function import( string $view, array $data = [], bool $htmlClassTagEnabled = true ): void
     {
-        if ( TEMPLATES_CACHE_ENABLED ) {
-            $result = TemplatesCache::getInstance()->getCachedTemplateClass( $view );
-            if ( $result !== false ) {
-                if ( class_exists( $result['className'], false ) === false )
-                    eval( $result['fileContent'] );
-                $view = $result['className'];
-            }
-        }
+        if ( TEMPLATES_CACHE_ENABLED )
+            $view = TemplatesCache::getInstance()->getCachedTemplateClass( $view ) ?: $view;
 
         $class = new $view( [ ...$this->data, ...$data ], $htmlClassTagEnabled );
 
@@ -69,7 +62,7 @@ abstract class AbstractView
         if ( array_key_exists( $name, $this->data ) )
             return $this->data[ $name ];
 
-        trigger_error( "Undefined Property `$name` in view: " . static::class, E_USER_ERROR );
+        throw new InvalidArgumentException( "Undefined Property `$name` in view: " . static::class );
     }
 
     /**

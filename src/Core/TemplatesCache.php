@@ -3,7 +3,6 @@
 namespace PHP_SF\System\Core;
 
 use App\Command\AppCacheClearCommand;
-use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Immutable;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
@@ -29,6 +28,7 @@ final class TemplatesCache
 {
 
     private const TEMPLATES_NAMESPACE = 'PHP_SF\\CachedTemplates';
+    private const COMPILED_DIR        = 'var/cache/templates';
 
     private static self $instance;
 
@@ -51,6 +51,9 @@ final class TemplatesCache
             if ( file_exists( ( $path = project_dir() . '/' . $dir ) ) === false || is_dir( $path ) === false )
                 throw new InvalidConfigurationException( sprintf( 'Invalid template directory “%s”', $dir ) );
 
+        $compiledDir = project_dir() . '/' . self::COMPILED_DIR;
+        if ( !is_dir( $compiledDir ) )
+            mkdir( $compiledDir, 0755, true );
 
         self::$templatesDefinition = array_combine( $this->getTemplatesDirectories(), $this->getTemplatesNamespaces() );
     }
@@ -124,12 +127,13 @@ final class TemplatesCache
 
     /**
      * Get the cached template class if it exists.
+     * Compiles the template on first access and writes it to a file so OPcache
+     * can serve bytecode on subsequent requests — no eval(), no Redis round-trip.
      *
      * @param string $className
-     * @return string[]|false
+     * @return string|false  The cached class name, or false when caching is disabled
      */
-    #[ArrayShape( ['className' => 'string', 'fileContent' => 'string'] )]
-    public function getCachedTemplateClass( string $className ): array|false
+    public function getCachedTemplateClass( string $className ): string|false
     {
         if (
             TEMPLATES_CACHE_ENABLED === false
@@ -138,16 +142,9 @@ final class TemplatesCache
         )
             return false;
 
-        $cacheKey = sprintf( 'cached_template_class_%s', $className );
-
-        if ( DEV_MODE === false && rca()->has( $cacheKey ) )
-            return j_decode( rca()->get( $cacheKey ), true );
-
-
         foreach ( $this->getTemplatesDefinition() as $directory => $namespace ) {
             if ( !str_contains( $className, $namespace ) )
                 continue;
-
 
             $arr = ( explode( '\\', $className ) );
             array_pop( $arr );
@@ -165,6 +162,13 @@ final class TemplatesCache
         if ( isset( $newClassName, $currentClassDirectory ) === false )
             return false;
 
+        $filePath = $this->getCompiledFilePath( $newClassName );
+
+        if ( DEV_MODE === false && file_exists( $filePath ) ) {
+            if ( class_exists( $newClassName, false ) === false )
+                require $filePath;
+            return $newClassName;
+        }
 
         $fileContent = $this->removeComments( $currentClassDirectory );
 
@@ -263,14 +267,44 @@ final class TemplatesCache
         $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
         $fileContent = trim( str_ireplace( $remove, '', $fileContent ) );
 
-        $result = [
-            'className' => $newClassName,
-            'fileContent' => substr( $fileContent, 5 ),
-        ];
+        // atomic write: write to a temp file then rename to avoid partial reads under concurrency
+        $tmp = $filePath . '.tmp.' . getmypid();
+        file_put_contents( $tmp, '<?php ' . substr( $fileContent, 5 ) );
+        rename( $tmp, $filePath );
 
-        rca()->set( $cacheKey, j_encode( $result ) );
+        require $filePath;
 
-        return $result;
+        return $newClassName;
+    }
+
+    /**
+     * Delete all compiled template files and invalidate OPcache entries.
+     * Called by {@link AppCacheClearCommand} when clearing application cache.
+     */
+    public static function clearCompiledFiles(): void
+    {
+        $dir = project_dir() . '/' . self::COMPILED_DIR;
+        foreach ( glob( $dir . '/*.php' ) ?: [] as $file ) {
+            if ( function_exists( 'opcache_invalidate' ) )
+                opcache_invalidate( $file, true );
+            unlink( $file );
+        }
+    }
+
+    /**
+     * Get the file path for a compiled template class.
+     *
+     * @param string $cachedClassName  Fully-qualified class name in the CachedTemplates namespace
+     * @return string  Absolute path to the compiled .php file
+     */
+    private function getCompiledFilePath( string $cachedClassName ): string
+    {
+        return sprintf(
+            '%s/%s/%s.php',
+            project_dir(),
+            self::COMPILED_DIR,
+            str_replace( '\\', '_', $cachedClassName )
+        );
     }
 
     /**
