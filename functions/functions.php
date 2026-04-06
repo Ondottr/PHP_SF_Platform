@@ -1,10 +1,8 @@
 <?php declare( strict_types=1 );
 
 use App\Kernel;
-use PHP_SF\System\Interface\UserInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
-use JetBrains\PhpStorm\Deprecated;
 use JetBrains\PhpStorm\ExpectedValues;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
@@ -16,6 +14,7 @@ use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\Translator;
 use PHP_SF\System\Database\Redis;
+use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Router;
 use Predis\Client;
 use Predis\Pipeline\Pipeline;
@@ -35,16 +34,6 @@ function em( string $connectionName ): EntityManager
 function qb( string $connectionName ): QueryBuilder
 {
     return em( $connectionName )->createQueryBuilder();
-}
-
-
-/**
- * @deprecated Use {@link rca()} function instead
- */
-#[Deprecated( replacement: 'rca()' )]
-function ra(): RedisCacheAdapter
-{
-    return RedisCacheAdapter::getInstance();
 }
 
 
