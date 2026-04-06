@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace PHP_SF\System;
 
-use JetBrains\PhpStorm\Deprecated;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\TemplatesCache;
+use PHP_SF\System\Core\Translator;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
 use ReflectionClass;
@@ -23,6 +23,10 @@ final class Kernel
     private static string $applicationUserClassName = '';
     private static string $headerTemplateClassName  = header::class;
     private static string $footerTemplateClassName  = footer::class;
+
+    /** @var string[] */
+    private static array $translationDirs   = [];
+    private static bool  $translationsReady = false;
 
     public function __construct()
     {
@@ -44,6 +48,9 @@ final class Kernel
 
         $this->addTemplatesDirectory('vendor/nations-original/php-simple-framework/templates', 'PHP_SF\Templates');
 
+        // Register the framework's own translation directory automatically.
+        self::$translationDirs[] = __DIR__.'/../translations';
+
         register_shutdown_function(function () {
             rp()->execute();
         });
@@ -60,22 +67,32 @@ final class Kernel
         return $this;
     }
 
-    /** @deprecated No-op. Translation paths are now configured in config/packages/translation.yaml. */
-    #[Deprecated(
-        reason: 'No-op. Translation paths are now configured in config/packages/translation.yaml.',
-        replacement: 'No direct replacement, translation paths should be configured in config/packages/translation.yaml.'
-    )]
+    /**
+     * Registers a directory containing YAML translation files (e.g. {@see translations/messages+intl-icu.en.yaml}).
+     * All registered directories are loaded by {@see bootTranslations()}, which is called automatically
+     * by {@see Router::init()} and {@see Router::loadRoutesOnly()} before any route is dispatched.
+     */
     public function addTranslationFiles(string $path): self
     {
-        trigger_deprecation(
-            'php-simple-framework',
-            '1.1.9',
-            'The method %s is deprecated since version 1.1.9 and will be removed in the next major release. '.
-            'Translation paths are now configured in config/packages/translation.yaml.',
-            __METHOD__
-        );
+        self::$translationDirs[] = $path;
 
         return $this;
+    }
+
+    /**
+     * Boots a lightweight standalone Symfony translator from all registered translation directories.
+     * Idempotent — safe to call multiple times; only the first call has any effect.
+     * Called automatically by {@see Router::init()} and {@see Router::loadRoutesOnly()}.
+     */
+    public function bootTranslations(): void
+    {
+        if (self::$translationsReady) {
+            return;
+        }
+
+        self::$translationsReady = true;
+
+        Translator::bootStandalone(...self::$translationDirs);
     }
 
     public function addTemplatesDirectory(string $templatesDirectoryName, string $namespaceName): self

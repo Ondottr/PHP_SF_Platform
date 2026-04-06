@@ -73,6 +73,8 @@ class Router
         if ( $kernel !== null )
             self::$kernel = $kernel;
 
+        self::$kernel?->bootTranslations();
+
         static::parseRoutes();
     }
 
@@ -83,6 +85,8 @@ class Router
             ?? throw new InvalidConfigurationException(
                 'Kernel must be set before calling Router::init() without passing it as a parameter!'
             );
+
+        self::$kernel->bootTranslations();
 
         $yamlConfigCacheKey = '/config/packages/doctrine.yaml';
 
