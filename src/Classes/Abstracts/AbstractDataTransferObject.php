@@ -2,21 +2,19 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use Serializable;
-
 /**
  * Class AbstractDataTransferObject
  *
  * @package PHP_SF\System\Classes\Abstracts
  */
-abstract readonly class AbstractDataTransferObject implements Serializable
+abstract readonly class AbstractDataTransferObject
 {
 
     /**
      * Create an instance of DTO class from array
      *
      * @param array $array
-     *`
+     *
      * @return static
      */
     public static function fromArray( array $array ): static
@@ -42,21 +40,11 @@ abstract readonly class AbstractDataTransferObject implements Serializable
     /**
      * Convert the DTO to string.
      *
-     * @return object
+     * @return string
      */
     public function toString(): string
     {
         return json_encode( $this->toArray() );
-    }
-
-    public function serialize(): string
-    {
-        return serialize($this->toArray());
-    }
-
-    public function unserialize(string $data)
-    {
-        $this->fromArray(unserialize($data));
     }
 
     public function __serialize(): array
@@ -64,9 +52,10 @@ abstract readonly class AbstractDataTransferObject implements Serializable
         return $this->toArray();
     }
 
-    public function __unserialize(array $data): void
+    public function __unserialize( array $data ): void
     {
-        $this->fromArray($data);
+        foreach ( $data as $key => $value )
+            $this->$key = $value;
     }
 
 }
