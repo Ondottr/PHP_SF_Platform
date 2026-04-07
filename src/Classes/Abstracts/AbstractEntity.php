@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
+use PHP_SF\System\Core\Lang;
 use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
@@ -100,20 +101,21 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     /**
      * Returns a Symfony Translator loaded with the validator constraint translations
-     * for the current DEFAULT_LOCALE. Falls back to English if the locale XLF is absent.
-     * Cached for the lifetime of the process (static local variable).
+     * for the current locale. Falls back to English if the locale XLF is absent.
+     * Cached per locale for the lifetime of the process.
      */
     private static function validatorTranslator(): SymfonyTranslator
     {
-        static $translator = null;
+        static $translators = [];
 
-        if ( $translator !== null ) {
-            return $translator;
+        $locale = Lang::getCurrentLocale();
+
+        if ( isset( $translators[$locale] ) ) {
+            return $translators[$locale];
         }
 
-        $locale          = DEFAULT_LOCALE;
-        $translator      = new SymfonyTranslator( $locale );
-        $loader          = new XliffFileLoader();
+        $translator = new SymfonyTranslator( $locale );
+        $loader     = new XliffFileLoader();
 
         $translator->addLoader( 'xlf', $loader );
 
@@ -134,6 +136,8 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
                 $translator->setLocale( 'en' );
             }
         }
+
+        $translators[$locale] = $translator;
 
         return $translator;
     }

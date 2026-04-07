@@ -19,12 +19,12 @@ final class login_page extends AbstractView { public function show(): void { ?>
 
         <tr>
           <td><?= _t( 'common.fields.email' ) ?>:</td>
-          <td><?php input( 'E-mail', [ 6, 50 ], _t( 'common.fields.email' ) ) ?></td>
+          <td><?= input( 'E-mail', [ 6, 50 ], _t( 'common.fields.email' ) ) ?></td>
         </tr>
 
         <tr>
           <td>Password:</td>
-          <td><?php input( 'password', [ 6, 50 ], 'password' ) ?></td>
+          <td><?= input( 'password', [ 6, 50 ], 'password' ) ?></td>
         </tr>
 
         <tr>
