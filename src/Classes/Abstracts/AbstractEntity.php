@@ -5,13 +5,13 @@ namespace PHP_SF\System\Classes\Abstracts;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
 use JsonSerializable;
-use PHP_SF\System\Attributes\Validator\TranslatablePropertyName;
-use PHP_SF\System\Classes\Exception\InvalidEntityConfigurationException;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
 use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
 use ReflectionClass;
 use ReflectionProperty;
+use Symfony\Component\Translation\Loader\XliffFileLoader;
+use Symfony\Component\Translation\Translator as SymfonyTranslator;
 use Symfony\Component\Validator\Validation;
 
 #[ORM\MappedSuperclass]
@@ -44,17 +44,18 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
         $violations = Validation::createValidatorBuilder()
             ->enableAttributeMapping()
+            ->setTranslator( self::validatorTranslator() )
+            ->setTranslationDomain( 'validators' )
             ->getValidator()
             ->validate( $this );
 
         foreach ( $violations as $violation ) {
             $pName = $violation->getPropertyPath();
 
-            $this->validationErrors[ $pName ] = sprintf(
-                'Field `%s`: %s',
-                _t( $this->getTranslatablePropertyName( $pName ) ),
-                rtrim( (string) $violation->getMessage(), '.' )
-            );
+            $this->validationErrors[ $pName ] = _t( 'entity.field_validation_error', [
+                'field'   => '@:' . $this->getTranslatablePropertyName( $pName ),
+                'message' => rtrim( $violation->getMessage(), '.' ),
+            ] );
         }
 
         return empty( $this->validationErrors );
@@ -62,19 +63,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
 
     final public function getTranslatablePropertyName( string $propertyName ): string
     {
-        $rp  = new ReflectionProperty( static::class, $propertyName );
-        $tpn = $rp->getAttributes( TranslatablePropertyName::class );
+        $rc = new ReflectionClass( static::class );
 
-        if ( empty( $tpn ) )
-            throw new InvalidEntityConfigurationException(
-                sprintf(
-                    'The required attribute "PHP_SF\System\Attributes\Validator\TranslatablePropertyName" is missing in the property "%s" of the entity "%s".',
-                    $rp->getName(),
-                    static::class
-                )
-            );
-
-        return $tpn[0]->getArguments()[0];
+        return camel_to_snake( $rc->getShortName() ) . '.fields.' . camel_to_snake( $propertyName );
     }
 
 
@@ -104,6 +95,47 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSer
             $arr[ $property ] = ( $this->$property instanceof self ) ? $this->$property->getId() : $this->$property;
 
         return $arr;
+    }
+
+
+    /**
+     * Returns a Symfony Translator loaded with the validator constraint translations
+     * for the current DEFAULT_LOCALE. Falls back to English if the locale XLF is absent.
+     * Cached for the lifetime of the process (static local variable).
+     */
+    private static function validatorTranslator(): SymfonyTranslator
+    {
+        static $translator = null;
+
+        if ( $translator !== null ) {
+            return $translator;
+        }
+
+        $locale          = DEFAULT_LOCALE;
+        $translator      = new SymfonyTranslator( $locale );
+        $loader          = new XliffFileLoader();
+
+        $translator->addLoader( 'xlf', $loader );
+
+        // symfony/validator ships its translations under Resources/translations/
+        // relative to its own root; derive it from the Validation class file path.
+        $translationsDir = dirname( ( new ReflectionClass( Validation::class ) )->getFileName() )
+            . '/Resources/translations';
+
+        $localXlf = $translationsDir . '/validators.' . $locale . '.xlf';
+
+        if ( file_exists( $localXlf ) ) {
+            $translator->addResource( 'xlf', $localXlf, $locale, 'validators' );
+        } else {
+            // Locale not bundled — fall back to English
+            $enXlf = $translationsDir . '/validators.en.xlf';
+            if ( file_exists( $enXlf ) ) {
+                $translator->addResource( 'xlf', $enXlf, 'en', 'validators' );
+                $translator->setLocale( 'en' );
+            }
+        }
+
+        return $translator;
     }
 
 }

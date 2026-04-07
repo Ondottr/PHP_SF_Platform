@@ -15,14 +15,14 @@ final class register_page extends AbstractView { public function show(): void { 
 <!--      --><?php //showErrors() ?>
 
       <label for="login">
-        Login: [2-35] <?php formInput( 'login', [ 2, 35 ] ) ?><br />
+        Login: [2-35] <?php input( 'login', [ 2, 35 ] ) ?><br />
         Enter your login
       </label>
 
       <div class="line"></div>
 
       <label for="email">
-        <?= _t( 'E-mail' ) ?>: [6-50] <?php formInput( 'email', [ 6, 50 ], 'email' ) ?><br />
+        <?= _t( 'common.fields.email' ) ?>: [6-50] <?php input( 'email', [ 6, 50 ], 'email' ) ?><br />
         Enter your email address
       </label>
 
@@ -30,7 +30,7 @@ final class register_page extends AbstractView { public function show(): void { 
 
       <label for="password">
         Password<span class="war">*</span>:
-        [6-50] <?php formInput( 'password', [ 6, 50 ], 'password' ) ?><br />
+        [6-50] <?php input( 'password', [ 6, 50 ], 'password' ) ?><br />
         Enter your password
 
       </label>

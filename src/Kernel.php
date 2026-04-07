@@ -4,7 +4,7 @@ namespace PHP_SF\System;
 
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\TemplatesCache;
-use PHP_SF\System\Core\Translator;
+use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
 use ReflectionClass;
@@ -63,7 +63,7 @@ final class Kernel
         if (file_exists($path) === false)
             throw new DirectoryNotFoundException( "Translation directory '$path' could not be found." );
 
-        Translator::addTranslationDirectory($path);
+        TranslatorV2::addTranslationDir($path);
 
         return $this;
     }

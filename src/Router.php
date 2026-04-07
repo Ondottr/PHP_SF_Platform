@@ -14,6 +14,7 @@ use PHP_SF\System\Classes\Exception\ViewException;
 use PHP_SF\System\Classes\MiddlewareChecks\MiddlewaresExecutor;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Traits\RedirectTrait;
 use ReflectionClass;
 use ReflectionException;
@@ -100,6 +101,7 @@ class Router
             em( $connection )->clear();
         }
 
+        TranslatorV2::getInstance()->loadCatalogs();
 
         static::parseRoutes();
 

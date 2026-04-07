@@ -35,58 +35,26 @@ function getTimeDiff(DateTimeInterface|string $time, DateTimeZone $timezone = nu
 
     $interval = $d->diff(new DateTime( 'now', $timezone));
 
-    if ($interval->y !== 0) {
+    if ($interval->y !== 0)
+        $res .= _t('common.time.years',   ['count' => $interval->y]) . ' ';
 
-        if ($interval->y <= 4)
-            $res .= sprintf('%s %s ', $interval->y, _t('yr'));
+    if ($interval->m !== 0)
+        $res .= _t('common.time.months',  ['count' => $interval->m]) . ' ';
 
-        else
-            $res .= sprintf('%s %s ', $interval->y, _t('yrs'));
+    if ($interval->d !== 0 && $interval->y === 0)
+        $res .= _t('common.time.days',    ['count' => $interval->d]) . ' ';
 
-    }
+    if ($interval->h !== 0 && $interval->y === 0 && $interval->m === 0)
+        $res .= _t('common.time.hours',   ['count' => $interval->h]) . ' ';
 
-    if ($interval->m !== 0) {
-        if ($interval->m === 1)
-            $res .= sprintf('%s %s ', $interval->m, _t('mo'));
+    if ($interval->i !== 0 && $interval->m === 0 && ($interval->d === 0 || $interval->h === 0))
+        $res .= _t('common.time.minutes', ['count' => $interval->i]) . ' ';
 
-        else
-            $res .= sprintf('%s %s ', $interval->m, _t('mos'));
-    }
-
-    if (( $interval->d !== 0 ) && $interval->y === 0) {
-        if ($interval->d === 1)
-            $res .= sprintf('%s %s ', $interval->d, _t('d'));
-
-        else
-            $res .= sprintf('%s %s ', $interval->d, _t('d (plural)'));
-    }
-
-    if ($interval->h !== 0 && $interval->y === 0 && $interval->m === 0) {
-        if ($interval->h === 1)
-            $res .= sprintf('%s %s ', $interval->h, _t('hr'));
-
-        else
-            $res .= sprintf('%s %s ', $interval->h, _t('hr (plural)'));
-    }
-
-    if ($interval->i !== 0 && $interval->m === 0 && ( $interval->d === 0 || $interval->h === 0 )) {
-        if ($interval->i === 1)
-            $res .= sprintf('%s %s ', $interval->i, _t('min'));
-
-        else
-            $res .= sprintf('%s %s ', $interval->i, _t('min (plural)'));
-    }
-
-    if ($interval->s !== 0 && $interval->d === 0 && ( $interval->h === 0 || $interval->i === 0 )) {
-        if ($interval->s === 1)
-            $res .= sprintf('%s %s ', $interval->s, _t('sec'));
-
-        else
-            $res .= sprintf('%s %s ', $interval->s, _t('sec (plural)'));
-    }
+    if ($interval->s !== 0 && $interval->d === 0 && ($interval->h === 0 || $interval->i === 0))
+        $res .= _t('common.time.seconds', ['count' => $interval->s]) . ' ';
 
     if (empty($res))
-        $res = _t('moment_ago');
+        $res = _t('common.time.moment_ago');
 
     return $res;
 }

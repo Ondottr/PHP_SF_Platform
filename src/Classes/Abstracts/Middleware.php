@@ -39,11 +39,11 @@ abstract class Middleware implements EventSubscriberInterface
         if ( $middlewareResult === false ) {
             if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
                 $middlewareResult = new JsonResponse(
-                    [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
+                    [ 'error' => _t( 'common.errors.access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
                 );
 
             else
-                $middlewareResult = $this->redirectBack( errors: [ _t( 'Access Denied!' ) ] );
+                $middlewareResult = $this->redirectBack( errors: [ _t( 'common.errors.access_denied' ) ] );
 
         }
 
