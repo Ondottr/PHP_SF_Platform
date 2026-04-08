@@ -1,5 +1,2 @@
 /vendor/
 .idea
-
-/lang/*
-!/lang/en.php

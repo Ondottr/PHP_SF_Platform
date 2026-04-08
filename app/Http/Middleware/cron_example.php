@@ -26,7 +26,7 @@ final class cron_example extends Middleware
             return true;
 
         return new JsonResponse(
-            [ 'error' => _t( 'access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
+            [ 'error' => _t( 'common.errors.access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
         );
     }
 }

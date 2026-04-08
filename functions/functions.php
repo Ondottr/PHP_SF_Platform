@@ -1,7 +1,6 @@
 <?php declare( strict_types=1 );
 
 use App\Kernel;
-use PHP_SF\System\Interface\UserInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\Deprecated;
@@ -14,13 +13,15 @@ use PHP_SF\System\Core\Cache\APCuCacheAdapter;
 use PHP_SF\System\Core\Cache\MemcachedCacheAdapter;
 use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
-use PHP_SF\System\Core\Translator;
+use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Database\Redis;
+use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Router;
 use Predis\Client;
 use Predis\Pipeline\Pipeline;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Symfony\Component\String\UnicodeString;
 
 require_once __DIR__ . '/time_functions.php';
 require_once __DIR__ . '/view_functions.php';
@@ -235,14 +236,14 @@ function routeLink( string $routeName, array $pathParams = [], array $queryParam
 }
 
 
-function _t( string $stringName, ...$values ): string
+function _t( string $id, array $parameters = [] ): string
 {
-    return nl2br( Translator::getInstance()->translate( $stringName, ...$values ) );
+    return nl2br( TranslatorV2::getInstance()->trans( $id, $parameters ) );
 }
 
-function _tt( string $stringName, string $translateTo, ...$values ): string
+function _tt( string $id, string $translateTo, array $parameters = [] ): string
 {
-    return nl2br( Translator::getInstance()->translateTo( $stringName, $translateTo, ...$values ) );
+    return nl2br( TranslatorV2::getInstance()->trans( $id, $parameters, null, $translateTo ) );
 }
 
 
@@ -265,12 +266,16 @@ function user(): UserInterface|false
 
 function camel_to_snake( string $input ): string
 {
-    return str_replace( '__', '_', strtolower( preg_replace( '/(?<!^)[A-Z]/', '_$0', $input ) ) );
+    return (new UnicodeString($input))
+        ->snake()
+        ->toString();
 }
 
 function snakeToCamel( string $input ): string
 {
-    return lcfirst( str_replace( ' ', '', ucwords( str_replace( '_', ' ', $input ) ) ) );
+    return (new UnicodeString($input))
+        ->camel()
+        ->toString();
 }
 
 

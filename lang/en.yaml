@@ -1,0 +1,78 @@
+# PHP-SF framework built-in translations
+entity.field_validation_error: "Field `{field}`: {message}"
+
+common:
+  fields:
+    email: 'Email'
+    name: 'Name'
+    password: 'Password'
+    user_group: 'User Group'
+    created_at: 'Created at'
+    updated_at: 'Updated at'
+  buttons:
+    change: 'Change'
+  errors:
+    access_denied: "Access denied."
+
+settings.language_form.select_label: "Select language"
+
+auth:
+  login_form:
+    submit: "Sign In"
+    error:
+      empty_credentials: "Email and password are required."
+      user_not_found: "No account found for this email."
+      wrong_password: "Incorrect password. Please try again."
+      password_length: "Password must be between {min} and {max} characters."
+      terms_not_accepted: "You must accept the terms and conditions."
+      email_already_exists: "An account with this email already exists."
+      login_already_exists: "An account with this login already exists."
+
+settings:
+  change_language:
+    error:
+      invalid_language: "Selected language is not supported."
+
+# ── Common — time ─────────────────────────────────────────────────────────────
+
+common.time.years: |-
+  {count, plural,
+    one   {# yr}
+    other {# yrs}
+  }
+
+common.time.months: |-
+  {count, plural,
+    one   {# mo}
+    other {# mos}
+  }
+
+common.time.days: |-
+  {count, plural,
+    one   {# d}
+    other {# d}
+  }
+
+common.time.hours: |-
+  {count, plural,
+    one   {# hr}
+    other {# hrs}
+  }
+
+common.time.minutes: |-
+  {count, plural,
+    one   {# min}
+    other {# min}
+  }
+
+common.time.seconds: |-
+  {count, plural,
+    one   {# sec}
+    other {# sec}
+  }
+
+common.time.ago: '{time} ago'
+common.time.in: 'in {time}'
+common.time.moment_ago: 'a moment ago'
+common.time.moment_from_now: 'in a moment'
+common.time.range: '{first} {second}'
