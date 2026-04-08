@@ -83,4 +83,8 @@ common.time.seconds: |-
     other {# sec}
   }
 
+common.time.ago: '{time} ago'
+common.time.in: 'in {time}'
 common.time.moment_ago: 'a moment ago'
+common.time.moment_from_now: 'in a moment'
+common.time.range: '{first} {second}'

@@ -10,11 +10,18 @@ use Symfony\Component\Yaml\Yaml;
 final class TranslatorV2Test extends TestCase
 {
 
-    private string $dir;
+    private string      $dir;
+    private array       $savedDirs;
+    private ?TranslatorV2 $savedInstance;
 
 
     protected function setUp(): void
     {
+        $ref = new ReflectionClass( TranslatorV2::class );
+
+        $this->savedDirs     = $ref->getProperty( 'dirs' )->getValue( null );
+        $this->savedInstance = $ref->getProperty( 'instance' )->getValue( null );
+
         $this->dir = sys_get_temp_dir() . '/translator_v2_test_' . uniqid( '', true );
         mkdir( $this->dir, 0777, true );
 
@@ -24,7 +31,14 @@ final class TranslatorV2Test extends TestCase
     protected function tearDown(): void
     {
         $this->removeDir( $this->dir );
-        $this->resetTranslatorState();
+
+        $ref = new ReflectionClass( TranslatorV2::class );
+        $ref->getProperty( 'instance' )->setValue( null, $this->savedInstance );
+        $ref->getProperty( 'dirs' )->setValue( null, $this->savedDirs );
+
+        if ( $this->savedInstance !== null ) {
+            $ref->getProperty( 'catalogsLoaded' )->setValue( $this->savedInstance, false );
+        }
     }
 
 
@@ -256,6 +270,43 @@ final class TranslatorV2Test extends TestCase
         );
 
         $this->assertSame( 'First name and Last name do not match.', $result );
+    }
+
+
+    // ── ICU plural / MessageFormatter ────────────────────────────────────
+
+    public function testIcuPluralStringIsFormattedCorrectly(): void
+    {
+        /**
+         * Values stored as ICU plural format must be resolved to a human-readable
+         * string when the intl extension is available. strtr() can't do this because
+         * {count} doesn't appear verbatim inside {count, plural, ...}.
+         */
+        if ( !class_exists( \MessageFormatter::class ) ) {
+            $this->markTestSkipped( 'intl extension not available' );
+        }
+
+        $this->registerYaml( "common.time.years: |-\n  {count, plural,\n    one   {# yr}\n    other {# yrs}\n  }" );
+
+        $this->assertSame( '1 yr',  TranslatorV2::getInstance()->trans( 'common.time.years', [ 'count' => 1 ] ) );
+        $this->assertSame( '5 yrs', TranslatorV2::getInstance()->trans( 'common.time.years', [ 'count' => 5 ] ) );
+    }
+
+    public function testSimpleParamSubstitutionStillWorksWithMessageFormatter(): void
+    {
+        /**
+         * MessageFormatter handles simple {name} arguments the same as strtr(),
+         * so existing translations are not broken by the ICU upgrade.
+         */
+        if ( !class_exists( \MessageFormatter::class ) ) {
+            $this->markTestSkipped( 'intl extension not available' );
+        }
+
+        $this->registerYaml( 'error: "Field `{field}`: {message}"' );
+
+        $result = TranslatorV2::getInstance()->trans( 'error', [ 'field' => 'Title', 'message' => 'is required' ] );
+
+        $this->assertSame( 'Field `Title`: is required', $result );
     }
 
 

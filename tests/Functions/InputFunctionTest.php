@@ -1,6 +1,7 @@
 <?php declare( strict_types=1 );
 
 namespace PHP_SF\Tests\Functions;
+
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

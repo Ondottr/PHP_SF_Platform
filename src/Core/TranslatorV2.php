@@ -199,13 +199,32 @@ final class TranslatorV2 implements TranslatorInterface
 
     private function resolveValue( string $raw, array $parameters, string $locale, int $depth ): string
     {
-        $replacements = [];
+        if ( empty( $parameters ) ) {
+            return $raw;
+        }
+
+        $resolved = [];
 
         foreach ( $parameters as $name => $value ) {
             if ( is_string( $value ) && str_starts_with( $value, '@:' ) ) {
                 $value = $this->resolveAtRef( substr( $value, 2 ), $locale, $depth );
             }
 
+            $resolved[$name] = $value;
+        }
+
+        // Try ICU MessageFormatter first — handles plural, select, and simple {name} substitution.
+        // Falls back to strtr() if the intl extension is unavailable or the value is not valid ICU.
+        if ( class_exists( \MessageFormatter::class ) ) {
+            $formatted = \MessageFormatter::formatMessage( $locale, $raw, $resolved );
+
+            if ( $formatted !== false ) {
+                return $formatted;
+            }
+        }
+
+        $replacements = [];
+        foreach ( $resolved as $name => $value ) {
             $replacements['{' . $name . '}'] = (string) $value;
         }
 
