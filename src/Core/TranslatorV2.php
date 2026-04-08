@@ -287,6 +287,8 @@ final class TranslatorV2 implements TranslatorInterface
             new \RecursiveDirectoryIterator( $entityDir, \RecursiveDirectoryIterator::FOLLOW_SYMLINKS )
         );
 
+        $newEntityKeys = [];
+
         foreach ( $iterator as $file ) {
             if ( !$file->isFile() || $file->getExtension() !== 'php' ) {
                 continue;
@@ -329,12 +331,19 @@ final class TranslatorV2 implements TranslatorInterface
                 foreach ( LANGUAGES_LIST as $locale ) {
                     if ( !array_key_exists( $translationKey, $this->catalogs[$locale] ) ) {
                         $this->catalogs[$locale][$translationKey] = $translationKey . '_not_translated';
+                        $newEntityKeys[]                          = $translationKey;
                     }
                 }
             }
         }
 
-        // Persist any newly added entity keys to the last registered dir
+        if ( empty( $newEntityKeys ) ) {
+            return;
+        }
+
+        $newEntityKeys = array_unique( $newEntityKeys );
+
+        // Persist only the newly discovered entity keys to the last registered dir
         foreach ( LANGUAGES_LIST as $locale ) {
             $lastDir  = self::$dirs[array_key_last( self::$dirs )];
             $filePath = $lastDir . '/' . $locale . '.yaml';
@@ -348,9 +357,9 @@ final class TranslatorV2 implements TranslatorInterface
             }
 
             $added = false;
-            foreach ( $this->catalogs[$locale] as $key => $value ) {
+            foreach ( $newEntityKeys as $key ) {
                 if ( !array_key_exists( $key, $existing ) ) {
-                    $existing[$key] = $value;
+                    $existing[$key] = $key . '_not_translated';
                     $added          = true;
                 }
             }
