@@ -329,16 +329,19 @@ final class TemplatesCache
         $w = [ ';', '{', '}' ];
         $ts = token_get_all( php_strip_whitespace( $filename ) );
         $s = '';
+        $interpDepth = 0;
 
         foreach ( $ts as $t ) {
-            if ( is_array( $t ) )
+            if ( is_array( $t ) ) {
+                if ( $t[0] === T_CURLY_OPEN || $t[0] === T_DOLLAR_OPEN_CURLY_BRACES )
+                    $interpDepth++;
                 $s .= $t[1];
-
-            else {
+            } else {
                 $s .= $t;
-                if ( in_array( $t, $w, true ) )
+                if ( $t === '}' && $interpDepth > 0 )
+                    $interpDepth--;
+                elseif ( in_array( $t, $w, true ) )
                     $s .= chr( 13 ) . chr( 10 );
-
             }
         }
 
