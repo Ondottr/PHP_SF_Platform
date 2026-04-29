@@ -13,6 +13,7 @@ common:
     change: 'Change'
   errors:
     access_denied: "Access denied."
+    not_found: "Not found."
 
 settings.language_form.select_label: "Select language"
 

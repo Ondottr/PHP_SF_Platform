@@ -4,6 +4,29 @@ use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\ExpectedValues;
 use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 
+/**
+ * Returns the per-session CSRF token, generating it on first call.
+ * Pass $asInput = true to get a ready-to-embed hidden input element.
+ *
+ * Used in templates:
+ *   <?= csrf_token( asInput: true ) ?>   — emits <input type="hidden" name="_token" value="...">
+ *   <?= csrf_token() ?>                  — returns the raw token string (for JS / fetch)
+ */
+function csrf_token( bool $asInput = false ): string
+{
+    $token = s()->get( '_csrf_token' );
+
+    if ( $token === null ) {
+        $token = bin2hex( random_bytes( 32 ) );
+        s()->set( '_csrf_token', $token );
+    }
+
+    if ( $asInput )
+        return sprintf( '<input type="hidden" name="_token" value="%s">', htmlspecialchars( $token, ENT_QUOTES, 'UTF-8' ) );
+
+    return $token;
+}
+
 function asset( string $path ): string
 {
     if ( file_exists( sprintf( '%s/public/%s', project_dir(), $path ) ) === false )
@@ -12,19 +35,31 @@ function asset( string $path ): string
     return "/$path";
 }
 
-function manifest_asset( string $filename ): string
+function build_manifest(): array
 {
     static $manifest = null;
     if ( $manifest === null ) {
         $manifestPath = project_dir() . '/public/build/manifest.json';
-        $manifest = file_exists( $manifestPath )
-            ? json_decode( file_get_contents( $manifestPath ), true )
+        $manifest     = file_exists( $manifestPath )
+            ? ( json_decode( file_get_contents( $manifestPath ), true ) ?: [] )
             : [];
     }
 
-    $resolved = $manifest[ $filename ] ?? "build/$filename";
+    return $manifest;
+}
+
+function manifest_asset( string $filename ): string
+{
+    $resolved = build_manifest()[ $filename ] ?? "build/$filename";
 
     return asset( ltrim( $resolved, '/' ) );
+}
+
+function manifest_has( string $filename ): bool
+{
+    $resolved = build_manifest()[ $filename ] ?? "build/$filename";
+
+    return file_exists( project_dir() . '/public/' . ltrim( $resolved, '/' ) );
 }
 
 function pageTitle(): string

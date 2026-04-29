@@ -3,10 +3,12 @@
 namespace PHP_SF\Framework\EventListener;
 
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Core\RedirectResponse as PhpSfRedirectResponse;
 use PHP_SF\System\Core\Response as PhpSfResponse;
 use PHP_SF\System\Router;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -94,7 +96,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
 
         // Replace the callable: ControllerResolver would do `new $class()` (no request),
         // here we inject the Symfony Request and forward route params correctly.
-        $event->setController( static function () use ( $class, $method, $request ): mixed {
+        $event->setController( static function () use ( $class, $method, $request, $routeUrl ): mixed {
             $instance = new $class( $request );
 
             $rawParams = [];
@@ -107,19 +109,36 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             if ( empty( $rawParams ) )
                 return $instance->$method();
 
-            // Cast each param to the type declared in the method signature,
-            // mirroring what Router::setRouteParameters() does in production.
-            $reflection = new \ReflectionMethod( $class, $method );
-            $params     = [];
-            foreach ( $reflection->getParameters() as $rp ) {
-                $name = $rp->getName();
-                if ( !array_key_exists( $name, $rawParams ) )
-                    continue;
-                $value = $rawParams[ $name ];
+            // Mirror Router::setRouteParameters(): positional matching by URL placeholder order.
+            // Method param N maps to URL placeholder N — names may differ for entity params.
+            $urlPlaceholderNames = array_keys( $rawParams );
+            $reflection          = new \ReflectionMethod( $class, $method );
+            $params              = [];
+
+            foreach ( $reflection->getParameters() as $index => $rp ) {
+                $urlPlaceholderName = $urlPlaceholderNames[ $index ] ?? null;
+                if ( $urlPlaceholderName === null )
+                    break;
+
+                $value = $rawParams[ $urlPlaceholderName ];
                 $type  = $rp->getType()?->getName();
-                if ( $type !== null )
-                    settype( $value, $type );
-                $params[] = $value;
+
+                if ( $type !== null && is_a( $type, AbstractEntity::class, true ) ) {
+                    $entity = $type::findOneBy( [ $urlPlaceholderName => $value ] );
+
+                    if ( $entity === null && $rp->getType()->allowsNull() === false ) {
+                        if ( str_starts_with( $routeUrl, '/api/' ) )
+                            return new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], JsonResponse::HTTP_NOT_FOUND );
+
+                        return new PhpSfResponse( status: PhpSfResponse::HTTP_NOT_FOUND );
+                    }
+
+                    $params[] = $entity;
+                } else {
+                    if ( $type !== null )
+                        settype( $value, $type );
+                    $params[] = $value;
+                }
             }
 
             return $instance->$method( ...$params );

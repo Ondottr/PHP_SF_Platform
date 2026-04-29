@@ -41,9 +41,8 @@ final class RedirectResponse extends Response
 
     /**
      * @noinspection GlobalVariableUsageInspection
-     * @noinspection PhpUnnecessaryStaticReferenceInspection
      */
-    #[NoReturn] public function send(bool $flush = true): static
+    #[NoReturn] public function send(bool $flush = true): never
     {
         $urlKey = hash( 'xxh3', $this->getTargetUrl() );
         $key = "$urlKey:{$this->getRequestDataId()}";
@@ -99,9 +98,6 @@ final class RedirectResponse extends Response
         parent::send();
 
         exit( die );
-
-        /** @noinspection PhpUnreachableStatementInspection */
-        return $this;
     }
 
     public function getTargetUrl(): string

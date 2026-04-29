@@ -7,6 +7,10 @@ use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
+use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
+use Symfony\Component\HttpKernel\Event\TerminateEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 use function function_exists;
 
@@ -63,7 +67,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
      * @noinspection OffsetOperationsInspection
      * @noinspection MissingParentCallInspection
      */
-    #[NoReturn] public function send(bool $flush = true): static
+    #[NoReturn] public function send(bool $flush = true): never
     {
         if ( str_starts_with( Router::$currentRoute->url, '/api/' ) === false ) {
             $headerClassName = ( TEMPLATES_CACHE_ENABLED
@@ -94,6 +98,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             ( new $footerClassName( $this->dataFromController ) )->show();
         }
 
+        $this->sendHeaders();
         ob_end_flush();
 
         if ( function_exists( 'fastcgi_finish_request' ) )
@@ -102,10 +107,21 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             /** @noinspection PhpUndefinedFunctionInspection */
             litespeed_finish_request();
 
-        exit( die );
+        $ctx = PhpSfContext::current();
+        if ( $ctx !== null ) {
+            $kernel  = $ctx->getKernel();
+            $request = $ctx->getRequest();
 
-        /** @noinspection PhpUnreachableStatementInspection */
-        return $this;
+            PhpSfEventDispatcher::dispatch( KernelEvents::FINISH_REQUEST, new FinishRequestEvent(
+                $kernel, $request, HttpKernelInterface::MAIN_REQUEST
+            ) );
+
+            PhpSfEventDispatcher::dispatch( KernelEvents::TERMINATE, new TerminateEvent(
+                $kernel, $request, $this
+            ) );
+        }
+
+        exit;
     }
 
 }

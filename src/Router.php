@@ -4,14 +4,16 @@ declare( strict_types=1 );
 namespace PHP_SF\System;
 
 use JetBrains\PhpStorm\NoReturn;
-use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
 use PHP_SF\System\Classes\Exception\ViewException;
 use PHP_SF\System\Classes\MiddlewareChecks\MiddlewaresExecutor;
+use PHP_SF\System\Core\PhpSfContext;
+use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TranslatorV2;
@@ -24,6 +26,14 @@ use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\VarDumper\VarDumper;
 use Throwable;
@@ -62,7 +72,22 @@ class Router
 
     private static Kernel $kernel;
 
+    /** @var array<string> Middleware classes run before every matched route's own middleware. */
+    protected static array $globalMiddlewares = [];
+
+
     private function __construct() {}
+
+
+    /**
+     * Registers one or more middleware classes to run globally on every matched route,
+     * before that route's own middleware. Each middleware still controls its own skip
+     * logic (e.g. skip for API routes, skip if a marker middleware is present).
+     */
+    public static function addGlobalMiddleware( string ...$classes ): void
+    {
+        self::$globalMiddlewares = array_merge( self::$globalMiddlewares, $classes );
+    }
 
     /**
      * Parses routes from all registered controller directories without dispatching any request.
@@ -105,8 +130,28 @@ class Router
 
         static::parseRoutes();
 
-        if ( static::setCurrentRoute() )
-            static::route();
+        if ( static::setCurrentRoute() ) {
+            try {
+                static::route();
+            } catch ( Throwable $e ) {
+                $exceptionEvent = new ExceptionEvent(
+                    self::$kernel, static::$requestData, HttpKernelInterface::MAIN_REQUEST, $e
+                );
+                PhpSfEventDispatcher::dispatch( KernelEvents::EXCEPTION, $exceptionEvent );
+
+                if ( $exceptionEvent->hasResponse() ) {
+                    $exResponse      = $exceptionEvent->getResponse();
+                    $exResponseEvent = new ResponseEvent(
+                        self::$kernel, static::$requestData, HttpKernelInterface::MAIN_REQUEST, $exResponse
+                    );
+                    PhpSfEventDispatcher::dispatch( KernelEvents::RESPONSE, $exResponseEvent );
+                    $exResponseEvent->getResponse()->send();
+                    exit;
+                }
+
+                throw $e;
+            }
+        }
 
     }
 
@@ -323,7 +368,7 @@ class Router
     {
         $reflectionMethod = new ReflectionMethod( $data->class, $data->method );
 
-        foreach ( $reflectionMethod->getParameters() as $reflectionParameter ) {
+        foreach ( $reflectionMethod->getParameters() as $index => $reflectionParameter ) {
             if ( $reflectionParameter->getType() instanceof ReflectionUnionType )
                 throw new RouteParameterException(
                     sprintf( 'Method parameter "%s" in the %s::%s route cannot be a union type!',
@@ -334,12 +379,13 @@ class Router
             self::checkMethodParameterType(
                 $reflectionParameter->getType()?->getName(),
                 $reflectionParameter->getName(),
-                $data
+                $data,
+                $index
             );
         }
     }
 
-    private static function checkMethodParameterType( string $type, string $propertyName, object $data ): void
+    private static function checkMethodParameterType( string $type, string $propertyName, object $data, int $paramIndex ): void
     {
         switch ( $type ) {
             case 'int':
@@ -347,6 +393,18 @@ class Router
             case 'string':
                 break;
             default:
+                if ( is_a( $type, AbstractEntity::class, true ) ) {
+                    $urlPlaceholder = $data->routeParams[ $paramIndex ] ?? null;
+                    if ( $urlPlaceholder !== null && !( new ReflectionClass( $type ) )->hasProperty( $urlPlaceholder ) )
+                        throw new RouteParameterException(
+                            sprintf(
+                                'Entity "%s" has no property "%s" (from URL placeholder {%s}) used in %s::%s route.',
+                                $type, $urlPlaceholder, $urlPlaceholder, $data->class, $data->method
+                            )
+                        );
+                    break;
+                }
+
                 throw new InvalidRouteMethodParameterTypeException( $type, $propertyName, $data );
         }
     }
@@ -487,13 +545,40 @@ class Router
 
         static::setRouteParameters();
 
+        PhpSfContext::set( new PhpSfContext(
+            static::$currentRoute,
+            static::$currentRoute->middleware ?? [],
+            static::$requestData,
+            self::$kernel,
+        ) );
+
+        PhpSfEventDispatcher::initialize();
+
+        PhpSfEventDispatcher::dispatch( KernelEvents::REQUEST, new RequestEvent(
+            self::$kernel, static::$requestData, HttpKernelInterface::MAIN_REQUEST
+        ) );
+
+        $controllerEvent = new ControllerEvent(
+            self::$kernel,
+            [ self::$controller, static::$currentRoute->method ],
+            static::$requestData,
+            HttpKernelInterface::MAIN_REQUEST
+        );
+        PhpSfEventDispatcher::dispatch( KernelEvents::CONTROLLER, $controllerEvent );
+
+        PhpSfEventDispatcher::dispatch( KernelEvents::CONTROLLER_ARGUMENTS, new ControllerArgumentsEvent(
+            self::$kernel,
+            $controllerEvent,
+            array_values( static::$routeParams ),
+            static::$requestData,
+            HttpKernelInterface::MAIN_REQUEST
+        ) );
+
         static::initializeRouteMiddlewares();
 
         static::initializeRouteMethod();
 
         static::sendRouteMethodResponse();
-
-        exit(die());
     }
 
     protected static function setRequest(): void
@@ -533,38 +618,68 @@ class Router
     protected static function setRouteParameters(): void
     {
         if ( !empty( static::$routeParams ) ) {
-            $reflectionMethod = new ReflectionMethod( static::$currentRoute->class, static::$currentRoute->method );
+            $reflectionMethod    = new ReflectionMethod( static::$currentRoute->class, static::$currentRoute->method );
+            $urlPlaceholderNames = array_keys( static::$routeParams );
+            $methodParameters    = $reflectionMethod->getParameters();
 
-            foreach ( $reflectionMethod->getParameters() as $reflectionParameter ) {
-                if ( array_key_exists( $reflectionParameter->getName(), static::$routeParams ) === false )
-                    throw new RouteParameterException(
-                        sprintf( 'Method parameter "%s" in the %s::%s route does not match the variables from route URL!',
-                            $reflectionParameter->getName(), static::$currentRoute->class, $reflectionMethod->getName()
-                        )
-                    );
+            if ( count( $urlPlaceholderNames ) !== count( $methodParameters ) )
+                throw new RouteParameterException(
+                    sprintf( 'Method parameters count in the %s::%s route do not match the variables count from route URL!',
+                        static::$currentRoute->class, $reflectionMethod->getName()
+                    )
+                );
 
-                $parameterValue = static::$routeParams[ $reflectionParameter->getName() ];
+            $resolvedParams = [];
+            foreach ( $methodParameters as $index => $reflectionParameter ) {
+                $urlPlaceholderName = $urlPlaceholderNames[ $index ];
+                $paramValue         = static::$routeParams[ $urlPlaceholderName ];
+                $paramType          = $reflectionParameter->getType()?->getName();
 
-                settype( $parameterValue, $reflectionParameter->getType()?->getName() );
+                if ( is_a( $paramType, AbstractEntity::class, true ) ) {
+                    $entity = $paramType::findOneBy( [ $urlPlaceholderName => $paramValue ] );
 
-                static::$routeParams[ $reflectionParameter->getName() ] = $parameterValue;
+                    if ( $entity === null && $reflectionParameter->getType()->allowsNull() === false )
+                        static::sendEntityNotFoundResponse();
 
+                    $resolvedParams[ $reflectionParameter->getName() ] = $entity;
+                } else {
+                    settype( $paramValue, $paramType );
+                    $resolvedParams[ $reflectionParameter->getName() ] = $paramValue;
+                }
             }
+
+            static::$routeParams = $resolvedParams;
         }
     }
 
+    /**
+     * Executes global and route-specific middlewares.
+     *
+     * @return void|never Returns `void` when all middlewares pass. Behaves as `never` when a middleware returns a
+     * response and the request flow is terminated after sending that response.
+     */
     private static function initializeRouteMiddlewares(): void
     {
+        if ( !empty( self::$globalMiddlewares ) ) {
+            $global = new MiddlewaresExecutor( self::$globalMiddlewares,
+                self::getRequest(), self::$kernel
+            );
+
+            $globalResult = $global->execute();
+
+            if ( $globalResult !== true ) {
+                $globalResult->send();
+            }
+        }
+
         $me = new MiddlewaresExecutor( static::$currentRoute->middleware ?? [],
-            self::getRequest(), self::$kernel, self::$controller
+            self::getRequest(), self::$kernel
         );
 
         $mResult = $me->execute();
 
         if ( $mResult !== true ) {
             $mResult->send();
-
-            exit( die );
         }
     }
 
@@ -622,9 +737,19 @@ class Router
     }
 
     #[NoReturn]
-    protected static function sendRouteMethodResponse(): void
+    protected static function sendRouteMethodResponse(): never
     {
-        if ( self::$routeMethodResponse instanceof Response ) {
+        $response = self::$routeMethodResponse;
+
+        if ( $response instanceof SymfonyResponse ) {
+            $responseEvent = new ResponseEvent(
+                self::$kernel, static::$requestData, HttpKernelInterface::MAIN_REQUEST, $response
+            );
+            PhpSfEventDispatcher::dispatch( KernelEvents::RESPONSE, $responseEvent );
+            $response = self::$routeMethodResponse = $responseEvent->getResponse();
+        }
+
+        if ( $response instanceof Response ) {
             VarDumper::setHandler( null );
             ob_start(
                 function ( $b ) {
@@ -636,17 +761,27 @@ class Router
             );
 
             try {
-                static::$routeMethodResponse->send();
+                $response->send();
             } catch ( Throwable $e ) {
                 ob_end_clean();
                 throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
             }
         }
 
-        self::$routeMethodResponse->send();
+        // if ( $response instanceof JsonResponse )
+        $response->send();
     }
 
-    #[Pure]
+    #[NoReturn]
+    private static function sendEntityNotFoundResponse(): never
+    {
+        self::$routeMethodResponse = str_starts_with( static::$currentRoute->url, '/api/' )
+            ? new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], SymfonyResponse::HTTP_NOT_FOUND )
+            : new Response( status: SymfonyResponse::HTTP_NOT_FOUND );
+
+        static::sendRouteMethodResponse();
+    }
+
     public static function getRouteLink( string $routeName ): string
     {
         return self::isRouteExists( $routeName ) === false ?

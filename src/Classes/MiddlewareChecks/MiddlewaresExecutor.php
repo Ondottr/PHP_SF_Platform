@@ -2,7 +2,6 @@
 
 namespace PHP_SF\System\Classes\MiddlewareChecks;
 
-use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Classes\Abstracts\MiddlewareType;
 use PHP_SF\System\Classes\Exception\RouteMiddlewareException;
 use PHP_SF\System\Core\RedirectResponse;
@@ -15,10 +14,9 @@ final class MiddlewaresExecutor
 {
 
     public function __construct(
-        private string|array $middlewares,
+        private string|array     $middlewares,
         private readonly Request $request,
-        private readonly Kernel $kernel,
-        private readonly AbstractController $controller,
+        private readonly Kernel  $kernel,
     ) {}
 
 
@@ -51,7 +49,7 @@ final class MiddlewaresExecutor
 
         try {
             $result =
-                ( new $middlewareType( $this->getMiddlewares(), $this->request, $this->kernel, $this->controller ) )
+                ( new $middlewareType( $this->getMiddlewares(), $this->request, $this->kernel ) )
                     ->validate()
                     ->execute();
         } catch ( Throwable $e ) {

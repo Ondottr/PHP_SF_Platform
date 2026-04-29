@@ -272,7 +272,8 @@ final class TemplatesCache
         file_put_contents( $tmp, '<?php ' . substr( $fileContent, 5 ) );
         rename( $tmp, $filePath );
 
-        require $filePath;
+        if ( class_exists( $newClassName, false ) === false )
+            require $filePath;
 
         return $newClassName;
     }

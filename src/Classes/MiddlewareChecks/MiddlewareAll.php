@@ -66,7 +66,7 @@ final class MiddlewareAll extends MiddlewareType
         foreach ( $middlewares as $middleware ) {
             // Instantiate the middleware class
             $mResult =
-                ( new $middleware( $this->request, $this->kernel, $this->controller ) )
+                ( new $middleware( $this->request, $this->kernel ) )
                     ->execute();
 
             // If the middleware result is not true, send the result and exit.
