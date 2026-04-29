@@ -79,6 +79,9 @@ final class PhpSfEventDispatcher
 
                 $contents = file_get_contents($file->getPathname());
 
+                if ($contents === false || $contents === '')
+                    continue;
+
                 if (preg_match('/namespace\s+([\w\\\\]+)\s*;/', $contents, $ns)
                     && preg_match('/(?:class|final\s+class)\s+(\w+)/', $contents, $cls)
                 ) {

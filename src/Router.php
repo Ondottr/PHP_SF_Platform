@@ -575,8 +575,6 @@ class Router
         static::initializeRouteMethod();
 
         static::sendRouteMethodResponse();
-
-        exit(die());
     }
 
     protected static function setRequest(): void
@@ -650,6 +648,12 @@ class Router
         }
     }
 
+    /**
+     * Executes global and route-specific middlewares.
+     *
+     * @return void|never Returns `void` when all middlewares pass. Behaves as `never` when a middleware returns a
+     * response and the request flow is terminated after sending that response.
+     */
     private static function initializeRouteMiddlewares(): void
     {
         if ( !empty( self::$globalMiddlewares ) ) {
@@ -729,7 +733,7 @@ class Router
     }
 
     #[NoReturn]
-    protected static function sendRouteMethodResponse(): void
+    protected static function sendRouteMethodResponse(): never
     {
         $response = self::$routeMethodResponse;
 
@@ -759,8 +763,6 @@ class Router
                 throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
             }
         }
-
-        $response->send();
     }
 
     #[NoReturn]

@@ -8,6 +8,7 @@ use PHP_SF\System\Core\RedirectResponse as PhpSfRedirectResponse;
 use PHP_SF\System\Core\Response as PhpSfResponse;
 use PHP_SF\System\Router;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -95,7 +96,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
 
         // Replace the callable: ControllerResolver would do `new $class()` (no request),
         // here we inject the Symfony Request and forward route params correctly.
-        $event->setController( static function () use ( $class, $method, $request ): mixed {
+        $event->setController( static function () use ( $class, $method, $request, $routeUrl ): mixed {
             $instance = new $class( $request );
 
             $rawParams = [];
@@ -123,7 +124,16 @@ final class PhpSfControllerListener implements EventSubscriberInterface
                 $type  = $rp->getType()?->getName();
 
                 if ( $type !== null && is_a( $type, AbstractEntity::class, true ) ) {
-                    $params[] = $type::findOneBy( [ $urlPlaceholderName => $value ] );
+                    $entity = $type::findOneBy( [ $urlPlaceholderName => $value ] );
+
+                    if ( $entity === null && $rp->getType()->allowsNull() === false ) {
+                        if ( str_starts_with( $routeUrl, '/api/' ) )
+                            return new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], JsonResponse::HTTP_NOT_FOUND );
+
+                        return new PhpSfResponse( status: PhpSfResponse::HTTP_NOT_FOUND );
+                    }
+
+                    $params[] = $entity;
                 } else {
                     if ( $type !== null )
                         settype( $value, $type );
