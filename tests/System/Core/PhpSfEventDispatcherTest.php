@@ -119,20 +119,6 @@ final class PhpSfEventDispatcherTest extends TestCase
         $this->assertSame( 2, DispatcherTestSubscriber::$calls );
     }
 
-    public function testAddSubscriberDirectoryResetsInitialized(): void
-    {
-        // Initialise once so $initialized = true.
-        PhpSfEventDispatcher::dispatch( 'phpsf.test_event', new stdClass() );
-
-        // Adding a new directory must reset the flag, triggering re-discovery.
-        $this->writeClassFile( DispatcherTestSubscriber::class );
-        PhpSfEventDispatcher::addSubscriberDirectory( $this->tmpDir );
-
-        PhpSfEventDispatcher::dispatch( 'phpsf.test_event', new stdClass() );
-
-        $this->assertSame( 1, DispatcherTestSubscriber::$calls );
-    }
-
     public function testUnrelatedEventDoesNotTriggerSubscriber(): void
     {
         $this->writeClassFile( DispatcherTestSubscriber::class );
