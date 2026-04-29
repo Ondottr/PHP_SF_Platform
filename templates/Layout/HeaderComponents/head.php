@@ -13,7 +13,9 @@ final class head extends AbstractView { public function show(): void { ?>
 <html lang="<?= DEFAULT_LOCALE ?>">
   <head>
     <link rel="stylesheet" href="<?= manifest_asset('app.css') ?>">
+    <?php if ( manifest_has('vendor.js') ): ?>
     <script type="text/javascript" src="<?= manifest_asset('vendor.js') ?>"></script>
+    <?php endif; ?>
     <script type="text/javascript" src="<?= manifest_asset('app.js') ?>"></script>
     <script type="text/javascript" src="<?= asset('js/jquery-3.6.0.min.js') ?>"></script>
     <script type="text/javascript" src="<?= asset('js/bootstrap.min.js') ?>"></script>

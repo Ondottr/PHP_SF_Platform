@@ -1,5 +1,6 @@
 {
   "name": "nations-original/php-simple-framework",
+  "version": "2.0.0",
   "description": "A simple PHP framework for Nations Original.",
   "authors": [
     {

@@ -3,7 +3,6 @@
 namespace PHP_SF\Templates\Layout;
 
 use App\Kernel;
-use PHP_SF\System\Classes\Abstracts\AbstractEventsDispatcher;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
@@ -41,7 +40,7 @@ final class footer extends AbstractView { public function show(): void { ?>
       <?php if ( DEV_MODE === true && env('APP_ENV') !== 'test' ) : ?>
         <div class="row">
           <div class="col-6">
-            <?php dump(Router::$currentRoute, AbstractEventsDispatcher::getDispatchedListeners()) ?>
+            <?php dump(Router::$currentRoute) ?>
           </div>
           <div class="col-6">
             <?php dump(Response::$activeTemplates) ?>

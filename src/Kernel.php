@@ -3,6 +3,7 @@
 namespace PHP_SF\System;
 
 use PHP_SF\System\Classes\Helpers\Locale;
+use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\Templates\Layout\footer;
@@ -11,12 +12,15 @@ use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 use function array_key_exists;
 use function define;
 use function in_array;
 
-final class Kernel
+final class Kernel implements HttpKernelInterface
 {
 
     private static string $applicationUserClassName = '';
@@ -43,9 +47,23 @@ final class Kernel
 
         $this->addTemplatesDirectory( 'vendor/nations-original/php-simple-framework/templates', 'PHP_SF\Templates' );
 
+        PhpSfEventDispatcher::addSubscriberDirectory( __DIR__ . '/../app/EventSubscriber' );
+
         register_shutdown_function( function () {
             rp()->execute();
         } );
+    }
+
+    public function handle( Request $request, int $type = self::MAIN_REQUEST, bool $catch = true ): SymfonyResponse
+    {
+        throw new \LogicException( 'PHP_SF\System\Kernel does not support Symfony request handling.' );
+    }
+
+    public function addEventSubscriberDirectory( string $dir ): self
+    {
+        PhpSfEventDispatcher::addSubscriberDirectory( $dir );
+
+        return $this;
     }
 
     public function addControllers(string $path): self

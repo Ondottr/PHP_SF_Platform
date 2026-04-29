@@ -3,6 +3,7 @@
 namespace PHP_SF\Framework\EventListener;
 
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Core\RedirectResponse as PhpSfRedirectResponse;
 use PHP_SF\System\Core\Response as PhpSfResponse;
 use PHP_SF\System\Router;
@@ -107,19 +108,27 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             if ( empty( $rawParams ) )
                 return $instance->$method();
 
-            // Cast each param to the type declared in the method signature,
-            // mirroring what Router::setRouteParameters() does in production.
-            $reflection = new \ReflectionMethod( $class, $method );
-            $params     = [];
-            foreach ( $reflection->getParameters() as $rp ) {
-                $name = $rp->getName();
-                if ( !array_key_exists( $name, $rawParams ) )
-                    continue;
-                $value = $rawParams[ $name ];
+            // Mirror Router::setRouteParameters(): positional matching by URL placeholder order.
+            // Method param N maps to URL placeholder N — names may differ for entity params.
+            $urlPlaceholderNames = array_keys( $rawParams );
+            $reflection          = new \ReflectionMethod( $class, $method );
+            $params              = [];
+
+            foreach ( $reflection->getParameters() as $index => $rp ) {
+                $urlPlaceholderName = $urlPlaceholderNames[ $index ] ?? null;
+                if ( $urlPlaceholderName === null )
+                    break;
+
+                $value = $rawParams[ $urlPlaceholderName ];
                 $type  = $rp->getType()?->getName();
-                if ( $type !== null )
-                    settype( $value, $type );
-                $params[] = $value;
+
+                if ( $type !== null && is_a( $type, AbstractEntity::class, true ) ) {
+                    $params[] = $type::findOneBy( [ $urlPlaceholderName => $value ] );
+                } else {
+                    if ( $type !== null )
+                        settype( $value, $type );
+                    $params[] = $value;
+                }
             }
 
             return $instance->$method( ...$params );

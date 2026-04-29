@@ -17,9 +17,8 @@ abstract class MiddlewareType
 
     public function __construct(
         protected readonly string|array $middlewares,
-        protected readonly Request $request,
-        protected readonly Kernel $kernel,
-        protected readonly AbstractController $controller,
+        protected readonly Request      $request,
+        protected readonly Kernel       $kernel,
     ) {}
 
 

@@ -9,7 +9,7 @@ final class InvalidRouteMethodParameterTypeException extends RouteParameterExcep
     {
         parent::__construct(
             sprintf(
-                'Invalid method parameter type in %s::%s for property “%s”, available types: "string|int|float" and `%s` provided!',
+                'Invalid method parameter type in %s::%s for property “%s”, available types: “string|int|float” or any AbstractEntity subclass, `%s` provided!',
                 $data->class, $data->method, $propertyName, $type
             )
         );
