@@ -1,5 +1,4 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
 
@@ -19,8 +18,10 @@ final class PhpSfEventDispatcher
 
     public static function addSubscriberDirectory(string $dir): void
     {
+        if (self::$initialized)
+            throw new \LogicException('Cannot register subscriber directory after the dispatcher is initialized.');
+
         self::$subscriberDirs[] = $dir;
-        self::$initialized      = false;
     }
 
     public static function initialize(): void

@@ -141,8 +141,8 @@ class Router
                 PhpSfEventDispatcher::dispatch( KernelEvents::EXCEPTION, $exceptionEvent );
 
                 if ( $exceptionEvent->hasResponse() ) {
-                    $exceptionEvent->getResponse()->send();
-                    exit( 0 );
+                    self::$routeMethodResponse = $exceptionEvent->getResponse();
+                    static::sendRouteMethodResponse();
                 }
 
                 throw $e;
@@ -763,6 +763,9 @@ class Router
                 throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
             }
         }
+
+        // if ( $response instanceof JsonResponse )
+        $response->send();
     }
 
     #[NoReturn]
