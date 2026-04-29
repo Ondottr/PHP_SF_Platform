@@ -3,6 +3,7 @@
 namespace PHP_SF\System\Classes\Abstracts;
 
 use PHP_SF\System\Core\RedirectResponse;
+use PHP_SF\System\Debug\MiddlewareTracker;
 use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
 use PHP_SF\System\Traits\RedirectTrait;
@@ -24,7 +25,12 @@ abstract class Middleware
 
     final public function execute(): bool|JsonResponse|RedirectResponse
     {
-        if ( ( $middlewareResult = $this->result() ) === true )
+        $middlewareResult = $this->result();
+
+        if ( DEV_MODE )
+            MiddlewareTracker::record( static::class, $middlewareResult === true );
+
+        if ( $middlewareResult === true )
             return true;
 
         if ( $middlewareResult === false ) {

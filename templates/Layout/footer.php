@@ -4,7 +4,10 @@ namespace PHP_SF\Templates\Layout;
 
 use App\Kernel;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
+use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Debug\MiddlewareTracker;
+use PHP_SF\System\Debug\QueryCounterMiddleware;
 use PHP_SF\System\Router;
 use PHP_SF\Templates\Layout\FooterComponents\CKEditor_activator;
 
@@ -44,6 +47,25 @@ final class footer extends AbstractView { public function show(): void { ?>
           </div>
           <div class="col-6">
             <?php dump(Response::$activeTemplates) ?>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <?php dump(PhpSfEventDispatcher::getDispatchLog()) ?>
+          </div>
+          <div class="col-6">
+            <?php dump(MiddlewareTracker::getLog()) ?>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-6">
+            <?php dump(QueryCounterMiddleware::getCounts()) ?>
+          </div>
+          <div class="col-6">
+            <?php dump([
+              'memory'      => round(memory_get_usage(true) / 1024 / 1024, 2) . ' MB',
+              'memory_peak' => round(memory_get_peak_usage(true) / 1024 / 1024, 2) . ' MB',
+            ]) ?>
           </div>
         </div>
       <?php endif ?>

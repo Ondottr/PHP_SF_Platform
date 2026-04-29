@@ -14,6 +14,7 @@ final class PhpSfEventDispatcher
     private static ?EventDispatcher $dispatcher     = null;
     private static array            $subscriberDirs = [];
     private static bool             $initialized    = false;
+    private static array            $dispatchLog    = [];
 
 
     public static function addSubscriberDirectory(string $dir): void
@@ -56,7 +57,24 @@ final class PhpSfEventDispatcher
             self::initialize();
         }
 
-        return self::$dispatcher->dispatch($event, $eventName);
+        $result = self::$dispatcher->dispatch($event, $eventName);
+
+        if (DEV_MODE) {
+            self::$dispatchLog[] = [
+                'event'       => $eventName,
+                'subscribers' => array_map(
+                    static fn( $l ) => is_array($l) ? get_class($l[0]) . '::' . $l[1] : ( is_object($l) ? get_class($l) : (string)$l ),
+                    self::$dispatcher->getListeners($eventName)
+                ),
+            ];
+        }
+
+        return $result;
+    }
+
+    public static function getDispatchLog(): array
+    {
+        return self::$dispatchLog;
     }
 
 

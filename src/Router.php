@@ -4,7 +4,6 @@ declare( strict_types=1 );
 namespace PHP_SF\System;
 
 use JetBrains\PhpStorm\NoReturn;
-use JetBrains\PhpStorm\Pure;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
@@ -141,8 +140,13 @@ class Router
                 PhpSfEventDispatcher::dispatch( KernelEvents::EXCEPTION, $exceptionEvent );
 
                 if ( $exceptionEvent->hasResponse() ) {
-                    self::$routeMethodResponse = $exceptionEvent->getResponse();
-                    static::sendRouteMethodResponse();
+                    $exResponse      = $exceptionEvent->getResponse();
+                    $exResponseEvent = new ResponseEvent(
+                        self::$kernel, static::$requestData, HttpKernelInterface::MAIN_REQUEST, $exResponse
+                    );
+                    PhpSfEventDispatcher::dispatch( KernelEvents::RESPONSE, $exResponseEvent );
+                    $exResponseEvent->getResponse()->send();
+                    exit;
                 }
 
                 throw $e;
@@ -771,17 +775,13 @@ class Router
     #[NoReturn]
     private static function sendEntityNotFoundResponse(): never
     {
-        if ( str_starts_with( static::$currentRoute->url, '/api/' ) ) {
-            ( new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], JsonResponse::HTTP_NOT_FOUND ) )->send();
-            exit( 0 );
-        }
+        self::$routeMethodResponse = str_starts_with( static::$currentRoute->url, '/api/' )
+            ? new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], SymfonyResponse::HTTP_NOT_FOUND )
+            : new Response( status: SymfonyResponse::HTTP_NOT_FOUND );
 
-        VarDumper::setHandler( null );
-        ob_start( fn( $b ) => TEMPLATES_CACHE_ENABLED ? preg_replace( [ '/>\s+</' ], [ '><' ], $b ) : $b );
-        ( new Response( status: Response::HTTP_NOT_FOUND ) )->send();
+        static::sendRouteMethodResponse();
     }
 
-    #[Pure]
     public static function getRouteLink( string $routeName ): string
     {
         return self::isRouteExists( $routeName ) === false ?
