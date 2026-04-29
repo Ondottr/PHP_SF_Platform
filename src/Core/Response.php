@@ -98,6 +98,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             ( new $footerClassName( $this->dataFromController ) )->show();
         }
 
+        $this->sendHeaders();
         ob_end_flush();
 
         if ( function_exists( 'fastcgi_finish_request' ) )
