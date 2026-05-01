@@ -420,9 +420,16 @@ class Router
          */
         $httpMethod = $_SERVER['REQUEST_METHOD'];
 
-        if ( array_key_exists( $httpMethod, self::$routesByUrl ) === false )
-            throw new RuntimeException( 'Looks like something went wrong with parsing routes from controllers.' .
-                                        ' Routes list for current httpMethod is empty. Please, check your controllers and routes!' );
+        // HEAD shares GET routes per HTTP spec
+        if ( $httpMethod === 'HEAD' && !array_key_exists( 'HEAD', self::$routesByUrl ) ) {
+            $httpMethod = 'GET';
+        }
+
+        if ( array_key_exists( $httpMethod, self::$routesByUrl ) === false ) {
+            header( 'Allow: ' . implode( ', ', array_keys( self::$routesByUrl ) ) );
+            http_response_code( 405 );
+            exit;
+        }
 
         $currentUrl = static::getCurrentRequestUrl();
         $urlHash = hash( 'sha256', $currentUrl );
@@ -766,10 +773,11 @@ class Router
                 ob_end_clean();
                 throw new ViewException( $e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e );
             }
-        }
+        } else // if ( $response instanceof JsonResponse or RedirectResponse or plain SymfonyResponse
+            $response->send();
 
-        // if ( $response instanceof JsonResponse )
-        $response->send();
+        /** @noinspection PhpUnreachableStatementInspection */
+        exit;
     }
 
     #[NoReturn]
