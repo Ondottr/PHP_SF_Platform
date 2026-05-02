@@ -91,10 +91,13 @@ final class RedirectResponse extends Response
         if ( empty( $_GET ) === false ) {
             $replacedUrl .= '?' . http_build_query( $_GET );
         }
-        $nonceAttr = self::$cspNonce !== null ? ' nonce="' . self::$cspNonce . '"' : '' ?>
+        $nonceAttr = self::$cspNonce !== null
+            ? ' nonce="' . htmlspecialchars( self::$cspNonce, ENT_QUOTES, 'UTF-8' ) . '"'
+            : '';
+        $safeUrl = json_encode( $replacedUrl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?>
 
         <script<?= $nonceAttr ?>>
-            history.replaceState( {}, '', '<?= $replacedUrl ?>' );
+            history.replaceState( {}, '', <?= $safeUrl ?> );
         </script>
 
         <?php
