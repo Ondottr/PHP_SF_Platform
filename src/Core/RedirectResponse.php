@@ -30,6 +30,19 @@ final class RedirectResponse extends Response
         self::ALERT_INFO,
     ];
 
+    private static ?string $cspNonce = null;
+
+
+    public static function setCspNonce( string $nonce ): void
+    {
+        self::$cspNonce = $nonce;
+    }
+
+    public static function getCspNonce(): ?string
+    {
+        return self::$cspNonce;
+    }
+
 
     public function __construct(
         #[Immutable] private readonly string $targetUrl,
@@ -75,11 +88,16 @@ final class RedirectResponse extends Response
 
 
         $replacedUrl = $this->getTargetUrl();
-        if ( empty( $_GET ) === false )
-            $replacedUrl .= '?' . http_build_query( $_GET ) ?>
+        if ( empty( $_GET ) === false ) {
+            $replacedUrl .= '?' . http_build_query( $_GET );
+        }
+        $nonceAttr = self::$cspNonce !== null
+            ? ' nonce="' . htmlspecialchars( self::$cspNonce, ENT_QUOTES, 'UTF-8' ) . '"'
+            : '';
+        $safeUrl = json_encode( $replacedUrl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?>
 
-        <script>
-            history.replaceState( {}, '', '<?= $replacedUrl ?>' );
+        <script<?= $nonceAttr ?>>
+            history.replaceState( {}, '', <?= $safeUrl ?> );
         </script>
 
         <?php
