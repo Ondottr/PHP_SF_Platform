@@ -2,6 +2,8 @@
 
 namespace PHP_SF\System\Traits;
 
+use PHP_SF\System\Classes\Helpers\CursorPaginationResult;
+use PHP_SF\System\Core\ApiResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
@@ -170,5 +172,43 @@ trait JsonResponseHelperTrait
     protected function unprocessableEntity( mixed $data = null, array $headers = [] ): JsonResponse
     {
         return $this->json( data: $data, status: JsonResponse::HTTP_UNPROCESSABLE_ENTITY, headers: $headers );
+    }
+
+    protected function apiSuccess(
+        mixed                   $data = null,
+        ?CursorPaginationResult $pagination = null,
+        int                     $status = 200,
+    ): ApiResponse {
+        return ApiResponse::success( data: $data, pagination: $pagination, status: $status );
+    }
+
+    protected function apiCreated( mixed $data = null ): ApiResponse
+    {
+        return ApiResponse::created( data: $data );
+    }
+
+    protected function apiError( string|array $errors, int $status = 400 ): ApiResponse
+    {
+        return ApiResponse::error( errors: $errors, status: $status );
+    }
+
+    protected function apiNotFound( ?string $error = null ): ApiResponse
+    {
+        return ApiResponse::notFound( error: $error );
+    }
+
+    protected function apiForbidden( ?string $error = null ): ApiResponse
+    {
+        return ApiResponse::forbidden( error: $error );
+    }
+
+    protected function apiUnauthorized( ?string $error = null ): ApiResponse
+    {
+        return ApiResponse::unauthorized( error: $error );
+    }
+
+    protected function apiUnprocessableEntity( array $errors ): ApiResponse
+    {
+        return ApiResponse::unprocessableEntity( errors: $errors );
     }
 }

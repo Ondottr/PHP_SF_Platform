@@ -4,6 +4,7 @@ namespace PHP_SF\Framework\Http\Middleware;
 
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Abstracts\Middleware;
+use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Kernel;
@@ -74,7 +75,7 @@ class auth extends Middleware
     {
         if ( self::isAuthenticated() === false ) {
             if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
-                return new JsonResponse( [ 'error' => 'Unauthorized!' ], JsonResponse::HTTP_UNAUTHORIZED );
+                return ApiResponse::unauthorized();
 
             return $this->redirectTo( 'login_page' );
         }

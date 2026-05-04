@@ -12,6 +12,7 @@ use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
 use PHP_SF\System\Classes\Exception\ViewException;
 use PHP_SF\System\Classes\MiddlewareChecks\MiddlewaresExecutor;
+use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\PhpSfContext;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\RedirectResponse;
@@ -784,7 +785,7 @@ class Router
     private static function sendEntityNotFoundResponse(): never
     {
         self::$routeMethodResponse = str_starts_with( static::$currentRoute->url, '/api/' )
-            ? new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], SymfonyResponse::HTTP_NOT_FOUND )
+            ? ApiResponse::notFound()
             : new Response( status: SymfonyResponse::HTTP_NOT_FOUND );
 
         static::sendRouteMethodResponse();
