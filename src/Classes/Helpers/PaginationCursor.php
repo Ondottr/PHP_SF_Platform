@@ -33,6 +33,9 @@ final class PaginationCursor
             throw new InvalidArgumentException( 'Invalid cursor: malformed JSON payload.', previous: $e );
         }
 
+        if ( !is_array( $data ) )
+            throw new InvalidArgumentException( 'Invalid cursor: decoded payload must be a JSON object.' );
+
         if ( !array_key_exists( 'field', $data ) || !isset( $data['id'] ) )
             throw new InvalidArgumentException( 'Invalid cursor: missing required keys.' );
 
