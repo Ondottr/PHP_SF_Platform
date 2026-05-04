@@ -211,4 +211,9 @@ trait JsonResponseHelperTrait
     {
         return ApiResponse::unprocessableEntity( errors: $errors );
     }
+
+    protected function apiNoContent(): JsonResponse
+    {
+        return ApiResponse::noContent();
+    }
 }

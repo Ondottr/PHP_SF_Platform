@@ -2,9 +2,7 @@
 
 namespace PHP_SF\System\Classes\Helpers;
 
-use DateTimeInterface;
 use Doctrine\ORM\QueryBuilder;
-use InvalidArgumentException;
 
 final class CursorPaginationHelper
 {
@@ -20,18 +18,16 @@ final class CursorPaginationHelper
      * Sort field must be non-nullable for stable cursor behaviour.
      */
     public static function paginate(
-        QueryBuilder $qb,
-        string       $sortField,
-        string       $entityAlias = 'e',
-        ?string      $cursor = null,
-        int          $perPage = self::DEFAULT_PER_PAGE,
+        QueryBuilder     $qb,
+        string           $sortField,
+        string           $entityAlias = 'e',
+        ?PaginationCursor $cursor      = null,
+        int              $perPage     = self::DEFAULT_PER_PAGE,
     ): CursorPaginationResult {
-        $perPage = min( max( 1, $perPage ), self::MAX_PER_PAGE );
+        $perPage   = min( max( 1, $perPage ), self::MAX_PER_PAGE );
+        $forward   = $cursor === null || $cursor->isForward;
 
-        $decoded = $cursor !== null ? self::decodeCursor( $cursor ) : null;
-        $forward = $decoded === null || ( $decoded['dir'] ?? 'next' ) === 'next';
-
-        if ( $decoded !== null ) {
+        if ( $cursor !== null ) {
             $expr = $qb->expr();
 
             if ( $forward ) {
@@ -52,8 +48,8 @@ final class CursorPaginationHelper
                 ) );
             }
 
-            $qb->setParameter( '_cpf', $decoded['field'] )
-               ->setParameter( '_cpi', $decoded['id'] );
+            $qb->setParameter( '_cpf', $cursor->field )
+               ->setParameter( '_cpi', $cursor->id );
         }
 
         $dir = $forward ? 'ASC' : 'DESC';
@@ -76,10 +72,10 @@ final class CursorPaginationHelper
 
         if ( !empty( $items ) ) {
             if ( $hasMore )
-                $nextCursor = self::encodeCursor( end( $items ), $sortField, isPrev: false );
+                $nextCursor = PaginationCursor::after( end( $items ), $sortField );
 
             if ( $cursor !== null )
-                $prevCursor = self::encodeCursor( reset( $items ), $sortField, isPrev: true );
+                $prevCursor = PaginationCursor::before( reset( $items ), $sortField );
         }
 
         return new CursorPaginationResult(
@@ -90,38 +86,6 @@ final class CursorPaginationHelper
             perPage:    $perPage,
             hasMore:    $hasMore,
         );
-    }
-
-
-    public static function decodeCursor( string $cursor ): array
-    {
-        $decoded = base64_decode( $cursor, strict: true );
-
-        if ( $decoded === false )
-            throw new InvalidArgumentException( 'Invalid cursor: not valid base64.' );
-
-        $data = json_decode( $decoded, associative: true, flags: JSON_THROW_ON_ERROR );
-
-        if ( !array_key_exists( 'field', $data ) || !isset( $data['id'] ) )
-            throw new InvalidArgumentException( 'Invalid cursor: missing required keys.' );
-
-        return $data;
-    }
-
-
-    private static function encodeCursor( object $entity, string $sortField, bool $isPrev ): string
-    {
-        $getter     = 'get' . ucfirst( $sortField );
-        $fieldValue = method_exists( $entity, $getter ) ? $entity->$getter() : null;
-
-        if ( $fieldValue instanceof DateTimeInterface )
-            $fieldValue = $fieldValue->getTimestamp();
-
-        return base64_encode( json_encode( [
-            'field' => $fieldValue,
-            'id'    => $entity->getId(),
-            'dir'   => $isPrev ? 'prev' : 'next',
-        ], JSON_THROW_ON_ERROR ) );
     }
 
 }

@@ -3,6 +3,7 @@
 namespace PHP_SF\Tests\System\Core;
 
 use PHP_SF\System\Classes\Helpers\CursorPaginationResult;
+use PHP_SF\System\Classes\Helpers\PaginationCursor;
 use PHP_SF\System\Core\ApiResponse;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -84,10 +85,16 @@ final class ApiResponseTest extends TestCase
 
     public function testPaginationAppearsInMeta(): void
     {
+        $entity = new class {
+            public function getCreatedAt(): int { return 1700000000; }
+            public function getId(): int { return 21; }
+        };
+
+        $next   = PaginationCursor::after( $entity, 'createdAt' );
         $result = new CursorPaginationResult(
             items:      [ [ 'id' => 1 ] ],
             cursor:     null,
-            nextCursor: 'abc123',
+            nextCursor: $next,
             prevCursor: null,
             perPage:    20,
             hasMore:    true,
@@ -97,7 +104,7 @@ final class ApiResponseTest extends TestCase
         $body = $this->decode( $r );
 
         self::assertNotNull( $body['meta']['pagination'] );
-        self::assertSame( 'abc123', $body['meta']['pagination']['next_cursor'] );
+        self::assertSame( $next->toString(), $body['meta']['pagination']['next_cursor'] );
         self::assertSame( 20, $body['meta']['pagination']['per_page'] );
         self::assertTrue( $body['meta']['pagination']['has_more'] );
     }
