@@ -107,4 +107,17 @@ final class PaginationCursorTest extends TestCase
         self::assertSame( 10, $cursor->id );
     }
 
+    public function testMissingGetterThrows(): void
+    {
+        $entity = new class {
+            public function getId(): int { return 1; }
+            // no getCreatedAt()
+        };
+
+        $this->expectException( \InvalidArgumentException::class );
+        $this->expectExceptionMessageMatches( '/getter getCreatedAt/' );
+
+        PaginationCursor::after( $entity, 'createdAt' );
+    }
+
 }

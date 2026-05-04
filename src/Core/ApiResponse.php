@@ -130,7 +130,7 @@ final class ApiResponse extends JsonResponse
     // 204 — no envelope, empty body (HTTP spec prohibits content on 204)
     public static function noContent( array $headers = [] ): JsonResponse
     {
-        return new JsonResponse( null, self::HTTP_NO_CONTENT, $headers );
+        return new JsonResponse( status: self::HTTP_NO_CONTENT, headers: $headers );
     }
 
 

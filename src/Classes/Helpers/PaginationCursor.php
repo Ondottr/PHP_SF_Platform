@@ -84,8 +84,14 @@ final class PaginationCursor
 
     private static function encode( object $entity, string $sortField, bool $isForward ): self
     {
-        $getter     = 'get' . ucfirst( $sortField );
-        $fieldValue = method_exists( $entity, $getter ) ? $entity->$getter() : null;
+        $getter = 'get' . ucfirst( $sortField );
+
+        if ( !method_exists( $entity, $getter ) )
+            throw new InvalidArgumentException(
+                sprintf( 'Entity %s has no getter %s() for sort field "%s".', $entity::class, $getter, $sortField )
+            );
+
+        $fieldValue = $entity->$getter();
 
         if ( $fieldValue instanceof DateTimeInterface )
             $fieldValue = $fieldValue->getTimestamp();

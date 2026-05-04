@@ -3,6 +3,7 @@
 namespace PHP_SF\System\Classes\Helpers;
 
 use Doctrine\ORM\QueryBuilder;
+use InvalidArgumentException;
 
 final class CursorPaginationHelper
 {
@@ -10,22 +11,39 @@ final class CursorPaginationHelper
     public const int DEFAULT_PER_PAGE = 20;
     public const int MAX_PER_PAGE     = 100;
 
+    // Allowlist pattern: DQL identifiers must be word characters only.
+    // $sortField and $entityAlias are interpolated into DQL — they must never
+    // come from user input. This guard is a last-resort safety net.
+    private const IDENTIFIER_PATTERN = '/^[a-zA-Z_][a-zA-Z0-9_]*$/';
+
 
     /**
      * Paginates a Doctrine QueryBuilder using cursor-based pagination.
      *
      * The QB must NOT have ORDER BY or setMaxResults applied — this method owns those clauses.
+     * $sortField and $entityAlias are interpolated into DQL and MUST be hardcoded
+     * trusted values, never derived from user input.
      * Sort field must be non-nullable for stable cursor behaviour.
      */
     public static function paginate(
-        QueryBuilder     $qb,
-        string           $sortField,
-        string           $entityAlias = 'e',
+        QueryBuilder      $qb,
+        string            $sortField,
+        string            $entityAlias = 'e',
         ?PaginationCursor $cursor      = null,
-        int              $perPage     = self::DEFAULT_PER_PAGE,
+        int               $perPage     = self::DEFAULT_PER_PAGE,
     ): CursorPaginationResult {
-        $perPage   = min( max( 1, $perPage ), self::MAX_PER_PAGE );
-        $forward   = $cursor === null || $cursor->isForward;
+        if ( !preg_match( self::IDENTIFIER_PATTERN, $sortField ) )
+            throw new InvalidArgumentException(
+                sprintf( 'Invalid sortField "%s": must be a valid DQL identifier.', $sortField )
+            );
+
+        if ( !preg_match( self::IDENTIFIER_PATTERN, $entityAlias ) )
+            throw new InvalidArgumentException(
+                sprintf( 'Invalid entityAlias "%s": must be a valid DQL identifier.', $entityAlias )
+            );
+
+        $perPage = min( max( 1, $perPage ), self::MAX_PER_PAGE );
+        $forward = $cursor === null || $cursor->isForward;
 
         if ( $cursor !== null ) {
             $expr = $qb->expr();
@@ -71,11 +89,20 @@ final class CursorPaginationHelper
         $prevCursor = null;
 
         if ( !empty( $items ) ) {
-            if ( $hasMore )
+            if ( $forward ) {
+                if ( $hasMore )
+                    $nextCursor = PaginationCursor::after( end( $items ), $sortField );
+
+                if ( $cursor !== null )
+                    $prevCursor = PaginationCursor::before( reset( $items ), $sortField );
+            } else {
+                // Backward pass: next is always known (we came from forward),
+                // prev only exists if there are more items further back.
                 $nextCursor = PaginationCursor::after( end( $items ), $sortField );
 
-            if ( $cursor !== null )
-                $prevCursor = PaginationCursor::before( reset( $items ), $sortField );
+                if ( $hasMore )
+                    $prevCursor = PaginationCursor::before( reset( $items ), $sortField );
+            }
         }
 
         return new CursorPaginationResult(
