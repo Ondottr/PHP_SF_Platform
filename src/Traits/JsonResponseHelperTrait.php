@@ -178,7 +178,8 @@ trait JsonResponseHelperTrait
         mixed                   $data = null,
         ?CursorPaginationResult $pagination = null,
         int                     $status = 200,
-    ): ApiResponse {
+    ): ApiResponse
+    {
         return ApiResponse::success( data: $data, pagination: $pagination, status: $status );
     }
 
