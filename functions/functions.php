@@ -171,7 +171,7 @@ function user(): UserInterface|false
 /**
  * @deprecated Use {@see \string_to_snake()} instead; this method will be removed in v3.
  */
-#[Deprecated(message: 'Use string_to_snake() instead; this method will be removed in v3.', since: '2.1.2')]
+#[Deprecated(message: 'Use string_to_snake() instead; this method will be removed in v3.', since: '2.2.0')]
 function camel_to_snake(string $input): string
 {
     return string_to_snake($input);
@@ -222,7 +222,7 @@ function string_to_screaming_snake(string $input): string
 /**
  * @deprecated Use {@see string_to_camel()} instead; this method will be removed in v3.
  */
-#[Deprecated(message: 'Use camel_to_snake() instead; this method will be removed in v3.', since: '2.1.2')]
+#[Deprecated(message: 'Use camel_to_snake() instead; this method will be removed in v3.', since: '2.2.0')]
 function snakeToCamel(string $input): string
 {
     return string_to_camel($input);
