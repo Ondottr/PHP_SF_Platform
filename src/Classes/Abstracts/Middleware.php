@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Debug\MiddlewareTracker;
 use PHP_SF\System\Kernel;
@@ -35,9 +36,7 @@ abstract class Middleware
 
         if ( $middlewareResult === false ) {
             if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
-                $middlewareResult = new JsonResponse(
-                    [ 'error' => _t( 'common.errors.access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
-                );
+                $middlewareResult = ApiResponse::forbidden();
 
             else
                 $middlewareResult = $this->redirectBack( errors: [ _t( 'common.errors.access_denied' ) ] );

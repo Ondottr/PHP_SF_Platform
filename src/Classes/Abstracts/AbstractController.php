@@ -4,6 +4,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
+use PHP_SF\System\Traits\JsonResponseHelperTrait;
 use PHP_SF\System\Traits\RedirectTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 abstract class AbstractController
 {
     use RedirectTrait;
+    use JsonResponseHelperTrait;
 
     private string $generatedUrl;
 
