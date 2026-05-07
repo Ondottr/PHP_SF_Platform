@@ -29,8 +29,6 @@ final class Kernel implements HttpKernelInterface
 
     public function __construct()
     {
-        require_once __DIR__ . '/../functions/functions.php';
-
         if ( DEV_MODE === true ) {
             if ( function_exists( 'apcu_clear_cache' ) )
                 apcu_clear_cache();

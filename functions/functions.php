@@ -6,16 +6,13 @@ use Doctrine\ORM\QueryBuilder;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
+use PHP_SF\System\Classes\Helpers\StringCase;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
-use Symfony\Component\String\UnicodeString;
-
-require_once __DIR__ . '/time_functions.php';
-require_once __DIR__ . '/view_functions.php';
 
 function em( string $connectionName ): EntityManager
 {
@@ -28,9 +25,6 @@ function qb( string $connectionName ): QueryBuilder
 {
     return em( $connectionName )->createQueryBuilder();
 }
-
-
-// ca(), rca(), aca(), mca(), fca(), rc(), rp() are provided by nations-original/php-sf-cache (autoloaded)
 
 
 function s(): Session
@@ -174,18 +168,130 @@ function user(): UserInterface|false
 }
 
 
-function camel_to_snake( string $input ): string
+/**
+ * @deprecated Use {@see \string_to_snake()} instead; this method will be removed in v3.
+ */
+#[Deprecated(message: 'Use string_to_snake() instead; this method will be removed in v3.', since: '2.1.2')]
+function camel_to_snake(string $input): string
 {
-    return (new UnicodeString($input))
-        ->snake()
-        ->toString();
+    return string_to_snake($input);
 }
 
-function snakeToCamel( string $input ): string
+
+/**
+ * Converts any string format to snake_case.
+ *
+ * Recognises camelCase, PascalCase, SCREAMING_SNAKE, kebab-case, dot.notation,
+ * slash/separated, mixed separators, acronyms (XMLHttpRequest → xml_http_request),
+ * and digit→uppercase boundaries (user1Profile → user1_profile).
+ * Unicode letters are preserved; accents are not stripped.
+ * Leading/trailing separators and whitespace are ignored.
+ *
+ * @param string $input Any string — empty string returns empty string.
+ *
+ * @return string Lowercase words joined by underscores.
+ *
+ * @example string_to_snake('helloWorld')     // 'hello_world'
+ * @example string_to_snake('XMLHttpRequest') // 'xml_http_request'
+ * @example string_to_snake('user1Profile')   // 'user1_profile'
+ */
+function string_to_snake(string $input): string
 {
-    return (new UnicodeString($input))
-        ->camel()
-        ->toString();
+    return StringCase::snake($input);
+}
+
+
+/**
+ * Converts any string format to SCREAMING_SNAKE_CASE.
+ *
+ * Applies the same tokenisation as {@see string_to_snake()}, then uppercases the result.
+ *
+ * @param string $input Any string — empty string returns empty string.
+ *
+ * @return string Uppercase words joined by underscores.
+ *
+ * @example string_to_screaming_snake('helloWorld')     // 'HELLO_WORLD'
+ * @example string_to_screaming_snake('XMLHttpRequest') // 'XML_HTTP_REQUEST'
+ */
+function string_to_screaming_snake(string $input): string
+{
+    return StringCase::screamingSnake($input);
+}
+
+
+/**
+ * @deprecated Use {@see string_to_camel()} instead; this method will be removed in v3.
+ */
+#[Deprecated(message: 'Use camel_to_snake() instead; this method will be removed in v3.', since: '2.1.2')]
+function snakeToCamel(string $input): string
+{
+    return string_to_camel($input);
+}
+
+
+/**
+ * Converts any string format to camelCase.
+ *
+ * Applies the same tokenisation as {@see string_to_snake()}, then joins words
+ * with the first word lowercase and every subsequent word title-cased.
+ * Note: {@see mb_convert_case()} with MB_CASE_TITLE treats digits as word
+ * boundaries, so digits in suffix words capitalise the following letter
+ * (e.g. 'hello2world' → 'hello2World' when not the first word).
+ *
+ * @param string $input Any string — empty string returns empty string.
+ *
+ * @return string Words joined without separator, first word lowercase, rest title-cased.
+ *
+ * @example string_to_camel('hello_world')    // 'helloWorld'
+ * @example string_to_camel('XMLHttpRequest') // 'xmlHttpRequest'
+ * @example string_to_camel('version2API')    // 'version2Api'
+ */
+function string_to_camel(string $input): string
+{
+    return StringCase::camel($input);
+}
+
+
+/**
+ * Converts any string format to PascalCase.
+ *
+ * Applies the same tokenisation as {@see string_to_snake()}, then joins words
+ * with every word title-cased (including the first).
+ * Note: {@see mb_convert_case()} with MB_CASE_TITLE treats digits as word
+ * boundaries, so digits capitalise the following letter
+ * (e.g. 'hello2world' → 'Hello2World').
+ *
+ * @param string $input Any string — empty string returns empty string.
+ *
+ * @return string Words joined without separator, every word title-cased.
+ *
+ * @example string_to_pascal('hello_world')    // 'HelloWorld'
+ * @example string_to_pascal('XMLHttpRequest') // 'XmlHttpRequest'
+ * @example string_to_pascal('version2API')    // 'Version2Api'
+ */
+function string_to_pascal(string $input): string
+{
+    return StringCase::pascal($input);
+}
+
+
+/**
+ * Converts any string format to kebab-case.
+ *
+ * Applies the same tokenisation as {@see string_to_snake()}, then joins words
+ * with hyphens instead of underscores.
+ *
+ * @param string $input Any string — empty string returns empty string.
+ *
+ * @return string Lowercase words joined by hyphens.
+ *
+ * @example string_to_kebab('helloWorld')     // 'hello-world'
+ * @example string_to_kebab('XMLHttpRequest') // 'xml-http-request'
+ * @example string_to_kebab('user1Profile')   // 'user1-profile'
+ */
+function string_to_kebab(string $input): string
+{
+    return StringCase::kebab($input);
 }
 
 

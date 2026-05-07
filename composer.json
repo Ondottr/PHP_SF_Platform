@@ -14,7 +14,12 @@
       "PHP_SF\\Framework\\": "app/",
       "PHP_SF\\Templates\\": "templates/",
       "PHP_SF\\Tests\\": "tests/"
-    }
+    },
+    "files": [
+      "functions/functions.php",
+      "functions/time_functions.php",
+      "functions/view_functions.php"
+    ]
   },
   "license": "ISC",
   "minimum-stability": "stable",
