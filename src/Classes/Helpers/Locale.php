@@ -3,7 +3,7 @@ declare( strict_types=1 );
 
 namespace PHP_SF\System\Classes\Helpers;
 
-use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
+use PHP_SF\Cache\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
 use ReflectionClass;

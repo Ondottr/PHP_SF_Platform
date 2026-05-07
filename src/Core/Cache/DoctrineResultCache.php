@@ -6,7 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Driver\Result as DriverResult;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
-use PHP_SF\System\Classes\Exception\InvalidCacheArgumentException;
+use PHP_SF\Cache\Exception\InvalidCacheArgumentException;
 
 final class DoctrineResultCache implements DriverResult
 {
