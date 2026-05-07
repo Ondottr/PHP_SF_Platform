@@ -3,22 +3,13 @@
 use App\Kernel;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
-use JetBrains\PhpStorm\Deprecated;
-use JetBrains\PhpStorm\ExpectedValues;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
-use PHP_SF\System\Classes\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\RouteParameterExpectedException;
-use PHP_SF\System\Core\Cache\APCuCacheAdapter;
-use PHP_SF\System\Core\Cache\MemcachedCacheAdapter;
-use PHP_SF\System\Core\Cache\RedisCacheAdapter;
 use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\TranslatorV2;
-use PHP_SF\System\Database\Redis;
 use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Router;
-use Predis\Client;
-use Predis\Pipeline\Pipeline;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\String\UnicodeString;
@@ -39,88 +30,7 @@ function qb( string $connectionName ): QueryBuilder
 }
 
 
-/**
- * @deprecated Use {@link rca()} function instead
- */
-#[Deprecated( replacement: 'rca()' )]
-function ra(): RedisCacheAdapter
-{
-    return RedisCacheAdapter::getInstance();
-}
-
-
-/**
- * This function returns an instance of one of the cache adapter classes ({@link RedisCacheAdapter} or {@link APCuCacheAdapter})
- */
-function ca(
-    #[ExpectedValues( [ null,
-        AbstractCacheAdapter::APCU_CACHE_ADAPTER,
-        AbstractCacheAdapter::REDIS_CACHE_ADAPTER,
-        AbstractCacheAdapter::MEMCACHED_CACHE_ADAPTER
-    ] )]
-    string|null $cacheAdapter = null
-): AbstractCacheAdapter {
-    if ( $cacheAdapter === null ) {
-        $isAPCuAvailable = function_exists( 'apcu_enabled' ) && apcu_enabled();
-        if ( $isAPCuAvailable )
-            $cacheAdapter = AbstractCacheAdapter::APCU_CACHE_ADAPTER;
-        else
-            $cacheAdapter = AbstractCacheAdapter::REDIS_CACHE_ADAPTER;
-    }
-
-    return match ( $cacheAdapter ) {
-        AbstractCacheAdapter::APCU_CACHE_ADAPTER      => aca(),
-        AbstractCacheAdapter::REDIS_CACHE_ADAPTER     => rca(),
-        AbstractCacheAdapter::MEMCACHED_CACHE_ADAPTER => mca(),
-        default                                       => throw new InvalidArgumentException( 'Invalid cache adapter' ),
-    };
-}
-
-
-/**
- * This function returns {@link RedisCacheAdapter} class instance
- *
- * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
- */
-function rca(): RedisCacheAdapter
-{
-    return RedisCacheAdapter::getInstance();
-}
-
-
-/**
- * This function returns {@link APCuCacheAdapter} class instance
- *
- * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
- *
- */
-function aca(): APCuCacheAdapter
-{
-    return APCuCacheAdapter::getInstance();
-}
-
-
-/**
- * This function returns {@link MemcachedCacheAdapter} class instance
- *
- * Use {@link ca()} instead for a more flexible way to get an cache adapter instance
- */
-function mca(): MemcachedCacheAdapter
-{
-    return MemcachedCacheAdapter::getInstance();
-}
-
-
-function rc(): Client
-{
-    return Redis::getClient();
-}
-
-
-function rp(): Pipeline
-{
-    return Redis::getPipeline();
-}
+// ca(), rca(), aca(), mca(), fca(), rc(), rp() are provided by nations-original/php-sf-cache (autoloaded)
 
 
 function s(): Session

@@ -20,7 +20,8 @@
   "minimum-stability": "stable",
   "prefer-stable": true,
   "require": {
-    "php": "8.3.*"
+    "php": "8.3.*",
+    "nations-original/php-sf-cache": "^2.0"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"
