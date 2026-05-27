@@ -2,8 +2,6 @@
 
 namespace PHP_SF\System\Core;
 
-use function function_exists;
-
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
@@ -13,6 +11,8 @@ use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+
+use function function_exists;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
 {
@@ -114,7 +114,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         $ctx = PhpSfContext::current();
         if (null !== $ctx) {
             $kernel = $ctx->getKernel();
-            $request = $ctx->getRequest();
+            $request = r();
 
             PhpSfEventDispatcher::dispatch(KernelEvents::FINISH_REQUEST, new FinishRequestEvent(
                 $kernel,

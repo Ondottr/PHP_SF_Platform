@@ -126,7 +126,7 @@ final class Kernel implements HttpKernelInterface
         return $this;
     }
 
-    public function setHeaderTemplateClassName(string $headerTemplateClassName): self
+    public static function setHeaderTemplateClassName( string $headerTemplateClassName ): void
     {
         if (false === class_exists($headerTemplateClassName)) {
             throw new InvalidConfigurationException(
@@ -135,11 +135,9 @@ final class Kernel implements HttpKernelInterface
         }
 
         self::$headerTemplateClassName = $headerTemplateClassName;
-
-        return $this;
     }
 
-    public function setFooterTemplateClassName(string $footerTemplateClassName): self
+    public static function setFooterTemplateClassName( string $footerTemplateClassName ): void
     {
         if (false === class_exists($footerTemplateClassName)) {
             throw new InvalidConfigurationException(
@@ -148,8 +146,6 @@ final class Kernel implements HttpKernelInterface
         }
 
         self::$footerTemplateClassName = $footerTemplateClassName;
-
-        return $this;
     }
 
     private function setDefaultLocale(): void

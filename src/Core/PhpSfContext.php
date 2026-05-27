@@ -3,7 +3,6 @@
 namespace PHP_SF\System\Core;
 
 use PHP_SF\System\Kernel;
-use Symfony\Component\HttpFoundation\Request;
 
 final class PhpSfContext
 {
@@ -12,7 +11,6 @@ final class PhpSfContext
     public function __construct(
         private readonly object $route,
         private readonly array $middleware,
-        private readonly Request $request,
         private readonly Kernel $kernel,
     ) {
     }
@@ -35,11 +33,6 @@ final class PhpSfContext
     public function getMiddleware(): array
     {
         return $this->middleware;
-    }
-
-    public function getRequest(): Request
-    {
-        return $this->request;
     }
 
     public function getKernel(): Kernel

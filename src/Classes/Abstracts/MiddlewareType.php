@@ -5,9 +5,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 use PHP_SF\System\Classes\Exception\RouteMiddlewareException;
 use PHP_SF\System\Classes\MiddlewareChecks\MiddlewareAll;
 use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\System\Kernel;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 abstract class MiddlewareType
 {
@@ -15,10 +13,8 @@ abstract class MiddlewareType
 
     public function __construct(
         protected readonly string|array $middlewares,
-        protected readonly Request $request,
-        protected readonly Kernel $kernel,
-    ) {
-    }
+    ) {}
+
 
     /**
      * @throws RouteMiddlewareException If any of validation fails it is recommended to throw an {@link RouteMiddlewareException}

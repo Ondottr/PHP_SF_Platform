@@ -89,12 +89,12 @@ trait RedirectTrait
         $messages ??= [];
         $formData ??= [];
 
-        if (null === $this->request->headers->get('referer')) {
+        if (null === r()->headers->get('referer')) {
             $url = '/';
-        } elseif (null !== $this->request->headers->get('origin')) {
-            $url = str_replace($this->request->headers->get('origin'), '', $this->request->headers->get('referer'));
+        } elseif (null !== r()->headers->get('origin')) {
+            $url = str_replace(r()->headers->get('origin'), '', r()->headers->get('referer'));
         } else {
-            $url = str_replace([$this->request->headers->get('host'), 'https://', 'http://'], '', $this->request->headers->get('referer'));
+            $url = str_replace([r()->headers->get('host'), 'https://', 'http://'], '', r()->headers->get('referer'));
         }
 
         return $this->toUrl(
@@ -123,7 +123,7 @@ trait RedirectTrait
                 post: $post,
                 errors: $errors,
                 messages: $messages,
-                formData: array_merge($formData, isset($this->request) ? $this->request->request->all() : []),
+                formData: array_merge($formData, r()->request->all()),
             ),
         );
     }
@@ -143,7 +143,7 @@ trait RedirectTrait
             post: $post,
             errors: $errors,
             messages: $messages,
-            formData: array_merge($formData, isset($this->request) ? $this->request->request->all() : []),
+            formData: array_merge($formData, r()->request->all()),
         );
     }
 

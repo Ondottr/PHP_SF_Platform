@@ -13,16 +13,13 @@ use PHP_SF\System\Core\Response;
 use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
-use Symfony\Component\HttpFoundation\Request;
 
 class AuthController extends AbstractController
 {
     protected EntityRepository|ObjectRepository $userRepository;
 
-    public function __construct(protected ?Request $request)
+    public function __construct()
     {
-        parent::__construct($request);
-
         /**
          * @var \PHP_SF\System\Interface\UserInterface&\PHP_SF\System\Classes\Abstracts\AbstractEntity $userClass
          */
@@ -47,8 +44,8 @@ class AuthController extends AbstractController
             return $this->redirectTo(routeLink('home_page'));
         }
 
-        $email = trim(htmlspecialchars($this->request->request->get('email')));
-        $password = trim(htmlspecialchars($this->request->request->get('password')));
+        $email = trim(htmlspecialchars(r()->request->get('email')));
+        $password = trim(htmlspecialchars(r()->request->get('password')));
 
         if (empty($email) || empty($password)) {
             $errors[] = _t('auth.login_form.error.empty_credentials');
@@ -92,10 +89,10 @@ class AuthController extends AbstractController
             return $this->redirectTo(routeLink('home_page'));
         }
 
-        $login = trim(htmlspecialchars($this->request->request->get('login')));
-        $password = trim(htmlspecialchars($this->request->request->get('password')));
-        $email = trim(htmlspecialchars($this->request->request->get('email')));
-        $accept = trim(htmlspecialchars($this->request->request->get('accept', '')));
+        $login = trim(htmlspecialchars(r()->request->get('login')));
+        $password = trim(htmlspecialchars(r()->request->get('password')));
+        $email = trim(htmlspecialchars(r()->request->get('email')));
+        $accept = trim(htmlspecialchars(r()->request->get('accept', '')));
 
         if (empty($password) || empty($email)) {
             $errors[] = _t('auth.login_form.error.empty_credentials');

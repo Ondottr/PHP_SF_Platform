@@ -1,6 +1,5 @@
 <?php declare(strict_types=1);
 
-use App\Kernel;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use PHP_SF\Framework\Http\Middleware\auth;
@@ -11,6 +10,7 @@ use PHP_SF\System\Core\Sessions;
 use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Router;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
@@ -29,6 +29,11 @@ function qb(string $connectionName): QueryBuilder
 function s(): Session
 {
     return Sessions::getInstance();
+}
+
+function r(): Request
+{
+    return Router::getRequest();
 }
 
 /**
