@@ -558,7 +558,7 @@ class Router
 
     protected static function initializeController(): void
     {
-        self::$controller = new (static::$currentRoute->class)(static::getRequest());
+        self::$controller = \App\Kernel::getInstance()->getContainer()->get(static::$currentRoute->class);
     }
 
     final public static function getRequest(): Request
