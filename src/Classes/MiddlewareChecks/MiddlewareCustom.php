@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\MiddlewareChecks;
 
@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 /**
  * Provide a custom logic to determine if the middleware must be executed or not <p>
  * Example: <p>
- * \#[{@link Route}( middleware: [ {@link MiddlewareAll::class} => [ {@link auth::class} ], {@link MiddlewareAny::class} => [ {@link admin_example::class}, {@link api_example::class} ] ] )]
+ * \#[{@link Route}( middleware: [ {@link MiddlewareAll::class} => [ {@link auth::class} ], {@link MiddlewareAny::class} => [ {@link admin_example::class}, {@link api_example::class} ] ] )].
  *
  * In this example, the route will be accepted if:
  * - The user is authenticated and the user is an admin
@@ -29,86 +29,95 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 final class MiddlewareCustom extends MiddlewareType
 {
-
     /**
      * @throws RouteMiddlewareException If any of validation fails it is recommended to throw an {@link RouteMiddlewareException}
      */
     public function validate(): MiddlewareType
     {
-        $middlewares = $this->middlewares[ self::class ];
+        $middlewares = $this->middlewares[self::class];
 
         // Check if middleware array is not empty
-        if ( empty( $this->middlewares ) || empty( $middlewares ) )
-            throw new RouteMiddlewareException( self::class . ' array must not be empty!' );
+        if (empty($this->middlewares) || empty($middlewares)) {
+            throw new RouteMiddlewareException(self::class . ' array must not be empty!');
+        }
 
         // Check if middleware array contains only arrays with max 2 elements
-        foreach ( $this->middlewares as $middleware )
-            if ( count( $middleware ) > 2 )
-                throw new RouteMiddlewareException( self::class . ' array must contain only arrays with max 2 elements!' );
+        foreach ($this->middlewares as $middleware) {
+            if (count($middleware) > 2) {
+                throw new RouteMiddlewareException(self::class . ' array must contain only arrays with max 2 elements!');
+            }
+        }
 
         // Check if middleware array contains only arrays with max 2 elements and all elements are arrays
-        foreach ( $this->middlewares as $middleware )
-            foreach ( $middleware as $element )
-                if ( is_array( $element ) === false )
-                    throw new RouteMiddlewareException( self::class . ' array must contain only arrays with max 2 elements and all elements must be arrays!' );
-
-        foreach ( $this->middlewares as $middleware ) {
-            foreach ( $middleware as $key => $arrOfMiddles ) {
-                if ( $key !== MiddlewareAll::class && $key !== MiddlewareAny::class )
-                    throw new RouteMiddlewareException(
-                        self::class . ' array must contain only arrays with max 2 elements and all keys must be ' . MiddlewareAll::class . ' or ' . MiddlewareAny::class
-                    );
-
-                foreach ( $arrOfMiddles as $string ) {
-                    if ( is_string( $string ) === false ||
-                        is_subclass_of( $string, Middleware::class ) === false
-                    )
-                        throw new RouteMiddlewareException(
-                            self::class . ' array must contain only arrays with max 2 elements and all elements strings of valid classes extended from ' . Middleware::class
-                        );
+        foreach ($this->middlewares as $middleware) {
+            foreach ($middleware as $element) {
+                if (false === is_array($element)) {
+                    throw new RouteMiddlewareException(self::class . ' array must contain only arrays with max 2 elements and all elements must be arrays!');
                 }
             }
         }
 
+        foreach ($this->middlewares as $middleware) {
+            foreach ($middleware as $key => $arrOfMiddles) {
+                if (MiddlewareAll::class !== $key && MiddlewareAny::class !== $key) {
+                    throw new RouteMiddlewareException(
+                        self::class . ' array must contain only arrays with max 2 elements and all keys must be ' . MiddlewareAll::class . ' or ' . MiddlewareAny::class,
+                    );
+                }
+
+                foreach ($arrOfMiddles as $string) {
+                    if (false === is_string($string)
+                        || false === is_subclass_of($string, Middleware::class)
+                    ) {
+                        throw new RouteMiddlewareException(
+                            self::class . ' array must contain only arrays with max 2 elements and all elements strings of valid classes extended from ' . Middleware::class,
+                        );
+                    }
+                }
+            }
+        }
 
         return $this;
     }
 
     /**
      * Return `true` if the middleware allow the route to be executed, or a {@link RedirectResponse} or {@link JsonResponse}
-     * which will be returned by the {@link Middleware::execute()} method
+     * which will be returned by the {@link Middleware::execute()} method.
      *
      * @return bool|RedirectResponse|JsonResponse Result of the {@link Middleware::execute()} method
      */
     public function execute(): bool|RedirectResponse|JsonResponse
     {
-        $middlewares = $this->middlewares[ self::class ];
+        $middlewares = $this->middlewares[self::class];
 
-        if ( array_key_exists( MiddlewareAll::class, $middlewares ) ) {
-            $all = new MiddlewaresExecutor( [ MiddlewareAll::class => $middlewares[ MiddlewareAll::class ] ],
-                $this->request, $this->kernel
+        if (array_key_exists(MiddlewareAll::class, $middlewares)) {
+            $all = new MiddlewaresExecutor(
+                [MiddlewareAll::class => $middlewares[MiddlewareAll::class]],
+                $this->request,
+                $this->kernel,
             );
 
             $result = $all->execute();
 
-            if ( $result !== true )
+            if (true !== $result) {
                 return $result;
-
+            }
         }
 
-        if ( array_key_exists( MiddlewareAny::class, $middlewares ) ) {
-            $any = new MiddlewaresExecutor( [ MiddlewareAny::class => $middlewares[ MiddlewareAny::class ] ],
-                $this->request, $this->kernel
+        if (array_key_exists(MiddlewareAny::class, $middlewares)) {
+            $any = new MiddlewaresExecutor(
+                [MiddlewareAny::class => $middlewares[MiddlewareAny::class]],
+                $this->request,
+                $this->kernel,
             );
 
             $result = $any->execute();
 
-            if ( $result !== true )
+            if (true !== $result) {
                 return $result;
-
+            }
         }
 
         return true;
     }
-
 }

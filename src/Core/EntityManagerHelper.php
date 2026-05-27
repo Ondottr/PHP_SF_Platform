@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
 
@@ -8,15 +8,12 @@ use Symfony\Component\Console\Helper\Helper;
 /**
  * Doctrine CLI Connection Helper.
  *
- * @link    www.doctrine-project.org
+ * @see    www.doctrine-project.org
  */
 class EntityManagerHelper extends Helper
 {
-
     /**
      * Doctrine ORM EntityManagerInterface.
-     *
-     * @var EntityManagerInterface
      */
     protected EntityManagerInterface $_em;
 
@@ -27,19 +24,12 @@ class EntityManagerHelper extends Helper
 
     /**
      * Retrieves Doctrine ORM EntityManager.
-     *
-     * @return EntityManagerInterface
      */
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->_em;
     }
 
-    /**
-     * {@inheritdoc}
-     *
-     * @return string
-     */
     public function getName(): string
     {
         return 'entityManager';

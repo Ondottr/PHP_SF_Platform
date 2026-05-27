@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\Framework\EventListener;
 
@@ -34,16 +34,15 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final class PhpSfControllerListener implements EventSubscriberInterface
 {
-
     /** Flash bag: populated on redirect response, consumed on the next request. */
     private static array $flashBag = [];
 
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::REQUEST    => [ 'onKernelRequest', 10 ],
-            KernelEvents::CONTROLLER => [ 'onKernelController', 10 ],
-            KernelEvents::RESPONSE   => [ 'onKernelResponse', 10 ],
+            KernelEvents::REQUEST => ['onKernelRequest', 10],
+            KernelEvents::CONTROLLER => ['onKernelController', 10],
+            KernelEvents::RESPONSE => ['onKernelResponse', 10],
         ];
     }
 
@@ -51,137 +50,146 @@ final class PhpSfControllerListener implements EventSubscriberInterface
      * On every main request: consume the static flash bag and populate the globals
      * that PHP_SF templates read via getErrors(), getMessages(), formValue().
      */
-    public function onKernelRequest( RequestEvent $event ): void
+    public function onKernelRequest(RequestEvent $event): void
     {
-        if ( !$event->isMainRequest() )
+        if (!$event->isMainRequest()) {
             return;
+        }
 
-        $GLOBALS['errors']    = self::$flashBag['errors']   ?? [];
-        $GLOBALS['messages']  = self::$flashBag['messages'] ?? [];
+        $GLOBALS['errors'] = self::$flashBag['errors'] ?? [];
+        $GLOBALS['messages'] = self::$flashBag['messages'] ?? [];
         $GLOBALS['form_data'] = self::$flashBag['formData'] ?? [];
         self::$flashBag = [];
     }
 
-    public function onKernelController( ControllerEvent $event ): void
+    public function onKernelController(ControllerEvent $event): void
     {
         $controller = $event->getController();
 
         // PhpSfRouteLoader registers controllers as 'ClassName::method' strings.
-        if ( is_string( $controller ) && str_contains( $controller, '::' ) )
-            $controller = explode( '::', $controller, 2 );
+        if (is_string($controller) && str_contains($controller, '::')) {
+            $controller = explode('::', $controller, 2);
+        }
 
-        if ( !is_array( $controller ) || count( $controller ) !== 2 )
+        if (!is_array($controller) || 2 !== count($controller)) {
             return;
+        }
 
-        [ $classOrInstance, $method ] = $controller;
-        $class = is_object( $classOrInstance ) ? $classOrInstance::class : $classOrInstance;
+        [$classOrInstance, $method] = $controller;
+        $class = is_object($classOrInstance) ? $classOrInstance::class : $classOrInstance;
 
-        if ( !is_a( $class, AbstractController::class, true ) )
+        if (!is_a($class, AbstractController::class, true)) {
             return;
+        }
 
-        $request  = $event->getRequest();
-        $routeUrl = $request->attributes->get( '_php_sf_url', '' );
+        $request = $event->getRequest();
+        $routeUrl = $request->attributes->get('_php_sf_url', '');
 
         // Reconstruct the currentRoute object that templates and Response::send() rely on.
         // Normally set by Router::setCurrentRoute(); in tests we rebuild it from request attributes.
-        [ $ctrlClass, $ctrlMethod ] = explode( '::', $request->attributes->get( '_controller', '::' ), 2 );
+        [$ctrlClass, $ctrlMethod] = explode('::', $request->attributes->get('_controller', '::'), 2);
         Router::$currentRoute = (object) [
-            'url'        => $routeUrl,
-            'name'       => $request->attributes->get( '_route', '' ),
-            'class'      => $ctrlClass,
-            'method'     => $ctrlMethod,
+            'url' => $routeUrl,
+            'name' => $request->attributes->get('_route', ''),
+            'class' => $ctrlClass,
+            'method' => $ctrlMethod,
             'httpMethod' => $request->getMethod(),
-            'middleware' => $request->attributes->get( '_php_sf_middleware', [] ),
+            'middleware' => $request->attributes->get('_php_sf_middleware', []),
         ];
 
         // Replace the callable: ControllerResolver would do `new $class()` (no request),
         // here we inject the Symfony Request and forward route params correctly.
-        $event->setController( static function () use ( $class, $method, $request, $routeUrl ): mixed {
-            $instance = new $class( $request );
+        $event->setController(static function () use ($class, $method, $request, $routeUrl): mixed {
+            $instance = new $class($request);
 
             $rawParams = [];
-            foreach ( $request->attributes->all() as $key => $value ) {
-                if ( str_starts_with( $key, '_' ) )
+            foreach ($request->attributes->all() as $key => $value) {
+                if (str_starts_with($key, '_')) {
                     continue;
-                $rawParams[ $key ] = $value;
+                }
+                $rawParams[$key] = $value;
             }
 
-            if ( empty( $rawParams ) )
+            if (empty($rawParams)) {
                 return $instance->$method();
+            }
 
             // Mirror Router::setRouteParameters(): positional matching by URL placeholder order.
             // Method param N maps to URL placeholder N — names may differ for entity params.
-            $urlPlaceholderNames = array_keys( $rawParams );
-            $reflection          = new \ReflectionMethod( $class, $method );
-            $params              = [];
+            $urlPlaceholderNames = array_keys($rawParams);
+            $reflection = new \ReflectionMethod($class, $method);
+            $params = [];
 
-            foreach ( $reflection->getParameters() as $index => $rp ) {
-                $urlPlaceholderName = $urlPlaceholderNames[ $index ] ?? null;
-                if ( $urlPlaceholderName === null )
+            foreach ($reflection->getParameters() as $index => $rp) {
+                $urlPlaceholderName = $urlPlaceholderNames[$index] ?? null;
+                if (null === $urlPlaceholderName) {
                     break;
+                }
 
-                $value = $rawParams[ $urlPlaceholderName ];
-                $type  = $rp->getType()?->getName();
+                $value = $rawParams[$urlPlaceholderName];
+                $type = $rp->getType()?->getName();
 
-                if ( $type !== null && is_a( $type, AbstractEntity::class, true ) ) {
-                    $entity = $type::findOneBy( [ $urlPlaceholderName => $value ] );
+                if (null !== $type && is_a($type, AbstractEntity::class, true)) {
+                    $entity = $type::findOneBy([$urlPlaceholderName => $value]);
 
-                    if ( $entity === null && $rp->getType()->allowsNull() === false ) {
-                        if ( str_starts_with( $routeUrl, '/api/' ) )
-                            return new JsonResponse( [ 'error' => _t( 'common.errors.not_found' ) ], JsonResponse::HTTP_NOT_FOUND );
+                    if (null === $entity && false === $rp->getType()->allowsNull()) {
+                        if (str_starts_with($routeUrl, '/api/')) {
+                            return new JsonResponse(['error' => _t('common.errors.not_found')], JsonResponse::HTTP_NOT_FOUND);
+                        }
 
-                        return new PhpSfResponse( status: PhpSfResponse::HTTP_NOT_FOUND );
+                        return new PhpSfResponse(status: PhpSfResponse::HTTP_NOT_FOUND);
                     }
 
                     $params[] = $entity;
                 } else {
-                    if ( $type !== null )
-                        settype( $value, $type );
+                    if (null !== $type) {
+                        settype($value, $type);
+                    }
                     $params[] = $value;
                 }
             }
 
-            return $instance->$method( ...$params );
-        } );
+            return $instance->$method(...$params);
+        });
     }
 
-    public function onKernelResponse( ResponseEvent $event ): void
+    public function onKernelResponse(ResponseEvent $event): void
     {
         $response = $event->getResponse();
 
         // ── PHP_SF RedirectResponse ───────────────────────────────────────────
         // Production: RedirectResponse::send() re-dispatches via Router::init() (exit-based).
         // Tests: convert to proper HTTP 302, carry flash data via the static bag.
-        if ( $response instanceof PhpSfRedirectResponse ) {
-            $targetUrl     = $response->getTargetUrl();
+        if ($response instanceof PhpSfRedirectResponse) {
+            $targetUrl = $response->getTargetUrl();
             $requestDataId = $response->getRequestDataId();
 
-            if ( $requestDataId !== null ) {
-                $urlKey   = hash( 'xxh3', $targetUrl );
+            if (null !== $requestDataId) {
+                $urlKey = hash('xxh3', $targetUrl);
                 $cacheKey = "$urlKey:$requestDataId";
 
-                $rawErrors   = ca()->get( ":ERRORS:$cacheKey" );
-                $rawMessages = ca()->get( ":MESSAGES:$cacheKey" );
-                $rawFormData = ca()->get( ":FORM_DATA:$cacheKey" );
+                $rawErrors = ca()->get(":ERRORS:$cacheKey");
+                $rawMessages = ca()->get(":MESSAGES:$cacheKey");
+                $rawFormData = ca()->get(":FORM_DATA:$cacheKey");
 
                 self::$flashBag = [
-                    'errors'   => $rawErrors   !== null ? j_decode( $rawErrors,   true ) : [],
-                    'messages' => $rawMessages !== null ? j_decode( $rawMessages, true ) : [],
-                    'formData' => $rawFormData !== null ? j_decode( $rawFormData, true ) : [],
+                    'errors' => null !== $rawErrors ? j_decode($rawErrors, true) : [],
+                    'messages' => null !== $rawMessages ? j_decode($rawMessages, true) : [],
+                    'formData' => null !== $rawFormData ? j_decode($rawFormData, true) : [],
                 ];
             }
 
-            $event->setResponse( new SymfonyRedirectResponse( $targetUrl ) );
+            $event->setResponse(new SymfonyRedirectResponse($targetUrl));
+
             return;
         }
 
         // ── PHP_SF Response ───────────────────────────────────────────────────
         // Render the page (header + view + footer) into $response->content so that
         // KernelBrowser can read it via getContent().
-        if ( $response instanceof PhpSfResponse ) {
-            $routeUrl = $event->getRequest()->attributes->get( '_php_sf_url', '/' );
-            $response->captureContent( $routeUrl );
+        if ($response instanceof PhpSfResponse) {
+            $routeUrl = $event->getRequest()->attributes->get('_php_sf_url', '/');
+            $response->captureContent($routeUrl);
         }
     }
-
 }

@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\Abstracts;
 
@@ -15,17 +15,16 @@ use Symfony\Component\Console\Input\InputInterface;
 
 abstract class AbstractEntityMaker extends AbstractMaker
 {
-
     protected string $entityNamespace;
     protected string $repositoryNamespace;
     protected string $entityDir;
     protected string $repositoryDir;
     protected string $schema;
 
-
     public function __construct(
         private readonly CommandLoaderInterface $commandLoader,
-    ) {}
+    ) {
+    }
 
     abstract public static function getCommandName(): string;
 
@@ -34,26 +33,26 @@ abstract class AbstractEntityMaker extends AbstractMaker
         return 'Creates a new entity & repository for a specific DB schema';
     }
 
-    public function configureCommand( Command $command, InputConfiguration $inputConfig )
+    public function configureCommand(Command $command, InputConfiguration $inputConfig)
     {
         $command
-            ->setName( static::getCommandName() )
-            ->setDescription( static::getCommandDescription() )
-            ->addArgument( 'name', InputArgument::REQUIRED, 'The class name of the entity (e.g. User)' );
+            ->setName(static::getCommandName())
+            ->setDescription(static::getCommandDescription())
+            ->addArgument('name', InputArgument::REQUIRED, 'The class name of the entity (e.g. User)');
     }
 
-    public function generate( InputInterface $input, ConsoleStyle $io, Generator $generator )
+    public function generate(InputInterface $input, ConsoleStyle $io, Generator $generator)
     {
-        $className = Str::asClassName( $input->getArgument( 'name' ) );
+        $className = Str::asClassName($input->getArgument('name'));
         $entityFqcn = $this->entityNamespace . '\\' . $className;
         $entityPath = $this->entityDir . '/' . $className . '.php';
 
-        if ( file_exists( $entityPath ) ) {
-            $io->warning( sprintf(
+        if (file_exists($entityPath)) {
+            $io->warning(sprintf(
                 'Entity "%s\\%s" already exists. To add fields, edit the file directly or run make:entity with the full FQCN manually.',
                 $this->entityNamespace,
                 $className,
-            ) );
+            ));
 
             return Command::INVALID;
         }
@@ -63,46 +62,44 @@ abstract class AbstractEntityMaker extends AbstractMaker
             $entityPath,
             __DIR__ . '/../../../Resources/skeleton/entity.tpl.php',
             [
-                'namespace'           => $this->entityNamespace,
-                'class_name'          => $className,
+                'namespace' => $this->entityNamespace,
+                'class_name' => $className,
                 'repositoryNamespace' => $this->repositoryNamespace,
-                'table_name'          => Str::asSnakeCase( $className ),
-                'schema'              => $this->schema,
-            ]
+                'table_name' => Str::asSnakeCase($className),
+                'schema' => $this->schema,
+            ],
         );
 
         $repositoryClass = $className . 'Repository';
-        $repositoryPath  = $this->repositoryDir . '/' . $repositoryClass . '.php';
+        $repositoryPath = $this->repositoryDir . '/' . $repositoryClass . '.php';
 
-        if ( !file_exists( $repositoryPath ) ) {
+        if (!file_exists($repositoryPath)) {
             $generator->generateFile(
                 $repositoryPath,
                 __DIR__ . '/../../../Resources/skeleton/repository.tpl.php',
                 [
-                    'namespace'    => $this->repositoryNamespace,
-                    'class_name'   => $className,
+                    'namespace' => $this->repositoryNamespace,
+                    'class_name' => $className,
                     'entity_class' => $className,
-                    'entityFqcn'   => $entityFqcn,
-                ]
+                    'entityFqcn' => $entityFqcn,
+                ],
             );
         }
 
         $generator->writeChanges();
 
-        $io->success( sprintf(
+        $io->success(sprintf(
             'Entity "%s" and repository "%sRepository" created (schema: %s)',
             $entityFqcn,
             $className,
-            $this->schema
-        ) );
+            $this->schema,
+        ));
 
         return Command::SUCCESS;
     }
 
-
-    public function configureDependencies( DependencyBuilder $dependencies )
+    public function configureDependencies(DependencyBuilder $dependencies)
     {
         // we don’t need DoctrineBundle internal stuff, just make sure Doctrine exists
     }
-
 }

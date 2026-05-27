@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\Abstracts;
 
@@ -11,16 +11,14 @@ use Symfony\Component\HttpFoundation\Request;
 
 abstract class MiddlewareType
 {
-
     public const DEFAULT = MiddlewareAll::class;
-
 
     public function __construct(
         protected readonly string|array $middlewares,
-        protected readonly Request      $request,
-        protected readonly Kernel       $kernel,
-    ) {}
-
+        protected readonly Request $request,
+        protected readonly Kernel $kernel,
+    ) {
+    }
 
     /**
      * @throws RouteMiddlewareException If any of validation fails it is recommended to throw an {@link RouteMiddlewareException}
@@ -29,10 +27,9 @@ abstract class MiddlewareType
 
     /**
      * Return `true` if the middleware allow the route to be executed, or a {@link RedirectResponse} or {@link JsonResponse}
-     * which will be returned by the {@link Middleware::execute()} method
+     * which will be returned by the {@link Middleware::execute()} method.
      *
      * @return bool|RedirectResponse|JsonResponse Result of the {@link Middleware::execute()} method
      */
     abstract public function execute(): bool|RedirectResponse|JsonResponse;
-
 }

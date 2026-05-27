@@ -1,6 +1,4 @@
-<?php
-
-declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Interface;
 
@@ -8,7 +6,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 interface ApiEntityInterface
 {
-
     public function getEntityClassName(): string;
 
     public function apiEntityGetAll(): JsonResponse;

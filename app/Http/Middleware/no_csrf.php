@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\Framework\Http\Middleware;
 
@@ -13,10 +13,8 @@ use PHP_SF\System\Classes\Abstracts\Middleware;
  */
 final class no_csrf extends Middleware
 {
-
     protected function result(): bool
     {
         return true;
     }
-
 }

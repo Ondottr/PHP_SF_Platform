@@ -1,6 +1,5 @@
 <?php /** @noinspection PhpAttributeCanBeAddedToOverriddenMemberInspection */
-declare( strict_types=1 );
-
+declare(strict_types=1);
 
 namespace PHP_SF\System\Interface;
 
@@ -9,32 +8,17 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping as ORM;
 use JetBrains\PhpStorm\ArrayShape;
 
-
 /**
  * @ORM\HasLifecycleCallbacks
  */
 interface DoctrineCallbacksLoaderInterface
 {
-
-    #[ArrayShape( [
-        Events::postRemove  => 'string',
-        Events::postUpdate  => 'string',
-        Events::postPersist => 'string',
-        Events::preRemove   => 'string',
-        Events::postLoad    => 'string',
-        Events::preFlush    => 'string',
-        Events::prePersist  => 'string',
-        Events::preUpdate   => 'string',
-    ] )]
-    public function getLifecycleCallbacks(): array;
-
-
     /**
      * @ORM\PreFlush
      *
      * The {@see preFlush} event occurs at the very beginning of a flush operation.
      */
-    public function __preFlush( EventArgs $args ): void;
+    public function __preFlush(EventArgs $args): void;
 
     /**
      * @ORM\PreRemove
@@ -42,7 +26,7 @@ interface DoctrineCallbacksLoaderInterface
      * The {@see PreRemove} event occurs for a given entity before the respective EntityManager remove operation for
      * that entity is executed. It is not called for a DQL DELETE statement.
      */
-    public function __preRemove( EventArgs $args ): void;
+    public function __preRemove(EventArgs $args): void;
 
     /**
      * @ORM\PrePersist
@@ -51,7 +35,7 @@ interface DoctrineCallbacksLoaderInterface
      * that entity is executed. It should be noted that this event is only triggered on initial persist of an entity
      * (i.e. it does not trigger on future updates).
      */
-    public function __prePersist( EventArgs $args ): void;
+    public function __prePersist(EventArgs $args): void;
 
     /**
      * @ORM\PreUpdate
@@ -59,7 +43,7 @@ interface DoctrineCallbacksLoaderInterface
      * The {@see PreUpdate} event occurs before the database update operations to entity data.
      * It is not called for a DQL UPDATE statement nor when the computed change-set is empty.
      */
-    public function __preUpdate( EventArgs $args ): void;
+    public function __preUpdate(EventArgs $args): void;
 
     /**
      * @ORM\PostRemove
@@ -67,7 +51,7 @@ interface DoctrineCallbacksLoaderInterface
      * The {@see PostRemove} event occurs for an entity after the entity has been deleted.
      * It will be invoked after the database delete operations. It is not called for a DQL DELETE statement.
      */
-    public function __postRemove( EventArgs $args ): void;
+    public function __postRemove(EventArgs $args): void;
 
     /**
      * @ORM\PostPersist
@@ -76,7 +60,7 @@ interface DoctrineCallbacksLoaderInterface
      * It will be invoked after the database insert operations. Generated primary key values are available in the
      * postPersist event.
      */
-    public function __postPersist( EventArgs $args ): void;
+    public function __postPersist(EventArgs $args): void;
 
     /**
      * @ORM\PostLoad
@@ -84,7 +68,7 @@ interface DoctrineCallbacksLoaderInterface
      * The {@see PostLoad} event occurs for an entity after the entity has been loaded into the current EntityManager
      * from the database or after the refresh operation has been applied to it.
      */
-    public function __postLoad( EventArgs $args ): void;
+    public function __postLoad(EventArgs $args): void;
 
     /**
      * @ORM\PostUpdate
@@ -92,6 +76,17 @@ interface DoctrineCallbacksLoaderInterface
      * The {@see PostUpdate} event occurs after the database update operations to entity data.
      * It is not called for a DQL UPDATE statement.
      */
-    public function __postUpdate( EventArgs $args ): void;
+    public function __postUpdate(EventArgs $args): void;
 
+    #[ArrayShape([
+        Events::postRemove => 'string',
+        Events::postUpdate => 'string',
+        Events::postPersist => 'string',
+        Events::preRemove => 'string',
+        Events::postLoad => 'string',
+        Events::preFlush => 'string',
+        Events::prePersist => 'string',
+        Events::preUpdate => 'string',
+    ])]
+    public function getLifecycleCallbacks(): array;
 }

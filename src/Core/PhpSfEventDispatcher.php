@@ -2,25 +2,21 @@
 
 namespace PHP_SF\System\Core;
 
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class PhpSfEventDispatcher
 {
-
-    private static ?EventDispatcher $dispatcher     = null;
-    private static array            $subscriberDirs = [];
-    private static bool             $initialized    = false;
-    private static array            $dispatchLog    = [];
-
+    private static ?EventDispatcher $dispatcher = null;
+    private static array $subscriberDirs = [];
+    private static bool $initialized = false;
+    private static array $dispatchLog = [];
 
     public static function addSubscriberDirectory(string $dir): void
     {
-        if (self::$initialized)
+        if (self::$initialized) {
             throw new \LogicException('Cannot register subscriber directory after the dispatcher is initialized.');
+        }
 
         self::$subscriberDirs[] = $dir;
     }
@@ -31,14 +27,14 @@ final class PhpSfEventDispatcher
             return;
         }
 
-        self::$dispatcher  = new EventDispatcher();
+        self::$dispatcher = new EventDispatcher();
         self::$initialized = true;
 
         $classes = DEV_MODE === false
-            ? json_decode((string)ca()->get('phpsf:event_subscribers'), true)
+            ? json_decode((string) ca()->get('phpsf:event_subscribers'), true)
             : null;
 
-        if ($classes === null) {
+        if (null === $classes) {
             $classes = self::discoverSubscriberClasses();
 
             if (DEV_MODE === false) {
@@ -53,7 +49,7 @@ final class PhpSfEventDispatcher
 
     public static function dispatch(string $eventName, object $event): object
     {
-        if ( !self::$initialized) {
+        if (!self::$initialized) {
             self::initialize();
         }
 
@@ -61,10 +57,10 @@ final class PhpSfEventDispatcher
 
         if (DEV_MODE) {
             self::$dispatchLog[] = [
-                'event'       => $eventName,
+                'event' => $eventName,
                 'subscribers' => array_map(
-                    static fn( $l ) => is_array($l) ? get_class($l[0]) . '::' . $l[1] : ( is_object($l) ? get_class($l) : (string)$l ),
-                    self::$dispatcher->getListeners($eventName)
+                    static fn ($l) => is_array($l) ? get_class($l[0]) . '::' . $l[1] : (is_object($l) ? get_class($l) : (string) $l),
+                    self::$dispatcher->getListeners($eventName),
                 ),
             ];
         }
@@ -77,36 +73,36 @@ final class PhpSfEventDispatcher
         return self::$dispatchLog;
     }
 
-
     private static function discoverSubscriberClasses(): array
     {
         $found = [];
 
         foreach (self::$subscriberDirs as $dir) {
-            if ( !is_dir($dir)) {
+            if (!is_dir($dir)) {
                 continue;
             }
 
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
             );
 
             foreach ($iterator as $file) {
-                if ($file->getExtension() !== 'php') {
+                if ('php' !== $file->getExtension()) {
                     continue;
                 }
 
                 $contents = file_get_contents($file->getPathname());
 
-                if ($contents === false || $contents === '')
+                if (false === $contents || '' === $contents) {
                     continue;
+                }
 
                 if (preg_match('/namespace\s+([\w\\\\]+)\s*;/', $contents, $ns)
                     && preg_match('/(?:class|final\s+class)\s+(\w+)/', $contents, $cls)
                 ) {
-                    $fqcn = $ns[1].'\\'.$cls[1];
+                    $fqcn = $ns[1] . '\\' . $cls[1];
 
-                    if ( !isset($found[$fqcn]) && is_a($fqcn, EventSubscriberInterface::class, true)) {
+                    if (!isset($found[$fqcn]) && is_a($fqcn, EventSubscriberInterface::class, true)) {
                         $found[$fqcn] = $fqcn;
                     }
                 }
@@ -115,5 +111,4 @@ final class PhpSfEventDispatcher
 
         return array_values($found);
     }
-
 }

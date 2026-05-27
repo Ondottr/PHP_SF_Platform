@@ -1,31 +1,30 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\ORM\EntityRepository;
 
 /**
- * Class AbstractEntityRepository
- *
- * @package PHP_SF\System\Classes\Abstracts
+ * @template T of object
+ * @extends EntityRepository<T>
  */
 abstract class AbstractEntityRepository extends EntityRepository
 {
-
-    final public function persist( AbstractEntity $entity, bool $flush = true ): void
+    final public function persist(AbstractEntity $entity, bool $flush = true): void
     {
-        $this->getEntityManager()->persist( $entity );
+        $this->getEntityManager()->persist($entity);
 
-        if ( $flush )
-            $this->getEntityManager()->flush( $entity );
+        if ($flush) {
+            $this->getEntityManager()->flush($entity);
+        }
     }
 
-    final public function remove( AbstractEntity $entity, bool $flush = true ): void
+    final public function remove(AbstractEntity $entity, bool $flush = true): void
     {
-        $this->getEntityManager()->remove( $entity );
+        $this->getEntityManager()->remove($entity);
 
-        if ( $flush )
-            $this->getEntityManager()->flush( $entity );
+        if ($flush) {
+            $this->getEntityManager()->flush($entity);
+        }
     }
-
 }

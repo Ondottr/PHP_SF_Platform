@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
 
@@ -6,14 +6,11 @@ use Symfony\Component\HttpFoundation\Session\Session;
 
 final class Sessions
 {
-
     private static Session $instance;
-
 
     private function __construct()
     {
     }
-
 
     public static function getInstance(): Session
     {
@@ -26,6 +23,6 @@ final class Sessions
 
     private static function setSessionsInstance(): void
     {
-        self::$instance = new Session;
+        self::$instance = new Session();
     }
 }

@@ -1,5 +1,5 @@
 <?php /** @noinspection PhpClassHasTooManyDeclaredMembersInspection @noinspection PhpLackOfCohesionInspection */
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace PHP_SF\System\Traits;
 
@@ -9,30 +9,30 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 trait EntityRepositoriesTrait
 {
-
+    /** @var array<class-string, AbstractEntityRepository<object>> */
     private static array $repositories = [];
 
-
-    public static function find( int $id ): static|null
+    public static function find(int $id): ?static
     {
-        return self::rep()->find( $id );
+        return self::rep()->find($id);
     }
 
-    public static function findOneBy( array $criteria, array $orderBy = null ): static|null
+    public static function findOneBy(array $criteria, ?array $orderBy = null): ?static
     {
-        return self::rep()->findOneBy( $criteria, $orderBy );
+        return self::rep()->findOneBy($criteria, $orderBy);
     }
 
     /**
      * @return array<static>
      */
-    public static function findBy( array $criteria = [], array $orderBy = null, int $limit = null, int $offset = null ): array
+    public static function findBy(array $criteria = [], ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array
     {
-        $arr = self::rep()->findBy( $criteria, $orderBy, $limit, $offset );
+        $arr = self::rep()->findBy($criteria, $orderBy, $limit, $offset);
 
         $res = [];
-        foreach ( $arr as $item )
-            $res[ $item->getId() ] = $item;
+        foreach ($arr as $item) {
+            $res[$item->getId()] = $item;
+        }
 
         return $res;
     }
@@ -45,19 +45,22 @@ trait EntityRepositoriesTrait
         $arr = self::rep()->findAll();
 
         $res = [];
-        foreach ( $arr as $item )
-            $res[ $item->getId() ] = $item;
+        foreach ($arr as $item) {
+            $res[$item->getId()] = $item;
+        }
 
         return $res;
     }
 
 
+    /** @return AbstractEntityRepository<static> */
     public static function rep(): AbstractEntityRepository
     {
-        if ( array_key_exists( static::class, self::$repositories ) === false )
+        if (false === array_key_exists(static::class, self::$repositories)) {
             self::setRepository();
+        }
 
-        return self::$repositories[ static::class ];
+        return self::$repositories[static::class];
     }
 
     private static function setRepository(): void
@@ -67,12 +70,12 @@ trait EntityRepositoriesTrait
         $yamlConfigCacheKey = '/config/packages/doctrine.yaml';
 
         // parse yaml doctrine config
-        $config = ca()->get( $yamlConfigCacheKey );
-        if ( $config === null ) {
-            $config = yaml_parse_file( $projectDir . '/config/packages/doctrine.yaml' );
-            ca()->set( $yamlConfigCacheKey, json_encode( $config ) );
+        $config = ca()->get($yamlConfigCacheKey);
+        if (null === $config) {
+            $config = yaml_parse_file($projectDir . '/config/packages/doctrine.yaml');
+            ca()->set($yamlConfigCacheKey, json_encode($config));
         } else {
-            $config = json_decode( $config, true );
+            $config = json_decode($config, true);
         }
 
         $entityManagers = $config['doctrine']['orm']['entity_managers'];
@@ -80,19 +83,18 @@ trait EntityRepositoriesTrait
         // get full namespace of static class
         $namespace = static::class;
         // remove class name to leave only namespace
-        $namespace = substr( $namespace, 0, strrpos( $namespace, '\\' ) );
+        $namespace = substr($namespace, 0, strrpos($namespace, '\\'));
 
-        foreach ( $entityManagers as $connection => $entityManager ) {
-            foreach ( $entityManager['mappings'] as $mapping ) {
-                if ( $mapping['prefix'] === $namespace ) {
-                    self::$repositories[ static::class ] = em( $connection )->getRepository( static::class );
+        foreach ($entityManagers as $connection => $entityManager) {
+            foreach ($entityManager['mappings'] as $mapping) {
+                if ($mapping['prefix'] === $namespace) {
+                    self::$repositories[static::class] = em($connection)->getRepository(static::class);
 
                     return;
                 }
             }
         }
 
-        throw new InvalidConfigurationException( 'Entity repository not found' );
+        throw new InvalidConfigurationException('Entity repository not found');
     }
-
 }

@@ -1,14 +1,10 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
 
 use App\Command\AppCacheClearCommand;
 use JetBrains\PhpStorm\Immutable;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-
-use function chr;
-use function in_array;
-use function is_array;
 
 /**
  * TemplatesCache is a class that provides caching functionality for HTML templates.
@@ -26,18 +22,16 @@ use function is_array;
  */
 final class TemplatesCache
 {
-
     private const TEMPLATES_NAMESPACE = 'PHP_SF\\CachedTemplates';
-    private const COMPILED_DIR        = 'var/cache/templates';
+    private const COMPILED_DIR = 'var/cache/templates';
 
     private static self $instance;
 
-    #[Immutable( Immutable::CONSTRUCTOR_WRITE_SCOPE )]
+    #[Immutable(Immutable::CONSTRUCTOR_WRITE_SCOPE)]
     private static array $templatesDefinition = [];
 
     private static array $templatesNamespaces = [];
     private static array $templatesDirectories = [];
-
 
     /**
      * Constructor for TemplatesCache class.
@@ -47,15 +41,234 @@ final class TemplatesCache
      */
     private function __construct()
     {
-        foreach ( $this->getTemplatesDirectories() as $dir )
-            if ( file_exists( ( $path = project_dir() . '/' . $dir ) ) === false || is_dir( $path ) === false )
-                throw new InvalidConfigurationException( sprintf( 'Invalid template directory “%s”', $dir ) );
+        foreach ($this->getTemplatesDirectories() as $dir) {
+            if (false === file_exists($path = project_dir() . '/' . $dir) || false === is_dir($path)) {
+                throw new InvalidConfigurationException(sprintf('Invalid template directory “%s”', $dir));
+            }
+        }
 
         $compiledDir = project_dir() . '/' . self::COMPILED_DIR;
-        if ( !is_dir( $compiledDir ) )
-            mkdir( $compiledDir, 0755, true );
+        if (!is_dir($compiledDir)) {
+            mkdir($compiledDir, 0755, true);
+        }
 
-        self::$templatesDefinition = array_combine( $this->getTemplatesDirectories(), $this->getTemplatesNamespaces() );
+        self::$templatesDefinition = array_combine($this->getTemplatesDirectories(), $this->getTemplatesNamespaces());
+    }
+
+    /**
+     * Add the templates namespaces to the list of templates namespaces.
+     */
+    public static function addTemplatesNamespace(string ...$templateNamespaces): void
+    {
+        self::$templatesNamespaces = [
+            ...self::$templatesNamespaces,
+            ...$templateNamespaces,
+        ];
+    }
+
+    /**
+     * Add the templates directories to the list of templates directories.
+     */
+    public static function addTemplatesDirectory(string ...$templateDirectories): void
+    {
+        self::$templatesDirectories = [
+            ...self::$templatesDirectories,
+            ...$templateDirectories,
+        ];
+    }
+
+    /**
+     * Get the instance of the TemplatesCache class.
+     */
+    public static function getInstance(): self
+    {
+        if (false === isset(self::$instance)) {
+            self::setInstance();
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * Get the cached template class if it exists.
+     * Compiles the template on first access and writes it to a file so OPcache
+     * can serve bytecode on subsequent requests — no eval(), no Redis round-trip.
+     *
+     * @return string|false The cached class name, or false when caching is disabled
+     */
+    public function getCachedTemplateClass(string $className): string|false
+    {
+        if (
+            TEMPLATES_CACHE_ENABLED === false
+            || str_starts_with($className, self::TEMPLATES_NAMESPACE . '\\')
+            || self::TEMPLATES_NAMESPACE === $className
+        ) {
+            return false;
+        }
+
+        foreach ($this->getTemplatesDefinition() as $directory => $namespace) {
+            if (!str_contains($className, $namespace)) {
+                continue;
+            }
+
+            $arr = explode('\\', $className);
+            array_pop($arr);
+            $currentNamespace = implode('\\', $arr);
+            $newClassName = str_replace($namespace, self::TEMPLATES_NAMESPACE, $className);
+
+            $currentClassDirectory = sprintf(
+                '%s/%s/%s.php',
+                project_dir(),
+                $directory,
+                str_replace([$namespace, '\\'], ['', '/'], $className),
+            );
+        }
+
+        if (false === isset($newClassName, $currentClassDirectory)) {
+            return false;
+        }
+
+        $filePath = $this->getCompiledFilePath($newClassName);
+
+        if (DEV_MODE === false && file_exists($filePath)) {
+            if (false === class_exists($newClassName, false)) {
+                require $filePath;
+            }
+
+            return $newClassName;
+        }
+
+        $fileContent = $this->removeComments($currentClassDirectory);
+
+        foreach ($this->getTemplatesNamespaces() as $oldNamespace) {
+            $fileContent = str_replace("namespace $oldNamespace", 'namespace ' . self::TEMPLATES_NAMESPACE, $fileContent);
+
+            $imports = explode('$this->import(', $fileContent);
+            unset($imports[0]);
+            foreach ($imports as $str) {
+                $importedView = trim(explode('::class', $str)[0]);
+
+                if (!str_contains($importedView, '\\')
+                    && !str_contains($fileContent, sprintf('\%s;', $importedView))
+                ) {
+                    $fileContent = str_replace(
+                        [sprintf('$this->import(%s', $importedView), sprintf('$this->import( %s', $importedView)],
+                        sprintf('$this->import(\%s\%s', $currentNamespace, $importedView),
+                        $fileContent,
+                    );
+                }
+            }
+        }
+
+        // remove redundant characters
+        $replace = [
+            // Remove JS inline comments (negative lookbehind skips URLs like http://)
+            '/(?<!:)\/\/.*$/m' => '',
+            // remove HTML comments
+            '/<!--(.|\s)*?-->/' => '',
+            // remove HTML comments
+            '/\>[^\S ]+/s' => '>',
+            '/[^\S ]+\</s' => '<',
+            // shorten multiple whitespace sequences; keep new-line characters because they matter in JS!!!
+            '/([\t ])+/s' => ' ',
+            // remove leading and trailing spaces
+            '/^([\t ])+/m' => '',
+            '/([\t ])+$/m' => '',
+            // remove JS line comments (simple only); do NOT remove lines containing URL (e.g. 'src="http://server.com/"')!!!
+            '~//[a-zA-Z0-9 ]+$~m' => '',
+            // remove empty lines (sequence of line-end and white-space characters)
+            '/[\r\n]+([\t ]?[\r\n]+)+/s' => "\n",
+            // remove empty lines (between HTML tags); cannot remove just any line-end characters because in inline JS they can matter!
+            '/\>[\r\n\t]+\</s' => '><',
+            // remove "empty" lines containing only JS's block end character; join with next line (e.g. "}\n}\n</script>" --> "}}</script>"
+            '/}[\r\n\t ]+,[\r\n\t ]+/s' => '},',
+            // remove new-line after JS's function or condition start; join with next line
+            '/\)[\r\n\t ]?{[\r\n\t ]+/s' => '){',
+            '/,[\r\n\t ]?{[\r\n\t ]+/s' => ',{',
+            // remove new-line after JS's line end (only most obvious and safe cases)
+            '/\),[\r\n\t ]+/s' => '),',
+            // remove quotes from HTML attributes that does not contain spaces; keep quotes around URLs!
+            // $1 and $4 insert first white-space character found before/after attribute
+            '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"(?=[\r\n\t >])~s' => '$1$2=$3',
+            '/<!--.*?-->/' => '',
+            '/(\x20+|\t)/' => ' ',    // Delete multispace (Without \n)
+            '/(["\'])\s+>/' => '$1>', // strip whitespaces between quotation ("') and end tags
+            '/=\s+(["\'])/' => '=$1', // strip whitespaces between = "'
+            '/ {2,}/' => ' ',         // Shorten multiple whitespace sequences
+            '/>[^\S ]+/' => '>',      // strip whitespaces after tags, except space
+            '/[^\S ]+</' => '<',      // strip whitespaces before tags, except space
+            '/(\s)+/' => '\\1',       // shorten multiple whitespace sequences
+        ];
+        $fileContent = preg_replace(array_keys($replace), array_values($replace), $fileContent);
+
+        /**
+         * Replace all newline characters with spaces, but only if they are not within the <script> and </script> HTML tags.
+         */
+        // Split the input string $fileContent into an array of substrings using the string "script>" as the delimiter.
+        $parts = explode('script>', $fileContent);
+        // Initialize $fileContent as an empty string.
+        $fileContent = '';
+
+        // Check if the number of elements in the $parts array is greater than 1.
+        if (count($parts) > 1) {
+            // If there are multiple elements, iterate through each element in $parts.
+            foreach ($parts as $key => $part) {
+                // Check if the last two characters of the current element are equal to "</".
+                if (!str_ends_with($part, '</')) {
+                    // If they are not equal, replace all newline characters in the current element with spaces.
+                    $fileContent .= str_replace("\n", ' ', $part);
+                } else { // If the last two characters are equal to "</", concatenate the unmodified current element to $fileContent.
+                    $fileContent .= $part;
+                }
+
+                // If the current key is less than the total number of elements minus 1, concatenate "script> " to $fileContent.
+                if ($key < count($parts) - 1) {
+                    $fileContent .= 'script> ';
+                }
+            }
+        } else { // If there is only one element in the $parts array, replace all newline characters in $parts[0] with spaces and store the result in $fileContent.
+            $fileContent = str_replace("\n", ' ', $parts[0]);
+        }
+
+        // remove optional ending tags {@link http://www.w3.org/TR/html5/syntax.html#syntax-tag-omission}
+        $remove = ['</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>'];
+        $fileContent = trim(str_ireplace($remove, '', $fileContent));
+
+        // atomic write: write to a temp file then rename to avoid partial reads under concurrency
+        $tmp = $filePath . '.tmp.' . getmypid();
+        file_put_contents($tmp, '<?php ' . substr($fileContent, 5));
+        rename($tmp, $filePath);
+
+        if (false === class_exists($newClassName, false)) {
+            require $filePath;
+        }
+
+        return $newClassName;
+    }
+
+    /**
+     * Delete all compiled template files and invalidate OPcache entries.
+     * Called by {@link AppCacheClearCommand} when clearing application cache.
+     */
+    public static function clearCompiledFiles(): void
+    {
+        $dir = project_dir() . '/' . self::COMPILED_DIR;
+        foreach (glob($dir . '/*.php') ?: [] as $file) {
+            if (function_exists('opcache_invalidate')) {
+                opcache_invalidate($file, true);
+            }
+            unlink($file);
+        }
+    }
+
+    /**
+     * Get templates definition.
+     *
+     * @return string[]
+     */
+    public function getTemplatesDefinition(): array
+    {
+        return self::$templatesDefinition;
     }
 
     /**
@@ -79,45 +292,6 @@ final class TemplatesCache
     }
 
     /**
-     * Add the templates namespaces to the list of templates namespaces.
-     *
-     * @param string ...$templateNamespaces
-     */
-    public static function addTemplatesNamespace( string ...$templateNamespaces ): void
-    {
-        self::$templatesNamespaces = [
-            ...self::$templatesNamespaces,
-            ...$templateNamespaces
-        ];
-    }
-
-    /**
-     * Add the templates directories to the list of templates directories.
-     *
-     * @param string ...$templateDirectories
-     */
-    public static function addTemplatesDirectory( string ...$templateDirectories ): void
-    {
-        self::$templatesDirectories = [
-            ...self::$templatesDirectories,
-            ...$templateDirectories
-        ];
-    }
-
-    /**
-     * Get the instance of the TemplatesCache class.
-     *
-     * @return self
-     */
-    public static function getInstance(): self
-    {
-        if ( isset( self::$instance ) === false )
-            self::setInstance();
-
-        return self::$instance;
-    }
-
-    /**
      * Set the instance of the TemplatesCache class.
      */
     private static function setInstance(): void
@@ -126,223 +300,45 @@ final class TemplatesCache
     }
 
     /**
-     * Get the cached template class if it exists.
-     * Compiles the template on first access and writes it to a file so OPcache
-     * can serve bytecode on subsequent requests — no eval(), no Redis round-trip.
-     *
-     * @param string $className
-     * @return string|false  The cached class name, or false when caching is disabled
-     */
-    public function getCachedTemplateClass( string $className ): string|false
-    {
-        if (
-            TEMPLATES_CACHE_ENABLED === false
-            || str_starts_with( $className, self::TEMPLATES_NAMESPACE . '\\' )
-            || $className === self::TEMPLATES_NAMESPACE
-        )
-            return false;
-
-        foreach ( $this->getTemplatesDefinition() as $directory => $namespace ) {
-            if ( !str_contains( $className, $namespace ) )
-                continue;
-
-            $arr = ( explode( '\\', $className ) );
-            array_pop( $arr );
-            $currentNamespace = implode( '\\', $arr );
-            $newClassName = str_replace( $namespace, self::TEMPLATES_NAMESPACE, $className );
-
-            $currentClassDirectory = sprintf(
-                '%s/%s/%s.php',
-                project_dir(),
-                $directory,
-                str_replace( [ $namespace, '\\' ], [ '', '/' ], $className )
-            );
-        }
-
-        if ( isset( $newClassName, $currentClassDirectory ) === false )
-            return false;
-
-        $filePath = $this->getCompiledFilePath( $newClassName );
-
-        if ( DEV_MODE === false && file_exists( $filePath ) ) {
-            if ( class_exists( $newClassName, false ) === false )
-                require $filePath;
-            return $newClassName;
-        }
-
-        $fileContent = $this->removeComments( $currentClassDirectory );
-
-        foreach ( $this->getTemplatesNamespaces() as $oldNamespace ) {
-            $fileContent = str_replace( "namespace $oldNamespace", 'namespace ' . self::TEMPLATES_NAMESPACE, $fileContent );
-
-            $imports = explode( '$this->import(', $fileContent );
-            unset( $imports[0] );
-            foreach ( $imports as $str ) {
-                $importedView = trim( explode( '::class', $str )[0] );
-
-                if ( !str_contains( $importedView, '\\' ) &&
-                    !str_contains( $fileContent, sprintf( '\%s;', $importedView ) )
-                ) {
-                    $fileContent = str_replace(
-                        [ sprintf( '$this->import(%s', $importedView ), sprintf( '$this->import( %s', $importedView ) ],
-                        sprintf( '$this->import(\%s\%s', $currentNamespace, $importedView ),
-                        $fileContent
-                    );
-                }
-            }
-        }
-
-        //remove redundant characters
-        $replace = [
-            // Remove JS inline comments (negative lookbehind skips URLs like http://)
-            '/(?<!:)\/\/.*$/m' => '',
-            //remove HTML comments
-            '/<!--(.|\s)*?-->/' => '',
-            //remove HTML comments
-            '/\>[^\S ]+/s' => '>',
-            '/[^\S ]+\</s' => '<',
-            //shorten multiple whitespace sequences; keep new-line characters because they matter in JS!!!
-            '/([\t ])+/s' => ' ',
-            //remove leading and trailing spaces
-            '/^([\t ])+/m' => '',
-            '/([\t ])+$/m' => '',
-            // remove JS line comments (simple only); do NOT remove lines containing URL (e.g. 'src="http://server.com/"')!!!
-            '~//[a-zA-Z0-9 ]+$~m' => '',
-            //remove empty lines (sequence of line-end and white-space characters)
-            '/[\r\n]+([\t ]?[\r\n]+)+/s' => "\n",
-            //remove empty lines (between HTML tags); cannot remove just any line-end characters because in inline JS they can matter!
-            '/\>[\r\n\t]+\</s' => '><',
-            //remove "empty" lines containing only JS's block end character; join with next line (e.g. "}\n}\n</script>" --> "}}</script>"
-            '/}[\r\n\t ]+,[\r\n\t ]+/s' => '},',
-            //remove new-line after JS's function or condition start; join with next line
-            '/\)[\r\n\t ]?{[\r\n\t ]+/s' => '){',
-            '/,[\r\n\t ]?{[\r\n\t ]+/s' => ',{',
-            //remove new-line after JS's line end (only most obvious and safe cases)
-            '/\),[\r\n\t ]+/s' => '),',
-            //remove quotes from HTML attributes that does not contain spaces; keep quotes around URLs!
-            //$1 and $4 insert first white-space character found before/after attribute
-            '~([\r\n\t ])?([a-zA-Z0-9]+)="([a-zA-Z0-9_/\\-]+)"(?=[\r\n\t >])~s' => '$1$2=$3',
-            '/<!--.*?-->/' => '',
-            '/(\x20+|\t)/' => ' ',    # Delete multispace (Without \n)
-            '/(["\'])\s+>/' => '$1>', # strip whitespaces between quotation ("') and end tags
-            '/=\s+(["\'])/' => '=$1', # strip whitespaces between = "'
-            '/ {2,}/' => ' ',         # Shorten multiple whitespace sequences
-            '/>[^\S ]+/' => '>',      # strip whitespaces after tags, except space
-            '/[^\S ]+</' => '<',      # strip whitespaces before tags, except space
-            '/(\s)+/' => '\\1',       # shorten multiple whitespace sequences
-        ];
-        $fileContent = preg_replace( array_keys( $replace ), array_values( $replace ), $fileContent );
-
-        /**
-         * Replace all newline characters with spaces, but only if they are not within the <script> and </script> HTML tags.
-         */
-        // Split the input string $fileContent into an array of substrings using the string "script>" as the delimiter.
-        $parts = explode( 'script>', $fileContent );
-        // Initialize $fileContent as an empty string.
-        $fileContent = '';
-
-        // Check if the number of elements in the $parts array is greater than 1.
-        if ( count( $parts ) > 1 ) {
-            // If there are multiple elements, iterate through each element in $parts.
-            foreach ( $parts as $key => $part ) {
-                // Check if the last two characters of the current element are equal to "</".
-                if ( !str_ends_with( $part, '</' ) )
-                    // If they are not equal, replace all newline characters in the current element with spaces.
-                    $fileContent .= str_replace( "\n", ' ', $part );
-
-                else
-                    // If the last two characters are equal to "</", concatenate the unmodified current element to $fileContent.
-                    $fileContent .= $part;
-
-                // If the current key is less than the total number of elements minus 1, concatenate "script> " to $fileContent.
-                if ( $key < count( $parts ) - 1 )
-                    $fileContent .= 'script> ';
-
-            }
-        } else
-            // If there is only one element in the $parts array, replace all newline characters in $parts[0] with spaces and store the result in $fileContent.
-            $fileContent = str_replace( "\n", ' ', $parts[0] );
-
-        // remove optional ending tags {@link http://www.w3.org/TR/html5/syntax.html#syntax-tag-omission}
-        $remove = [ '</option>', '</li>', '</dt>', '</dd>', '</tr>', '</th>', '</td>', ];
-        $fileContent = trim( str_ireplace( $remove, '', $fileContent ) );
-
-        // atomic write: write to a temp file then rename to avoid partial reads under concurrency
-        $tmp = $filePath . '.tmp.' . getmypid();
-        file_put_contents( $tmp, '<?php ' . substr( $fileContent, 5 ) );
-        rename( $tmp, $filePath );
-
-        if ( class_exists( $newClassName, false ) === false )
-            require $filePath;
-
-        return $newClassName;
-    }
-
-    /**
-     * Delete all compiled template files and invalidate OPcache entries.
-     * Called by {@link AppCacheClearCommand} when clearing application cache.
-     */
-    public static function clearCompiledFiles(): void
-    {
-        $dir = project_dir() . '/' . self::COMPILED_DIR;
-        foreach ( glob( $dir . '/*.php' ) ?: [] as $file ) {
-            if ( function_exists( 'opcache_invalidate' ) )
-                opcache_invalidate( $file, true );
-            unlink( $file );
-        }
-    }
-
-    /**
      * Get the file path for a compiled template class.
      *
-     * @param string $cachedClassName  Fully-qualified class name in the CachedTemplates namespace
-     * @return string  Absolute path to the compiled .php file
+     * @param string $cachedClassName Fully-qualified class name in the CachedTemplates namespace
+     *
+     * @return string Absolute path to the compiled .php file
      */
-    private function getCompiledFilePath( string $cachedClassName ): string
+    private function getCompiledFilePath(string $cachedClassName): string
     {
         return sprintf(
             '%s/%s/%s.php',
             project_dir(),
             self::COMPILED_DIR,
-            str_replace( '\\', '_', $cachedClassName )
+            str_replace('\\', '_', $cachedClassName),
         );
     }
 
     /**
-     * Get templates definition
-     *
-     * @return string[]
+     * Remove PHP comments from file.
      */
-    public function getTemplatesDefinition(): array
+    private function removeComments(string $filename): string
     {
-        return self::$templatesDefinition;
-    }
-
-    /**
-     * Remove PHP comments from file
-     *
-     * @param string $filename
-     *
-     * @return string
-     */
-    private function removeComments( string $filename ): string
-    {
-        $w = [ ';', '{', '}' ];
-        $ts = token_get_all( php_strip_whitespace( $filename ) );
+        $w = [';', '{', '}'];
+        $ts = token_get_all(php_strip_whitespace($filename));
         $s = '';
         $interpDepth = 0;
 
-        foreach ( $ts as $t ) {
-            if ( is_array( $t ) ) {
-                if ( $t[0] === T_CURLY_OPEN || $t[0] === T_DOLLAR_OPEN_CURLY_BRACES )
-                    $interpDepth++;
+        foreach ($ts as $t) {
+            if (\is_array($t)) {
+                if (T_CURLY_OPEN === $t[0] || T_DOLLAR_OPEN_CURLY_BRACES === $t[0]) {
+                    ++$interpDepth;
+                }
                 $s .= $t[1];
             } else {
                 $s .= $t;
-                if ( $t === '}' && $interpDepth > 0 )
-                    $interpDepth--;
-                elseif ( in_array( $t, $w, true ) )
-                    $s .= chr( 13 ) . chr( 10 );
+                if ('}' === $t && $interpDepth > 0) {
+                    --$interpDepth;
+                } elseif (\in_array($t, $w, true)) {
+                    $s .= \chr(13) . \chr(10);
+                }
             }
         }
 

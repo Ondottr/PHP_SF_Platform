@@ -1,10 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Interface;
 
 interface UserInterface
 {
-
     public function getId(): int;
 
     public function setEmail(?string $email): self;

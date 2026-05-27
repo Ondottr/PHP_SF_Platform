@@ -1,6 +1,5 @@
 <?php /** @noinspection MagicMethodsValidityInspection */
-
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\Abstracts;
 
@@ -10,8 +9,9 @@ abstract class AbstractDoctrineLifecycleCallback
 {
     public function __construct(
         protected AbstractEntity $entity,
-        protected EventArgs      $args
-    ) {}
+        protected EventArgs $args,
+    ) {
+    }
 
     abstract public function callback(): void;
 }

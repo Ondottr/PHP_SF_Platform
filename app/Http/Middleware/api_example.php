@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\Framework\Http\Middleware;
 
@@ -19,14 +19,15 @@ final class api_example extends Middleware
     public function result(): bool|JsonResponse
     {
         if (
-            array_key_exists( 'REMOTE_ADDR', $_SERVER ) &&
-            in_array( $_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS )
-        )
+            array_key_exists('REMOTE_ADDR', $_SERVER)
+            && in_array($_SERVER['REMOTE_ADDR'], AVAILABLE_HOSTS, true)
+        ) {
             return true;
-
+        }
 
         return new JsonResponse(
-            [ 'error' => _t( 'common.errors.access_denied' ) ], JsonResponse::HTTP_FORBIDDEN
+            ['error' => _t('common.errors.access_denied')],
+            JsonResponse::HTTP_FORBIDDEN,
         );
     }
 }

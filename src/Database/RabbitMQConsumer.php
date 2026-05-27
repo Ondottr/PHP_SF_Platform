@@ -2,15 +2,13 @@
 
 namespace PHP_SF\System\Database;
 
+use App\Enums\Amqp\QueueEnum;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
-use App\Enums\Amqp\QueueEnum;
 
 /**
- * Class RabbitMQConsumer
- *
- * @package PHP_SF\System\Database
+ * Class RabbitMQConsumer.
  */
 final class RabbitMQConsumer
 {
@@ -26,9 +24,15 @@ final class RabbitMQConsumer
             $dsn['port'],
             $dsn['user'],
             $dsn['pass'],
-            '/'
+            '/',
         );
         $this->channel = $this->connection->channel();
+    }
+
+    public function __destruct()
+    {
+        $this->channel->close();
+        $this->connection->close();
     }
 
     public function consume(QueueEnum $queue, callable $callback): void
@@ -45,11 +49,5 @@ final class RabbitMQConsumer
         while ($this->channel->is_consuming()) {
             $this->channel->wait();
         }
-    }
-
-    public function __destruct()
-    {
-        $this->channel->close();
-        $this->connection->close();
     }
 }

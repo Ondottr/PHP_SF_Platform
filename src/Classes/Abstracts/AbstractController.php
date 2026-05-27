@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\Abstracts;
 
@@ -10,9 +10,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class AbstractController
- *
- * @package PHP_SF\System\Classes\Abstracts
+ * Class AbstractController.
  */
 abstract class AbstractController
 {
@@ -21,23 +19,24 @@ abstract class AbstractController
 
     private string $generatedUrl;
 
-
-    public function __construct( protected Request|null $request = null ) {}
-
-
-    final protected function render( string $view, array $data = [], string $pageTitle = null ): Response
+    public function __construct(protected ?Request $request = null)
     {
-        s()->set( 'page_title', $pageTitle ?? APPLICATION_NAME );
-
-        if ( TEMPLATES_CACHE_ENABLED )
-            $view = TemplatesCache::getInstance()->getCachedTemplateClass( $view ) ?: $view;
-
-        $view = new $view( $data );
-
-        if ( $view instanceof AbstractView === false )
-            throw new InvalidConfigurationException;
-
-        return new Response( view: $view, dataFromController: $data );
     }
 
+    final protected function render(string $view, array $data = [], ?string $pageTitle = null): Response
+    {
+        s()->set('page_title', $pageTitle ?? APPLICATION_NAME);
+
+        if (TEMPLATES_CACHE_ENABLED) {
+            $view = TemplatesCache::getInstance()->getCachedTemplateClass($view) ?: $view;
+        }
+
+        $view = new $view($data);
+
+        if (false === $view instanceof AbstractView) {
+            throw new InvalidConfigurationException();
+        }
+
+        return new Response(view: $view, dataFromController: $data);
+    }
 }
