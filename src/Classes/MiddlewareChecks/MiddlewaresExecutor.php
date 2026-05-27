@@ -5,16 +5,12 @@ namespace PHP_SF\System\Classes\MiddlewareChecks;
 use PHP_SF\System\Classes\Abstracts\MiddlewareType;
 use PHP_SF\System\Classes\Exception\RouteMiddlewareException;
 use PHP_SF\System\Core\RedirectResponse;
-use PHP_SF\System\Kernel;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 final class MiddlewaresExecutor
 {
     public function __construct(
         private string|array $middlewares,
-        private readonly Request $request,
-        private readonly Kernel $kernel,
     ) {
     }
 
@@ -53,7 +49,7 @@ final class MiddlewaresExecutor
 
         try {
             $result =
-                (new $middlewareType($this->getMiddlewares(), $this->request, $this->kernel))
+                (new $middlewareType($this->getMiddlewares()))
                     ->validate()
                     ->execute();
         } catch (\Throwable $e) {

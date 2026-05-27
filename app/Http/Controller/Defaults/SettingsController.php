@@ -20,7 +20,7 @@ final class SettingsController extends AbstractController
     #[Route(url: 'settings/change_language', httpMethod: 'POST')]
     public function change_language_post_handler(): RedirectResponse
     {
-        $lang = $this->request->request->get('lang', false);
+        $lang = r()->request->get('lang', false);
 
         if (!$lang || !\in_array($lang, LANGUAGES_LIST, true)) {
             return $this->redirectTo('change_language_page', errors: [_t('settings.change_language.error.invalid_language')]);

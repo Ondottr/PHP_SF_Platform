@@ -9,17 +9,12 @@ use PHP_SF\System\Kernel;
 use PHP_SF\System\Router;
 use PHP_SF\System\Traits\RedirectTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 abstract class Middleware
 {
     use RedirectTrait;
 
-    public function __construct(
-        protected readonly ?Request $request,
-        private readonly Kernel $kernel,
-    ) {
-    }
+    abstract protected function result(): bool|JsonResponse|RedirectResponse;
 
     final public function execute(): bool|JsonResponse|RedirectResponse
     {
@@ -44,15 +39,21 @@ abstract class Middleware
         return $middlewareResult;
     }
 
-    abstract protected function result(): bool|JsonResponse|RedirectResponse;
-
+    /**
+     * @deprecated since 3.0.0 Use direct {@see Kernel::setHeaderTemplateClassName()} call instead.
+     */
+    #[\Deprecated(message: 'Use direct Kernel::setHeaderTemplateClassName() call instead.', since: '3.0.0')]
     final protected function changeHeaderTemplateClassName(string $headerClassName): void
     {
-        $this->kernel->setHeaderTemplateClassName($headerClassName);
+        Kernel::setHeaderTemplateClassName($headerClassName);
     }
 
+    /**
+     * @deprecated since 3.0.0 Use direct {@see Kernel::setFooterTemplateClassName()} call instead.
+     */
+    #[\Deprecated(message: 'Use direct Kernel::setFooterTemplateClassName() call instead.', since: '3.0.0')]
     final protected function changeFooterTemplateClassName(string $footerClassName): void
     {
-        $this->kernel->setFooterTemplateClassName($footerClassName);
+        Kernel::setFooterTemplateClassName($footerClassName);
     }
 }

@@ -13,7 +13,7 @@ final class ApiLanguageController extends AbstractController
     #[Route(url: 'api/lang/change_language', httpMethod: 'POST')]
     public function api_change_language(): JsonResponse
     {
-        $lang = $this->request->request->get('lang', false);
+        $lang = r()->request->get( 'lang', false );
 
         if (!$lang || !\in_array($lang, LANGUAGES_LIST, true)) {
             throw new NotAcceptableHttpException();

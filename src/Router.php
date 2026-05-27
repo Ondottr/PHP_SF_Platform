@@ -561,7 +561,7 @@ class Router
         self::$controller = new (static::$currentRoute->class)(static::getRequest());
     }
 
-    final protected static function getRequest(): Request
+    final public static function getRequest(): Request
     {
         return static::$requestData;
     }
@@ -717,7 +717,6 @@ class Router
         PhpSfContext::set(new PhpSfContext(
             static::$currentRoute,
             static::$currentRoute->middleware ?? [],
-            static::$requestData,
             self::$kernel,
         ));
 

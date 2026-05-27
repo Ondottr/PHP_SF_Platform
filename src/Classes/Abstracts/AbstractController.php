@@ -7,7 +7,6 @@ use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Traits\JsonResponseHelperTrait;
 use PHP_SF\System\Traits\RedirectTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class AbstractController.
@@ -19,11 +18,9 @@ abstract class AbstractController
 
     private string $generatedUrl;
 
-    public function __construct(protected ?Request $request = null)
-    {
-    }
 
-    final protected function render(string $view, array $data = [], ?string $pageTitle = null): Response
+
+    final protected function render( string $view, array $data = [], string $pageTitle = null ): Response
     {
         s()->set('page_title', $pageTitle ?? APPLICATION_NAME);
 

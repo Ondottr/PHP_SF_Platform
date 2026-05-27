@@ -37,7 +37,7 @@ final class csrf extends Middleware
         }
 
         $sessionToken = s()->get('_csrf_token');
-        $submitted = (string) $this->request->request->get('_token', '');
+        $submitted = (string) r()->request->get('_token', '');
 
         if (null === $sessionToken || !hash_equals($sessionToken, $submitted)) {
             return $this->redirectBack(errors: [RedirectResponse::ALERT_DANGER => 'Invalid CSRF token.']);
