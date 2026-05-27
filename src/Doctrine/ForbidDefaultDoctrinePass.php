@@ -1,8 +1,7 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Doctrine;
 
-use LogicException;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -16,45 +15,41 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class ForbidDefaultDoctrinePass implements CompilerPassInterface
 {
-
     private const FORBIDDEN_SERVICES = [
         'doctrine.orm.entity_manager' => 'Use a named EM: @doctrine.orm.invoices_uk_entity_manager, etc.',
-        'doctrine.dbal.connection'    => 'Use a named connection: @doctrine.dbal.invoices_uk_connection, etc.',
+        'doctrine.dbal.connection' => 'Use a named connection: @doctrine.dbal.invoices_uk_connection, etc.',
     ];
 
-
-    public function process( ContainerBuilder $container ): void
+    public function process(ContainerBuilder $container): void
     {
-        foreach ( $container->getDefinitions() as $serviceId => $definition ) {
-            foreach ( $definition->getArguments() as $argument ) {
-                $this->assertNotForbidden( $argument, $serviceId );
+        foreach ($container->getDefinitions() as $serviceId => $definition) {
+            foreach ($definition->getArguments() as $argument) {
+                $this->assertNotForbidden($argument, $serviceId);
             }
 
-            foreach ( $definition->getMethodCalls() as [, $methodArguments] ) {
-                foreach ( $methodArguments as $argument ) {
-                    $this->assertNotForbidden( $argument, $serviceId );
+            foreach ($definition->getMethodCalls() as [, $methodArguments]) {
+                foreach ($methodArguments as $argument) {
+                    $this->assertNotForbidden($argument, $serviceId);
                 }
             }
         }
     }
 
-
-    private function assertNotForbidden( mixed $argument, string $serviceId ): void
+    private function assertNotForbidden(mixed $argument, string $serviceId): void
     {
-        if ( !$argument instanceof Reference ) {
+        if (!$argument instanceof Reference) {
             return;
         }
 
-        $referencedId = (string)$argument;
+        $referencedId = (string) $argument;
 
-        if ( isset( self::FORBIDDEN_SERVICES[ $referencedId ] ) ) {
-            throw new LogicException( sprintf(
+        if (isset(self::FORBIDDEN_SERVICES[$referencedId])) {
+            throw new \LogicException(sprintf(
                 'Service "%s" injects the forbidden default Doctrine service "%s". %s',
                 $serviceId,
                 $referencedId,
-                self::FORBIDDEN_SERVICES[ $referencedId ],
-            ) );
+                self::FORBIDDEN_SERVICES[$referencedId],
+            ));
         }
     }
-
 }

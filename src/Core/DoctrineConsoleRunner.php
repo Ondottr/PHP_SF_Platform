@@ -1,27 +1,25 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
 
-use OutOfBoundsException;
-use PackageVersions\Versions;
-use Doctrine\ORM\Tools\Console\Command;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Console\Application;
 use Doctrine\DBAL\Tools\Console as DBALConsole;
-use Symfony\Component\Console\Helper\HelperSet;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Console\Command;
 use Doctrine\ORM\Tools\Console\EntityManagerProvider;
-use Symfony\Component\Console\Command\Command as SymfonyCommand;
-use Doctrine\ORM\Tools\Console\EntityManagerProvider\HelperSetManagerProvider;
 use Doctrine\ORM\Tools\Console\EntityManagerProvider\ConnectionFromManagerProvider;
+use Doctrine\ORM\Tools\Console\EntityManagerProvider\HelperSetManagerProvider;
+use PackageVersions\Versions;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Symfony\Component\Console\Helper\HelperSet;
 
 /**
  * Handles running the Console Tools inside Symfony Console context.
  */
 final class DoctrineConsoleRunner
 {
-
     /**
-     * Create a Symfony Console HelperSet
+     * Create a Symfony Console HelperSet.
      */
     public static function createHelperSet(EntityManagerInterface $entityManager): HelperSet
     {
@@ -29,7 +27,7 @@ final class DoctrineConsoleRunner
             [
                 'db' => new DBALConsole\Helper\ConnectionHelper($entityManager->getConnection()),
                 'em' => new EntityManagerHelper($entityManager),
-            ]
+            ],
         );
     }
 
@@ -52,7 +50,7 @@ final class DoctrineConsoleRunner
      * @param HelperSet|EntityManagerProvider $helperSetOrProvider
      * @param SymfonyCommand[]                $commands
      *
-     * @throws OutOfBoundsException
+     * @throws \OutOfBoundsException
      */
     public static function createApplication($helperSetOrProvider, array $commands = []): Application
     {
@@ -73,7 +71,7 @@ final class DoctrineConsoleRunner
 
     public static function addCommands(Application $cli, ?EntityManagerProvider $entityManagerProvider = null): void
     {
-        if ($entityManagerProvider === null) {
+        if (null === $entityManagerProvider) {
             $entityManagerProvider = new HelperSetManagerProvider($cli->getHelperSet());
         }
 
@@ -106,7 +104,7 @@ final class DoctrineConsoleRunner
                 new Command\ValidateSchemaCommand($entityManagerProvider),
                 new Command\InfoCommand($entityManagerProvider),
                 new Command\MappingDescribeCommand($entityManagerProvider),
-            ]
+            ],
         );
     }
 

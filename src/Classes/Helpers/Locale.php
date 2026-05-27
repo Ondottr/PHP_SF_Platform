@@ -1,16 +1,11 @@
 <?php /** @noinspection SpellCheckingInspection @noinspection PhpUnused */
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace PHP_SF\System\Classes\Helpers;
 
 use PHP_SF\Cache\Abstracts\AbstractCacheAdapter;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleKeyException;
 use PHP_SF\System\Classes\Exception\UndefinedLocaleNameException;
-use ReflectionClass;
-use ReflectionProperty;
-
-use function array_flip;
-use function array_key_exists;
 
 /**
  * This class represents a collection of locales and provides methods for retrieving and managing them.
@@ -23,8 +18,7 @@ use function array_key_exists;
  */
 final class Locale
 {
-
-    # region Locale constants
+    // region Locale constants
     public const af = 'Afrikaans';
     public const af_NA = 'Afrikaans (Namibia)';
     public const af_ZA = 'Afrikaans (South Africa)';
@@ -662,8 +656,7 @@ final class Locale
     public const zh_TW = 'Chinese (Taiwan)';
     public const zu = 'Zulu';
     public const zu_ZA = 'Zulu (South Africa)';
-    # endregion
-
+    // endregion
 
     /**
      * The list of all locales.
@@ -679,24 +672,24 @@ final class Locale
      */
     private static array $localeKeysList;
 
-
     /**
      * Returns the locale key for the given locale name.
      *
      * Example getLocaleKey( 'English (United States)' ) will return 'en_US' {@see self::en_US}
      *
-     * @param string $localeName The name of the locale.
+     * @param string $localeName the name of the locale
      *
-     * @throws UndefinedLocaleKeyException If the given locale name is not defined.
+     * @return string the key for the given locale name
      *
-     * @return string The key for the given locale name.
+     * @throws UndefinedLocaleKeyException if the given locale name is not defined
      */
-    public static function getLocaleKey( string $localeName ): string
+    public static function getLocaleKey(string $localeName): string
     {
-        if ( self::checkLocaleName( $localeName ) === false )
-            throw new UndefinedLocaleNameException( $localeName );
+        if (false === self::checkLocaleName($localeName)) {
+            throw new UndefinedLocaleNameException($localeName);
+        }
 
-        return self::getLocaleKeysList()[ $localeName ];
+        return self::getLocaleKeysList()[$localeName];
     }
 
     /**
@@ -704,13 +697,13 @@ final class Locale
      *
      * Example checkLocaleName( 'English (United States)' ) will return true {@see self::en_US}
      *
-     * @param string $localeName The name of the locale to check.
+     * @param string $localeName the name of the locale to check
      *
-     * @return bool true if the locale name is defined, false otherwise.
+     * @return bool true if the locale name is defined, false otherwise
      */
-    public static function checkLocaleName( string $localeName ): bool
+    public static function checkLocaleName(string $localeName): bool
     {
-        return array_key_exists( $localeName, self::getLocaleKeysList() );
+        return \array_key_exists($localeName, self::getLocaleKeysList());
     }
 
     /**
@@ -718,30 +711,19 @@ final class Locale
      *
      * Example getLocaleNamesList() will return [ 'English (United States)' => 'en_US', ... ] {@see self::en_US}
      *
-     * @return array The list of locale keys.
+     * @return array the list of locale keys
      */
     public static function getLocaleKeysList(): array
     {
-        if ( isset( self::$localeKeysList ) === false ) {
-            if ( ca()->get( 'locale_keys_list') === null )
+        if (false === isset(self::$localeKeysList)) {
+            if (null === ca()->get('locale_keys_list')) {
                 self::setLocaleKeysList();
-            else
-                self::$localeKeysList = j_decode( ca()->get( 'locale_keys_list' ), true );
+            } else {
+                self::$localeKeysList = j_decode(ca()->get('locale_keys_list'), true);
+            }
         }
 
         return self::$localeKeysList;
-    }
-
-    /**
-     * Populates the cache with the locale keys, obtained by inverting the list of locale names.
-     *
-     * @internal Must only be used once per request to populate the cache.
-     */
-    private static function setLocaleKeysList(): void
-    {
-        self::$localeKeysList = array_flip( self::getLocaleNamesList() );
-
-        ca()->set( 'locale_keys_list', j_encode( self::$localeKeysList ) );
     }
 
     /**
@@ -749,31 +731,19 @@ final class Locale
      *
      * Example getLocaleNamesList() will return [ 'en_US' => 'English (United States)', ... ] {@see self::en_US}
      *
-     * @return array The list of locale names.
+     * @return array the list of locale names
      */
     public static function getLocaleNamesList(): array
     {
-        if ( isset( self::$localesList ) === false ) {
-            if ( ca()->get( 'locale_names_list') === null )
+        if (false === isset(self::$localesList)) {
+            if (null === ca()->get('locale_names_list')) {
                 self::setLocaleNamesList();
-            else
-                self::$localesList = j_decode( ca()->get( 'locale_names_list' ), true );
+            } else {
+                self::$localesList = j_decode(ca()->get('locale_names_list'), true);
+            }
         }
 
         return self::$localesList;
-    }
-
-    /**
-     * Populates the cache with the locale names, obtained using reflection.
-     *
-     * @internal Must only be used once per request to populate the cache.
-     */
-    private static function setLocaleNamesList(): void
-    {
-        self::$localesList = ( new ReflectionClass( self::class ) )
-            ->getConstants( ReflectionProperty::IS_PUBLIC );
-
-        ca()->set( 'locale_names_list', j_encode( self::$localesList ) );
     }
 
     /**
@@ -781,18 +751,19 @@ final class Locale
      *
      * Example getLocaleName( 'en_US' ) will return 'English (United States)' {@link self::en_US}
      *
-     * @param string $localeKey The key of the locale.
+     * @param string $localeKey the key of the locale
      *
-     * @throws UndefinedLocaleNameException If the given locale key is not defined.
+     * @return string the name of the locale with the given key
      *
-     * @return string The name of the locale with the given key.
+     * @throws UndefinedLocaleNameException if the given locale key is not defined
      */
-    public static function getLocaleName( string $localeKey ): string
+    public static function getLocaleName(string $localeKey): string
     {
-        if ( self::checkLocaleKey( $localeKey ) === false )
-            throw new UndefinedLocaleKeyException( $localeKey );
+        if (false === self::checkLocaleKey($localeKey)) {
+            throw new UndefinedLocaleKeyException($localeKey);
+        }
 
-        return self::getLocaleNamesList()[ $localeKey ];
+        return self::getLocaleNamesList()[$localeKey];
     }
 
     /**
@@ -800,13 +771,37 @@ final class Locale
      *
      * Example checkLocaleKey( 'en_US' ) will return true {@link self::en_US}
      *
-     * @param string $localeKey The key of the locale to check.
+     * @param string $localeKey the key of the locale to check
      *
-     * @return bool true if the locale key is defined, false otherwise.
+     * @return bool true if the locale key is defined, false otherwise
      */
-    public static function checkLocaleKey( string $localeKey ): bool
+    public static function checkLocaleKey(string $localeKey): bool
     {
-        return array_key_exists( $localeKey, self::getLocaleNamesList() );
+        return \array_key_exists($localeKey, self::getLocaleNamesList());
     }
 
+    /**
+     * Populates the cache with the locale keys, obtained by inverting the list of locale names.
+     *
+     * @internal must only be used once per request to populate the cache
+     */
+    private static function setLocaleKeysList(): void
+    {
+        self::$localeKeysList = \array_flip(self::getLocaleNamesList());
+
+        ca()->set('locale_keys_list', j_encode(self::$localeKeysList));
+    }
+
+    /**
+     * Populates the cache with the locale names, obtained using reflection.
+     *
+     * @internal must only be used once per request to populate the cache
+     */
+    private static function setLocaleNamesList(): void
+    {
+        self::$localesList = (new \ReflectionClass(self::class))
+            ->getConstants(\ReflectionProperty::IS_PUBLIC);
+
+        ca()->set('locale_names_list', j_encode(self::$localesList));
+    }
 }

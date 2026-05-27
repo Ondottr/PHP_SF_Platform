@@ -1,6 +1,8 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
+
+use function function_exists;
 
 use JetBrains\PhpStorm\Immutable;
 use JetBrains\PhpStorm\NoReturn;
@@ -9,17 +11,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-use function function_exists;
-
 final class RedirectResponse extends Response
 {
-
-    public const ALERT_PRIMARY   = 'primary';
+    public const ALERT_PRIMARY = 'primary';
     public const ALERT_SECONDARY = 'secondary';
-    public const ALERT_SUCCESS   = 'success';
-    public const ALERT_DANGER    = 'danger';
-    public const ALERT_WARNING   = 'warning';
-    public const ALERT_INFO      = 'info';
+    public const ALERT_SUCCESS = 'success';
+    public const ALERT_DANGER = 'danger';
+    public const ALERT_WARNING = 'warning';
+    public const ALERT_INFO = 'info';
 
     public const ALERT_TYPES = [
         self::ALERT_PRIMARY,
@@ -32,8 +31,16 @@ final class RedirectResponse extends Response
 
     private static ?string $cspNonce = null;
 
+    public function __construct(
+        #[Immutable]
+        private readonly string $targetUrl,
+        #[Immutable]
+        private readonly ?string $requestDataId = null,
+    ) {
+        parent::__construct();
+    }
 
-    public static function setCspNonce( string $nonce ): void
+    public static function setCspNonce(string $nonce): void
     {
         self::$cspNonce = $nonce;
     }
@@ -43,35 +50,27 @@ final class RedirectResponse extends Response
         return self::$cspNonce;
     }
 
-
-    public function __construct(
-        #[Immutable] private readonly string $targetUrl,
-        #[Immutable] private readonly string|null $requestDataId = null
-    ) {
-        parent::__construct();
-    }
-
-
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    #[NoReturn] public function send(bool $flush = true): never
+    #[NoReturn]
+    public function send(bool $flush = true): never
     {
-        $urlKey = hash( 'xxh3', $this->getTargetUrl() );
+        $urlKey = hash('xxh3', $this->getTargetUrl());
         $key = "$urlKey:{$this->getRequestDataId()}";
 
-        $_SERVER['REQUEST_URI']    = $this->getTargetUrl();
+        $_SERVER['REQUEST_URI'] = $this->getTargetUrl();
         $_SERVER['REQUEST_METHOD'] = Request::METHOD_GET;
 
-        $get      = ca()->get( ":GET:$key" );
-        $post     = ca()->get( ":POST:$key" );
-        $errors   = ca()->get( ":ERRORS:$key" );
-        $messages = ca()->get( ":MESSAGES:$key" );
-        $formData = ca()->get( ":FORM_DATA:$key" );
+        $get = ca()->get(":GET:$key");
+        $post = ca()->get(":POST:$key");
+        $errors = ca()->get(":ERRORS:$key");
+        $messages = ca()->get(":MESSAGES:$key");
+        $formData = ca()->get(":FORM_DATA:$key");
 
-        if ($get === null || $post === null || $errors === null)
+        if (null === $get || null === $post || null === $errors) {
             throw new HttpException(Response::HTTP_GONE, 'The page has expired, please return to the previous page!');
-
+        }
 
         $this->setQuery($get);
         $this->setParams($post);
@@ -80,24 +79,23 @@ final class RedirectResponse extends Response
         $this->setFormData($formData);
 
         // delete the data after retrieving it
-        ca()->delete( ":GET:$key" );
-        ca()->delete( ":POST:$key" );
-        ca()->delete( ":ERRORS:$key" );
-        ca()->delete( ":MESSAGES:$key" );
-        ca()->delete( ":FORM_DATA:$key" );
-
+        ca()->delete(":GET:$key");
+        ca()->delete(":POST:$key");
+        ca()->delete(":ERRORS:$key");
+        ca()->delete(":MESSAGES:$key");
+        ca()->delete(":FORM_DATA:$key");
 
         $replacedUrl = $this->getTargetUrl();
-        if ( empty( $_GET ) === false ) {
-            $replacedUrl .= '?' . http_build_query( $_GET );
+        if (false === empty($_GET)) {
+            $replacedUrl .= '?' . http_build_query($_GET);
         }
-        $nonceAttr = self::$cspNonce !== null
-            ? ' nonce="' . htmlspecialchars( self::$cspNonce, ENT_QUOTES, 'UTF-8' ) . '"'
+        $nonceAttr = null !== self::$cspNonce
+            ? ' nonce="' . htmlspecialchars(self::$cspNonce, ENT_QUOTES, 'UTF-8') . '"'
             : '';
-        $safeUrl = json_encode( $replacedUrl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT ); ?>
+        $safeUrl = json_encode($replacedUrl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>
 
-        <script<?= $nonceAttr ?>>
-            history.replaceState( {}, '', <?= $safeUrl ?> );
+        <script<?php echo $nonceAttr; ?>>
+            history.replaceState( {}, '', <?php echo $safeUrl; ?> );
         </script>
 
         <?php
@@ -109,13 +107,14 @@ final class RedirectResponse extends Response
          *
          * @url https://www.php.net/manual/en/function.uopz-allow-exit
          */
-        if ( function_exists( 'uopz_allow_exit' ) )
+        if (function_exists('uopz_allow_exit')) {
             /** @noinspection PhpUndefinedFunctionInspection */
-            uopz_allow_exit( /* Whether to allow the execution of exit opcodes or not.  */ true );
+            uopz_allow_exit( /* Whether to allow the execution of exit opcodes or not. */ true);
+        }
 
         parent::send();
 
-        exit( die );
+        exit(exit);
     }
 
     public function getTargetUrl(): string
@@ -123,7 +122,7 @@ final class RedirectResponse extends Response
         return $this->targetUrl;
     }
 
-    public function getRequestDataId(): string|null
+    public function getRequestDataId(): ?string
     {
         return $this->requestDataId;
     }
@@ -131,61 +130,60 @@ final class RedirectResponse extends Response
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    private function setFormData( string $formData ): void
+    private function setFormData(string $formData): void
     {
         $GLOBALS['form_data'] = [];
 
-        foreach ( j_decode( $formData ) as $key => $value )
-            $GLOBALS['form_data'][ $key ] = $value;
-
+        foreach (j_decode($formData) as $key => $value) {
+            $GLOBALS['form_data'][$key] = $value;
+        }
     }
 
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    private function setMessages( string $messages ): void
+    private function setMessages(string $messages): void
     {
         $GLOBALS['messages'] = [];
 
-        foreach ( json_decode( $messages, false, 512, JSON_THROW_ON_ERROR ) as $key => $value )
-            $GLOBALS['messages'][ $key ] = $value;
-
+        foreach (json_decode($messages, false, 512, JSON_THROW_ON_ERROR) as $key => $value) {
+            $GLOBALS['messages'][$key] = $value;
+        }
     }
 
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    private function setErrors( string $errors ): void
+    private function setErrors(string $errors): void
     {
         $GLOBALS['errors'] = [];
 
-        foreach ( json_decode( $errors, false, 512, JSON_THROW_ON_ERROR ) as $key => $value )
-            $GLOBALS['errors'][ $key ] = $value;
-
+        foreach (json_decode($errors, false, 512, JSON_THROW_ON_ERROR) as $key => $value) {
+            $GLOBALS['errors'][$key] = $value;
+        }
     }
 
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    private function setQuery( string $get ): void
+    private function setQuery(string $get): void
     {
         $_GET = [];
 
-        foreach ( json_decode( $get, true, 512, JSON_THROW_ON_ERROR ) as $key => $value )
-            $_GET[ $key ] = $value;
-
+        foreach (json_decode($get, true, 512, JSON_THROW_ON_ERROR) as $key => $value) {
+            $_GET[$key] = $value;
+        }
     }
 
     /**
      * @noinspection GlobalVariableUsageInspection
      */
-    private function setParams( string $post ): void
+    private function setParams(string $post): void
     {
         $_POST = [];
 
-        foreach ( json_decode( $post, true, 512, JSON_THROW_ON_ERROR ) as $key => $value )
-            $_POST[ $key ] = $value;
-
+        foreach (json_decode($post, true, 512, JSON_THROW_ON_ERROR) as $key => $value) {
+            $_POST[$key] = $value;
+        }
     }
-
 }

@@ -7,17 +7,15 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class PhpSfContext
 {
-
     private static ?self $current = null;
-
 
     public function __construct(
         private readonly object $route,
         private readonly array $middleware,
         private readonly Request $request,
         private readonly Kernel $kernel,
-    ) {}
-
+    ) {
+    }
 
     public static function set(self $ctx): void
     {
@@ -28,7 +26,6 @@ final class PhpSfContext
     {
         return self::$current;
     }
-
 
     public function getRoute(): object
     {
@@ -49,5 +46,4 @@ final class PhpSfContext
     {
         return $this->kernel;
     }
-
 }

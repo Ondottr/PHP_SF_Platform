@@ -1,116 +1,117 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Traits;
 
-use InvalidArgumentException;
 use JetBrains\PhpStorm\ExpectedValues;
 use PHP_SF\System\Core\RedirectResponse;
 
 trait RedirectTrait
 {
-
     /**
      * @param string     $linkOrRoute
-     *                             If you want to redirect to a route, you can use the routeLink() function.
-     *                             Works with Symfony routes too.
-     *                             <br />
+     *                                If you want to redirect to a route, you can use the routeLink() function.
+     *                                Works with Symfony routes too.
+     *                                <br />
      * @param array|null $withParams
-     *                             Route parameters optional if <b>$linkOrRoute</b> is a route name
-     *                             and not used if <b>$linkOrRoute</b> is a link.
-     *                             <br />
-     *                             For example, if you want to redirect to the route named <b>example_route</b>,
-     *                             with url: <b>/example/{$id}</b>, you can use the following code: <br />
-     *                             <i>$this->redirectTo( routeLink( 'example_route', [ 'id' => 1 ] ) )</i> or <br />
-     *                             <i>$this->redirectTo ( '/example/1 ) </i>
-     *                             <br />
-     * @param array|null $get      Additional GET parameters. <br />
-     *                             If request already has a GET parameter with the same name, it will be replaced!
-     *                             <br />
-     * @param array|null $post     Additional POST parameters. <br />
-     *                             If request already has a POST parameter with the same name, it will be replaced! <br />
-     *                             Works with all HTTP methods, not only POST
-     *                             <br />
-     * @param array|null $errors   Errors to be transferred to the next request. <br />
-     *                             To add errors to the current request, you can use the following code: <br />
-     *                             <i>$this->redirectTo( routeLink( 'example_route' ), errors: [ 'Error 1', 'Error 2' ] )</i> or <br />
-     *                             <i>$this->redirectTo( routeLink( 'example_route' ), errors: [
-     *                             {@see RedirectResponse::ALERT_DANGER} =>'Error 1', {@see RedirectResponse::ALERT_WARNING} => 'Error 2'
-     *                             ] )</i> <br />
-     *                             To get all errors, use: {@see getErrors()} <br />
-     *                             To get a specific error, use: {@see getErrors(RedirectResponse::ALERT_DANGER)}
-     *                             <br />
-     * @param array|null $messages Messages to be transferred to the next request.
-     *                             To add messages to the current request, you can use the following code: <br />
-     *                             <i>$this->redirectTo( routeLink( 'example_route' ), messages: [ 'Message 1', 'Message 2' ] )</i> or <br />
-     *                             <i>$this->redirectTo( routeLink( 'example_route' ), messages: [
-     *                             {@see RedirectResponse::ALERT_SUCCESS} =>'Message 1', {@see RedirectResponse::ALERT_INFO} => 'Message 2'
-     *                             ] )</i> <br />
-     *                             To get all messages, use: {@see getMessages()} <br />
-     *                             To get a specific message, use: {@see getMessages(RedirectResponse::ALERT_SUCCESS)}
-     *                             <br />
-     * @param array|null $formData Additional form data to be transferred to the next request
-     *                             (useful for example when you want to redirect to the same page with the same form data) <br />
-     *                             If request already has a form data with the same name, it will be replaced <br />
-     *                             Works with all HTTP methods, not only POST
-     *
-     * @return RedirectResponse
+     *                                Route parameters optional if <b>$linkOrRoute</b> is a route name
+     *                                and not used if <b>$linkOrRoute</b> is a link.
+     *                                <br />
+     *                                For example, if you want to redirect to the route named <b>example_route</b>,
+     *                                with url: <b>/example/{$id}</b>, you can use the following code: <br />
+     *                                <i>$this->redirectTo( routeLink( 'example_route', [ 'id' => 1 ] ) )</i> or <br />
+     *                                <i>$this->redirectTo ( '/example/1 ) </i>
+     *                                <br />
+     * @param array|null $get         Additional GET parameters. <br />
+     *                                If request already has a GET parameter with the same name, it will be replaced!
+     *                                <br />
+     * @param array|null $post        Additional POST parameters. <br />
+     *                                If request already has a POST parameter with the same name, it will be replaced! <br />
+     *                                Works with all HTTP methods, not only POST
+     *                                <br />
+     * @param array|null $errors      Errors to be transferred to the next request. <br />
+     *                                To add errors to the current request, you can use the following code: <br />
+     *                                <i>$this->redirectTo( routeLink( 'example_route' ), errors: [ 'Error 1', 'Error 2' ] )</i> or <br />
+     *                                <i>$this->redirectTo( routeLink( 'example_route' ), errors: [
+     *                                {@see RedirectResponse::ALERT_DANGER} =>'Error 1', {@see RedirectResponse::ALERT_WARNING} => 'Error 2'
+     *                                ] )</i> <br />
+     *                                To get all errors, use: {@see getErrors()} <br />
+     *                                To get a specific error, use: {@see getErrors(RedirectResponse::ALERT_DANGER)}
+     *                                <br />
+     * @param array|null $messages    Messages to be transferred to the next request.
+     *                                To add messages to the current request, you can use the following code: <br />
+     *                                <i>$this->redirectTo( routeLink( 'example_route' ), messages: [ 'Message 1', 'Message 2' ] )</i> or <br />
+     *                                <i>$this->redirectTo( routeLink( 'example_route' ), messages: [
+     *                                {@see RedirectResponse::ALERT_SUCCESS} =>'Message 1', {@see RedirectResponse::ALERT_INFO} => 'Message 2'
+     *                                ] )</i> <br />
+     *                                To get all messages, use: {@see getMessages()} <br />
+     *                                To get a specific message, use: {@see getMessages(RedirectResponse::ALERT_SUCCESS)}
+     *                                <br />
+     * @param array|null $formData    Additional form data to be transferred to the next request
+     *                                (useful for example when you want to redirect to the same page with the same form data) <br />
+     *                                If request already has a form data with the same name, it will be replaced <br />
+     *                                Works with all HTTP methods, not only POST
      */
     final protected function redirectTo(
         string $linkOrRoute,
-        array|null $withParams = null,
-        #[ExpectedValues( 'string' )]
-        array|null $get = null,
-        #[ExpectedValues( 'string' )]
-        array|null $post = null,
-        #[ExpectedValues( 'string' )]
-        array|null $errors = null,
-        #[ExpectedValues( 'string' )]
-        array|null $messages = null,
-        #[ExpectedValues( 'string' )]
-        array|null $formData = null
+        ?array $withParams = null,
+        #[ExpectedValues('string')]
+        ?array $get = null,
+        #[ExpectedValues('string')]
+        ?array $post = null,
+        #[ExpectedValues('string')]
+        ?array $errors = null,
+        #[ExpectedValues('string')]
+        ?array $messages = null,
+        #[ExpectedValues('string')]
+        ?array $formData = null,
     ): RedirectResponse {
         $withParams ??= [];
-        $get        ??= [];
-        $post       ??= [];
-        $errors     ??= [];
-        $messages   ??= [];
-        $formData   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
+        $messages ??= [];
+        $formData ??= [];
 
-        if ( str_contains( $linkOrRoute, '/' ) ) {
-            $rr = $this->toUrl( $linkOrRoute, $get, $post, $errors, $messages, $formData );
+        if (str_contains($linkOrRoute, '/')) {
+            $rr = $this->toUrl($linkOrRoute, $get, $post, $errors, $messages, $formData);
         } else {
-            $rr = $this->toRoute( $linkOrRoute, $get, $post, $errors, $messages, $formData, $withParams );
+            $rr = $this->toRoute($linkOrRoute, $get, $post, $errors, $messages, $formData, $withParams);
         }
 
         return $rr;
     }
 
-    final protected function redirectBack( array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse
+    final protected function redirectBack(?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null): RedirectResponse
     {
-        $get      ??= [];
-        $post     ??= [];
-        $errors   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
         $messages ??= [];
         $formData ??= [];
 
-        if ( $this->request->headers->get( 'referer' ) === null )
+        if (null === $this->request->headers->get('referer')) {
             $url = '/';
-        elseif ( $this->request->headers->get( 'origin' ) !== null )
-            $url = str_replace( $this->request->headers->get( 'origin' ), '', $this->request->headers->get( 'referer' ) );
-        else
-            $url = str_replace( [ $this->request->headers->get( 'host' ), 'https://', 'http://' ], '', $this->request->headers->get( 'referer' ) );
+        } elseif (null !== $this->request->headers->get('origin')) {
+            $url = str_replace($this->request->headers->get('origin'), '', $this->request->headers->get('referer'));
+        } else {
+            $url = str_replace([$this->request->headers->get('host'), 'https://', 'http://'], '', $this->request->headers->get('referer'));
+        }
 
         return $this->toUrl(
-            $url, $get, $post, $errors, $messages, $formData
+            $url,
+            $get,
+            $post,
+            $errors,
+            $messages,
+            $formData,
         );
     }
 
-
-    private function toUrl( string $url, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): RedirectResponse
+    private function toUrl(string $url, ?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null): RedirectResponse
     {
-        $get      ??= [];
-        $post     ??= [];
-        $errors   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
         $messages ??= [];
         $formData ??= [];
 
@@ -122,98 +123,103 @@ trait RedirectTrait
                 post: $post,
                 errors: $errors,
                 messages: $messages,
-                formData: array_merge( $formData, isset( $this->request ) ? $this->request->request->all() : [] )
-            )
+                formData: array_merge($formData, isset($this->request) ? $this->request->request->all() : []),
+            ),
         );
     }
 
-    private function toRoute( string $routeName, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null, array|null $with = null ): RedirectResponse
+    private function toRoute(string $routeName, ?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null, ?array $with = null): RedirectResponse
     {
-        $get      ??= [];
-        $post     ??= [];
-        $errors   ??= [];
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
         $messages ??= [];
         $formData ??= [];
-        $with     ??= [];
+        $with ??= [];
 
         return $this->toUrl(
-            url: routeLink( $routeName, $with ),
+            url: routeLink($routeName, $with),
             get: $get,
             post: $post,
             errors: $errors,
             messages: $messages,
-            formData: array_merge( $formData, isset( $this->request ) ? $this->request->request->all() : [] )
+            formData: array_merge($formData, isset($this->request) ? $this->request->request->all() : []),
         );
     }
 
-
-    private function generateData( string $url, array|null $get = null, array|null $post = null, array|null $errors = null, array|null $messages = null, array|null $formData = null ): string
+    private function generateData(string $url, ?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null): string
     {
-        $get        ??= [];
-        $post       ??= [];
-        $errors     ??= [];
-        $messages   ??= [];
-        $formData   ??= [];
-        $hashedUrl  = hash( 'xxh3', $url );
-        $redirectId = (string)hrtime( true );
+        $get ??= [];
+        $post ??= [];
+        $errors ??= [];
+        $messages ??= [];
+        $formData ??= [];
+        $hashedUrl = hash('xxh3', $url);
+        $redirectId = (string) hrtime(true);
 
-        $this->validateParams( $get, $post );
-        $this->validateErrors( $errors );
-        $this->validateMessages( $messages );
+        $this->validateParams($get, $post);
+        $this->validateErrors($errors);
+        $this->validateMessages($messages);
 
-
-        ca()->set( ":GET:$hashedUrl:$redirectId", j_encode( $get ), 300 );
-        ca()->set( ":POST:$hashedUrl:$redirectId", j_encode( $post ), 300 );
-        ca()->set( ":ERRORS:$hashedUrl:$redirectId", j_encode( $errors ), 300 );
-        ca()->set( ":MESSAGES:$hashedUrl:$redirectId", j_encode( $messages ), 300 );
-        ca()->set( ":FORM_DATA:$hashedUrl:$redirectId", j_encode( $formData ), 300 );
+        ca()->set(":GET:$hashedUrl:$redirectId", j_encode($get), 300);
+        ca()->set(":POST:$hashedUrl:$redirectId", j_encode($post), 300);
+        ca()->set(":ERRORS:$hashedUrl:$redirectId", j_encode($errors), 300);
+        ca()->set(":MESSAGES:$hashedUrl:$redirectId", j_encode($messages), 300);
+        ca()->set(":FORM_DATA:$hashedUrl:$redirectId", j_encode($formData), 300);
 
         return $redirectId;
     }
 
-    private function validateParams( array $get, array $post ): void
+    private function validateParams(array $get, array $post): void
     {
-        foreach ( $get as $param )
-            if ( is_string( $param ) === false )
-                throw new InvalidArgumentException( 'All GET parameters must be strings' );
+        foreach ($get as $param) {
+            if (false === is_string($param)) {
+                throw new \InvalidArgumentException('All GET parameters must be strings');
+            }
+        }
 
-        foreach ( $post as $param )
-            if ( is_string( $param ) === false )
-                throw new InvalidArgumentException( 'All POST parameters must be strings' );
+        foreach ($post as $param) {
+            if (false === is_string($param)) {
+                throw new \InvalidArgumentException('All POST parameters must be strings');
+            }
+        }
     }
 
-    private function validateErrors( array $errors ): void
+    private function validateErrors(array $errors): void
     {
-        foreach ( $errors as $errorType => $error ) {
-            if ( is_int( $errorType ) === false && in_array( $errorType, RedirectResponse::ALERT_TYPES, true ) === false ) {
-                throw new InvalidArgumentException(
+        foreach ($errors as $errorType => $error) {
+            if (false === is_int($errorType) && false === in_array($errorType, RedirectResponse::ALERT_TYPES, true)) {
+                throw new \InvalidArgumentException(
                     sprintf(
                         'Invalid error type: "%s". Available types: ( %s )',
-                        $errorType, implode( ', ', RedirectResponse::ALERT_TYPES )
-                    )
+                        $errorType,
+                        implode(', ', RedirectResponse::ALERT_TYPES),
+                    ),
                 );
             }
 
-            if ( is_string( $error ) === false )
-                throw new InvalidArgumentException( 'Error must be a string' );
+            if (false === is_string($error)) {
+                throw new \InvalidArgumentException('Error must be a string');
+            }
         }
     }
 
-    private function validateMessages( array $messages ): void
+    private function validateMessages(array $messages): void
     {
-        foreach ( $messages as $messageType => $message ) {
-            if ( is_int( $messageType ) === false && in_array( $messageType, RedirectResponse::ALERT_TYPES, true ) === false ) {
-                throw new InvalidArgumentException(
+        foreach ($messages as $messageType => $message) {
+            if (false === is_int($messageType) && false === in_array($messageType, RedirectResponse::ALERT_TYPES, true)) {
+                throw new \InvalidArgumentException(
                     sprintf(
                         'Invalid message type: "%s". Available types: ( %s )',
-                        $messageType, implode( ', ', RedirectResponse::ALERT_TYPES )
-                    )
+                        $messageType,
+                        implode(', ', RedirectResponse::ALERT_TYPES),
+                    ),
                 );
             }
 
-            if ( is_string( $message ) === false )
-                throw new InvalidArgumentException( 'Message must be a string' );
+            if (false === is_string($message)) {
+                throw new \InvalidArgumentException('Message must be a string');
+            }
         }
     }
-
 }

@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\Framework\Http\Middleware;
 
@@ -20,47 +20,50 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 final class csrf extends Middleware
 {
-
-    private const MUTATING_METHODS = [ 'POST', 'PUT', 'PATCH', 'DELETE' ];
-
+    private const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
     protected function result(): bool|RedirectResponse|JsonResponse
     {
-        if ( !in_array( Router::$currentRoute->httpMethod, self::MUTATING_METHODS, true ) )
+        if (!in_array(Router::$currentRoute->httpMethod, self::MUTATING_METHODS, true)) {
             return true;
+        }
 
-        if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
+        if (str_starts_with(Router::$currentRoute->url, '/api/')) {
             return true;
+        }
 
-        if ( $this->hasMiddleware( Router::$currentRoute->middleware ?? [], no_csrf::class ) )
+        if ($this->hasMiddleware(Router::$currentRoute->middleware ?? [], no_csrf::class)) {
             return true;
+        }
 
-        $sessionToken = s()->get( '_csrf_token' );
-        $submitted    = (string) $this->request->request->get( '_token', '' );
+        $sessionToken = s()->get('_csrf_token');
+        $submitted = (string) $this->request->request->get('_token', '');
 
-        if ( $sessionToken === null || !hash_equals( $sessionToken, $submitted ) )
-            return $this->redirectBack( errors: [ RedirectResponse::ALERT_DANGER => 'Invalid CSRF token.' ] );
+        if (null === $sessionToken || !hash_equals($sessionToken, $submitted)) {
+            return $this->redirectBack(errors: [RedirectResponse::ALERT_DANGER => 'Invalid CSRF token.']);
+        }
 
         return true;
     }
 
-
-    private function hasMiddleware( mixed $middleware, string $class ): bool
+    private function hasMiddleware(mixed $middleware, string $class): bool
     {
-        if ( is_string( $middleware ) )
+        if (is_string($middleware)) {
             return $middleware === $class;
+        }
 
-        if ( is_array( $middleware ) ) {
-            foreach ( $middleware as $key => $value ) {
-                if ( is_string( $key ) && $key === $class )
+        if (is_array($middleware)) {
+            foreach ($middleware as $key => $value) {
+                if (is_string($key) && $key === $class) {
                     return true;
+                }
 
-                if ( $this->hasMiddleware( $value, $class ) )
+                if ($this->hasMiddleware($value, $class)) {
                     return true;
+                }
             }
         }
 
         return false;
     }
-
 }

@@ -1,16 +1,15 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\System\Core\Cache;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Driver\Result as DriverResult;
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\Cache\Exception\InvalidCacheArgumentException;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 
 final class DoctrineResultCache implements DriverResult
 {
-
     /**
      * @var Collection<AbstractEntity[]>
      */
@@ -24,52 +23,17 @@ final class DoctrineResultCache implements DriverResult
      */
     private Collection $fetchOneResult;
 
-
-    public function __construct( private readonly string $cacheKey )
+    public function __construct(private readonly string $cacheKey)
     {
-        $this->numericResult     = new ArrayCollection;
-        $this->associativeResult = new ArrayCollection;
-        $this->fetchOneResult    = new ArrayCollection;
+        $this->numericResult = new ArrayCollection();
+        $this->associativeResult = new ArrayCollection();
+        $this->fetchOneResult = new ArrayCollection();
 
-        if ( ca()->has( $this->cacheKey ) === null )
-            throw new InvalidCacheArgumentException( 'Cache key does not exist!' );
+        if (null === ca()->has($this->cacheKey)) {
+            throw new InvalidCacheArgumentException('Cache key does not exist!');
+        }
 
         $this->setAll();
-    }
-
-
-    private function setAll(): void
-    {
-        if ( ( $result = ca()->get( $this->cacheKey ) ) === null )
-            $result = "[]";
-
-        $cachedValue = j_decode( $result, true );
-
-        $this->associativeResult = new ArrayCollection( $cachedValue );
-
-        $res = [];
-        foreach ( $cachedValue as $values )
-            $res[] = array_values( $values );
-
-        $this->numericResult = new ArrayCollection( $res );
-
-        $res = [];
-        foreach ( $cachedValue as $values )
-            if ( empty( $values ) === false )
-                $res[] = $values[ array_key_first( $values ) ];
-
-        $this->fetchOneResult = new ArrayCollection( $res );
-    }
-
-    private function next(): void
-    {
-        $this->numericResult->removeElement( $this->numericResult->key() );
-        $this->associativeResult->removeElement( $this->associativeResult->key() );
-        $this->fetchOneResult->removeElement( $this->fetchOneResult->key() );
-
-        $this->numericResult->next();
-        $this->associativeResult->next();
-        $this->fetchOneResult->next();
     }
 
     /**
@@ -121,8 +85,9 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchAllNumeric(): array
     {
-        if ( isset( $this->numericResult ) === false )
+        if (false === isset($this->numericResult)) {
             return [];
+        }
 
         $result = $this->numericResult->getValues();
 
@@ -138,8 +103,9 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchAllAssociative(): array
     {
-        if ( isset( $this->associativeResult ) === false )
+        if (false === isset($this->associativeResult)) {
             return [];
+        }
 
         $result = $this->associativeResult->getValues();
 
@@ -155,8 +121,9 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchFirstColumn(): array
     {
-        if ( isset( $this->fetchOneResult ) === false )
+        if (false === isset($this->fetchOneResult)) {
             return [];
+        }
 
         $result = $this->fetchOneResult->getValues();
 
@@ -172,22 +139,22 @@ final class DoctrineResultCache implements DriverResult
      * some database drivers may return the number of rows returned by that query. However, this behaviour
      * is not guaranteed for all drivers and should not be relied on in portable applications.
      *
-     * @return int The number of rows.
+     * @return int the number of rows
      */
     public function rowCount(): int
     {
-        return count( $this->fetchAllNumeric() );
+        return count($this->fetchAllNumeric());
     }
 
     /**
-     * Returns the number of columns in the result
+     * Returns the number of columns in the result.
      *
      * @return int The number of columns in the result. If the columns cannot be counted,
      *             this method must return 0.
      */
     public function columnCount(): int
     {
-        return count( $this->fetchOne() );
+        return count($this->fetchOne());
     }
 
     /**
@@ -195,7 +162,44 @@ final class DoctrineResultCache implements DriverResult
      */
     public function free(): void
     {
-        unset( $this->numericResult, $this->associativeResult, $this->fetchOneResult, $this->fetchAllNumericResult, $this->fetchAllAssociativeResult, $this->fetchAllFirstColumnResult );
+        unset($this->numericResult, $this->associativeResult, $this->fetchOneResult, $this->fetchAllNumericResult, $this->fetchAllAssociativeResult, $this->fetchAllFirstColumnResult);
     }
 
+    private function setAll(): void
+    {
+        if (($result = ca()->get($this->cacheKey)) === null) {
+            $result = '[]';
+        }
+
+        $cachedValue = j_decode($result, true);
+
+        $this->associativeResult = new ArrayCollection($cachedValue);
+
+        $res = [];
+        foreach ($cachedValue as $values) {
+            $res[] = array_values($values);
+        }
+
+        $this->numericResult = new ArrayCollection($res);
+
+        $res = [];
+        foreach ($cachedValue as $values) {
+            if (false === empty($values)) {
+                $res[] = $values[array_key_first($values)];
+            }
+        }
+
+        $this->fetchOneResult = new ArrayCollection($res);
+    }
+
+    private function next(): void
+    {
+        $this->numericResult->removeElement($this->numericResult->key());
+        $this->associativeResult->removeElement($this->associativeResult->key());
+        $this->fetchOneResult->removeElement($this->fetchOneResult->key());
+
+        $this->numericResult->next();
+        $this->associativeResult->next();
+        $this->fetchOneResult->next();
+    }
 }

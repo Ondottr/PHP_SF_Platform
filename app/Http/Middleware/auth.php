@@ -1,4 +1,4 @@
-<?php declare( strict_types=1 );
+<?php declare(strict_types=1);
 
 namespace PHP_SF\Framework\Http\Middleware;
 
@@ -26,14 +26,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 class auth extends Middleware
 {
-
     /**
      * Holds the currently authenticated user, or {@see false} when no session is active.
      *
-     * @type false|UserInterface&AbstractEntity
+     * @var false|UserInterface&AbstractEntity
      */
     public static false|UserInterface $user = false;
-
 
     /**
      * Returns a fresh entity instance for the authenticated user (re-fetched from the database),
@@ -41,13 +39,13 @@ class auth extends Middleware
      */
     final public static function user(): false|UserInterface
     {
-        if ( self::$user !== false ) {
+        if (false !== self::$user) {
             /**
              * @var UserInterface&AbstractEntity $userClass
              */
-            $userClass = ( Kernel::getApplicationUserClassName() );
+            $userClass = Kernel::getApplicationUserClassName();
 
-            return $userClass::find( self::$user->getId() );
+            return $userClass::find(self::$user->getId());
         }
 
         return self::$user;
@@ -63,7 +61,6 @@ class auth extends Middleware
         self::$user = false;
     }
 
-
     /**
      * Runs the authentication gate.
      *
@@ -73,16 +70,16 @@ class auth extends Middleware
      */
     final public function result(): bool|RedirectResponse|JsonResponse
     {
-        if ( self::isAuthenticated() === false ) {
-            if ( str_starts_with( Router::$currentRoute->url, '/api/' ) )
+        if (false === self::isAuthenticated()) {
+            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
                 return ApiResponse::unauthorized();
+            }
 
-            return $this->redirectTo( 'login_page' );
+            return $this->redirectTo('login_page');
         }
 
         return true;
     }
-
 
     /**
      * Establishes the authenticated user for this request.
@@ -95,37 +92,36 @@ class auth extends Middleware
      * Silently returns when the session contains no user ID, or when the stored ID no longer
      * resolves to an existing user record.
      */
-    public static function logInUser( UserInterface|null $user = null ): void
+    public static function logInUser(?UserInterface $user = null): void
     {
-        if ( $user === null ) {
-            $userId = s()->get( 'session_user_id' );
+        if (null === $user) {
+            $userId = s()->get('session_user_id');
 
-            if ( $userId !== null ) {
+            if (null !== $userId) {
                 /**
                  * @var UserInterface&AbstractEntity $userClass
                  */
-                $userClass = ( Kernel::getApplicationUserClassName() );
-                $user      = $userClass::find( $userId );
+                $userClass = Kernel::getApplicationUserClassName();
+                $user = $userClass::find($userId);
 
-                if ( $user === null )
+                if (null === $user) {
                     return;
+                }
 
                 self::$user = $user;
             }
-        } elseif ( $user instanceof ( Kernel::getApplicationUserClassName() ) ) {
+        } elseif ($user instanceof (Kernel::getApplicationUserClassName())) {
             self::$user = $user;
 
-            s()->set( 'session_user_id', $user->getId() );
+            s()->set('session_user_id', $user->getId());
         }
     }
-
 
     /**
      * Returns {@see true} when a valid user entity is loaded into {@see self::$user}.
      */
     final public static function isAuthenticated(): bool
     {
-        return self::$user instanceof ( Kernel::getApplicationUserClassName() );
+        return self::$user instanceof (Kernel::getApplicationUserClassName());
     }
-
 }

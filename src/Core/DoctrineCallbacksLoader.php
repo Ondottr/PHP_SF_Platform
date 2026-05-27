@@ -1,5 +1,5 @@
 <?php /** @noinspection MagicMethodsValidityInspection */
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace PHP_SF\System\Core;
 
@@ -10,12 +10,8 @@ use JetBrains\PhpStorm\ArrayShape;
 use PHP_SF\System\Classes\Abstracts\AbstractDoctrineLifecycleCallback;
 use PHP_SF\System\Interface\DoctrineCallbacksLoaderInterface;
 
-use function array_key_exists;
-use function in_array;
-
 abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterface
 {
-
     private const AVAILABLE_CALLBACKS = [
         Events::postRemove,
         Events::preRemove,
@@ -27,84 +23,83 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
         Events::postUpdate,
     ];
 
-    #[ArrayShape( [
-        Events::postRemove  => 'string',
-        Events::postUpdate  => 'string',
+    #[ORM\PreFlush]
+    final public function __preFlush(EventArgs $args): void
+    {
+        $this->getCallbackClass(Events::preFlush, $args)?->callback();
+    }
+
+    #[ORM\PreRemove]
+    final public function __preRemove(EventArgs $args): void
+    {
+        $this->getCallbackClass(Events::preRemove, $args)?->callback();
+    }
+
+    #[ORM\PrePersist]
+    final public function __prePersist(EventArgs $args): void
+    {
+        $this->getCallbackClass(Events::prePersist, $args)?->callback();
+    }
+
+    #[ORM\PreUpdate]
+    final public function __preUpdate(EventArgs $args): void
+    {
+        $this->getCallbackClass(Events::preUpdate, $args)?->callback();
+    }
+
+    #[ORM\PostRemove]
+    final public function __postRemove(EventArgs $args): void
+    {
+        static::clearQueryBuilderCache();
+
+        $this->getCallbackClass(Events::postRemove, $args)?->callback();
+    }
+
+    #[ORM\PostPersist]
+    final public function __postPersist(EventArgs $args): void
+    {
+        static::clearQueryBuilderCache();
+
+        $this->getCallbackClass(Events::postPersist, $args)?->callback();
+    }
+
+    #[ORM\PostLoad]
+    final public function __postLoad(EventArgs $args): void
+    {
+        $this->getCallbackClass(Events::postLoad, $args)?->callback();
+    }
+
+    #[ORM\PostUpdate]
+    final public function __postUpdate(EventArgs $args): void
+    {
+        static::clearQueryBuilderCache();
+
+        $this->getCallbackClass(Events::postUpdate, $args)?->callback();
+    }
+
+    #[ArrayShape([
+        Events::postRemove => 'string',
+        Events::postUpdate => 'string',
         Events::postPersist => 'string',
-        Events::preRemove   => 'string',
-        Events::postLoad    => 'string',
-        Events::preFlush    => 'string',
-        Events::prePersist  => 'string',
-        Events::preUpdate   => 'string',
-    ] )]
+        Events::preRemove => 'string',
+        Events::postLoad => 'string',
+        Events::preFlush => 'string',
+        Events::prePersist => 'string',
+        Events::preUpdate => 'string',
+    ])]
     public function getLifecycleCallbacks(): array
     {
         return [];
     }
 
-    final public function getCallbackClass( string $callback, EventArgs $args ): AbstractDoctrineLifecycleCallback|null
+    final public function getCallbackClass(string $callback, EventArgs $args): ?AbstractDoctrineLifecycleCallback
     {
-        if ( in_array( $callback, self::AVAILABLE_CALLBACKS, true ) === false ||
-            array_key_exists( $callback, $this->getLifecycleCallbacks() ) === false
-        )
+        if (false === \in_array($callback, self::AVAILABLE_CALLBACKS, true)
+            || false === \array_key_exists($callback, $this->getLifecycleCallbacks())
+        ) {
             return null;
+        }
 
-        return new ( $this->getLifecycleCallbacks()[ $callback ] )( $this, $args );
+        return new ($this->getLifecycleCallbacks()[$callback])($this, $args);
     }
-
-
-    #[ORM\PreFlush]
-    final public function __preFlush( EventArgs $args ): void
-    {
-        $this->getCallbackClass( Events::preFlush, $args )?->callback();
-    }
-
-    #[ORM\PreRemove]
-    final public function __preRemove( EventArgs $args ): void
-    {
-        $this->getCallbackClass( Events::preRemove, $args )?->callback();
-    }
-
-    #[ORM\PrePersist]
-    final public function __prePersist( EventArgs $args ): void
-    {
-        $this->getCallbackClass( Events::prePersist, $args )?->callback();
-    }
-
-    #[ORM\PreUpdate]
-    final public function __preUpdate( EventArgs $args ): void
-    {
-        $this->getCallbackClass( Events::preUpdate, $args )?->callback();
-    }
-
-    #[ORM\PostRemove]
-    final public function __postRemove( EventArgs $args ): void
-    {
-        static::clearQueryBuilderCache();
-
-        $this->getCallbackClass( Events::postRemove, $args )?->callback();
-    }
-
-    #[ORM\PostPersist]
-    final public function __postPersist( EventArgs $args ): void
-    {
-        static::clearQueryBuilderCache();
-
-        $this->getCallbackClass( Events::postPersist, $args )?->callback();
-    }
-
-    #[ORM\PostLoad]
-    final public function __postLoad( EventArgs $args ): void
-    {
-        $this->getCallbackClass( Events::postLoad, $args )?->callback();
-    }
-
-    #[ORM\PostUpdate]
-    final public function __postUpdate( EventArgs $args ): void
-    {
-        static::clearQueryBuilderCache();
-
-        $this->getCallbackClass( Events::postUpdate, $args )?->callback();
-    }
-
 }
