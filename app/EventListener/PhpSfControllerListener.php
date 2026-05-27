@@ -56,6 +56,11 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             return;
         }
 
+        // Router::$requestData is normally set by Router::init() which does not run during
+        // functional tests. Seed it here so r() works inside PHP_SF controller methods.
+        $ref = new \ReflectionProperty(Router::class, 'requestData');
+        $ref->setValue(null, $event->getRequest());
+
         $GLOBALS['errors'] = self::$flashBag['errors'] ?? [];
         $GLOBALS['messages'] = self::$flashBag['messages'] ?? [];
         $GLOBALS['form_data'] = self::$flashBag['formData'] ?? [];
@@ -97,10 +102,10 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             'middleware' => $request->attributes->get('_php_sf_middleware', []),
         ];
 
-        // Replace the callable: ControllerResolver would do `new $class()` (no request),
-        // here we inject the Symfony Request and forward route params correctly.
+        // Replace the callable: ControllerResolver would do `new $class()`,
+        // here we forward route params correctly.
         $event->setController(static function () use ($class, $method, $request, $routeUrl): mixed {
-            $instance = new $class($request);
+            $instance = new $class();
 
             $rawParams = [];
             foreach ($request->attributes->all() as $key => $value) {

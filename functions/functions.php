@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use App\Kernel;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use PHP_SF\Framework\Http\Middleware\auth;
