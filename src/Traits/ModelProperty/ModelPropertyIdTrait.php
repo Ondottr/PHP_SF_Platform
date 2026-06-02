@@ -14,7 +14,7 @@ trait ModelPropertyIdTrait
     #[Groups(['read'])]
     protected int $id;
 
-    final public function getId(): int
+    public function getId(): int
     {
         return $this->id;
     }
