@@ -13,7 +13,7 @@ trait ModelPropertyUpdatedAtTrait
     #[Groups(['read', 'write'])]
     protected string|\DateTimeInterface|null $updatedAt = null;
 
-    final public function getUpdatedAt(): \DateTimeInterface
+    public function getUpdatedAt(): \DateTimeInterface
     {
         if (is_string($this->updatedAt)) {
             return $this->updatedAt = new DateTime($this->updatedAt);
@@ -22,7 +22,7 @@ trait ModelPropertyUpdatedAtTrait
         return $this->updatedAt;
     }
 
-    final public function setUpdatedAt(\DateTimeInterface $updatedAt): void
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): void
     {
         $this->updatedAt = $updatedAt;
     }

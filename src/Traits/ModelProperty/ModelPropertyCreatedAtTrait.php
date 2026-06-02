@@ -13,7 +13,7 @@ trait ModelPropertyCreatedAtTrait
     #[Groups(['read'])]
     protected string|\DateTimeInterface|null $createdAt;
 
-    final public function getCreatedAt(): \DateTimeInterface
+    public function getCreatedAt(): \DateTimeInterface
     {
         if (is_string($this->createdAt)) {
             return $this->createdAt = new DateTime($this->createdAt);
@@ -22,7 +22,7 @@ trait ModelPropertyCreatedAtTrait
         return $this->createdAt;
     }
 
-    final public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
 
