@@ -22,6 +22,7 @@ class AuthController extends AbstractController
      */
     protected AbstractEntityRepository $userRepository;
 
+
     public function __construct()
     {
         /**
@@ -30,6 +31,7 @@ class AuthController extends AbstractController
         $userClass = Kernel::getApplicationUserClassName();
         $this->userRepository = $userClass::rep();
     }
+
 
     #[Route(url: 'auth/login', httpMethod: 'GET')]
     public function login_page(): Response|RedirectResponse

@@ -19,7 +19,6 @@ use PHPStan\Type\Type;
  */
 final class RepReturnTypeExtension implements DynamicStaticMethodReturnTypeExtension
 {
-
     public function getClass(): string
     {
         return AbstractEntity::class;
@@ -27,7 +26,7 @@ final class RepReturnTypeExtension implements DynamicStaticMethodReturnTypeExten
 
     public function isStaticMethodSupported(MethodReflection $methodReflection): bool
     {
-        return $methodReflection->getName() === 'rep';
+        return 'rep' === $methodReflection->getName();
     }
 
     public function getTypeFromStaticMethodCall(
@@ -47,7 +46,6 @@ final class RepReturnTypeExtension implements DynamicStaticMethodReturnTypeExten
         return new ObjectType(AbstractEntityRepository::class);
     }
 
-
     private function resolveCalledClass(StaticCall $methodCall, Scope $scope): ?string
     {
         $class = $methodCall->class;
@@ -55,11 +53,11 @@ final class RepReturnTypeExtension implements DynamicStaticMethodReturnTypeExten
         if ($class instanceof Name) {
             $name = (string) $class;
 
-            if ($name === 'self' || $name === 'static') {
+            if ('self' === $name || 'static' === $name) {
                 return $scope->isInClass() ? $scope->getClassReflection()->getName() : null;
             }
 
-            if ($name === 'parent') {
+            if ('parent' === $name) {
                 return $scope->isInClass()
                     ? ($scope->getClassReflection()->getParentClass()?->getName())
                     : null;
@@ -70,5 +68,4 @@ final class RepReturnTypeExtension implements DynamicStaticMethodReturnTypeExten
 
         return null;
     }
-
 }

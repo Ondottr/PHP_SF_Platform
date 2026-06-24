@@ -11,6 +11,7 @@ abstract class MiddlewareType
 {
     public const DEFAULT = MiddlewareAll::class;
 
+
     /**
      * @param array<array-key, mixed> $middlewares
      */

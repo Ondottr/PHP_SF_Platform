@@ -9,8 +9,11 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 trait EntityRepositoriesTrait
 {
-    /** @var array<class-string, AbstractEntityRepository<object>> */
+    /**
+     * @var array<class-string, AbstractEntityRepository<object>>
+     */
     private static array $repositories = [];
+
 
     public static function find(int $id): ?static
     {
@@ -66,7 +69,6 @@ trait EntityRepositoriesTrait
 
         return $res;
     }
-
 
     /**
      * @return AbstractEntityRepository<static>

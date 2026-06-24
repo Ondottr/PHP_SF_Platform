@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityRepository;
 
 /**
  * @template T of object
+ *
  * @extends EntityRepository<T>
  */
 abstract class AbstractEntityRepository extends EntityRepository

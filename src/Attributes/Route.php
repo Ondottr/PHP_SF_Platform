@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace PHP_SF\System\Attributes;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+use Attribute;
+
+#[Attribute(Attribute::TARGET_METHOD)]
 class Route
 {
     /**
@@ -14,6 +16,5 @@ class Route
         public readonly string $httpMethod,
         public readonly ?string $name = null,
         public readonly string|array $middleware = [],
-    ) {
-    }
+    ) {}
 }

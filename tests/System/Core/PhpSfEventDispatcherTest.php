@@ -2,8 +2,13 @@
 
 namespace PHP_SF\Tests\System\Core;
 
+use FilesystemIterator;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ReflectionClass;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 // ---------------------------------------------------------------------------
@@ -15,14 +20,15 @@ final class DispatcherTestSubscriber implements EventSubscriberInterface
 {
     public static int $calls = 0;
 
-    public static function getSubscribedEvents(): array
-    {
-        return ['phpsf.test_event' => 'onTestEvent'];
-    }
 
     public function onTestEvent(): void
     {
         ++self::$calls;
+    }
+
+    public static function getSubscribedEvents(): array
+    {
+        return ['phpsf.test_event' => 'onTestEvent'];
     }
 }
 
@@ -35,6 +41,95 @@ final class PhpSfEventDispatcherTest extends TestCase
 {
     private string $tmpDir;
     private array $savedState;
+
+
+    public function testDispatchWithNoDirectoriesDoesNotThrow(): void
+    {
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+        $this->assertSame(0, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testNonExistentDirectoryIsIgnored(): void
+    {
+        PhpSfEventDispatcher::addSubscriberDirectory('/nonexistent/path/that/does/not/exist');
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(0, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testNonPhpFileIsIgnored(): void
+    {
+        file_put_contents($this->tmpDir . '/readme.txt', 'not PHP');
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(0, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testPhpFileWithoutNamespaceIsIgnored(): void
+    {
+        file_put_contents($this->tmpDir . '/NoNamespace.php', "<?php\nclass NoNamespace {}");
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(0, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testNonSubscriberClassIsIgnored(): void
+    {
+        // File declares DispatcherTestNonSubscriber — already loaded, is_a() returns false.
+        $this->writeClassFile(DispatcherTestNonSubscriber::class);
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(0, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testSubscriberInDirectoryReceivesDispatchedEvent(): void
+    {
+        // File declares DispatcherTestSubscriber — already loaded, is_a() returns true.
+        $this->writeClassFile(DispatcherTestSubscriber::class);
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(1, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testSubscriberCalledOncePerDispatch(): void
+    {
+        $this->writeClassFile(DispatcherTestSubscriber::class);
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(2, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testUnrelatedEventDoesNotTriggerSubscriber(): void
+    {
+        $this->writeClassFile(DispatcherTestSubscriber::class);
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+
+        PhpSfEventDispatcher::dispatch('phpsf.different_event', new stdClass());
+
+        $this->assertSame(0, DispatcherTestSubscriber::$calls);
+    }
+
+    public function testDuplicateFilesDeduplicatedByFqcn(): void
+    {
+        $subDir = $this->tmpDir . '/sub';
+        mkdir($subDir, 0777, true);
+
+        // Same FQCN in two files — must only register the subscriber once.
+        $this->writeClassFile(DispatcherTestSubscriber::class);
+        $this->writeClassFile(DispatcherTestSubscriber::class, $subDir . '/Duplicate.php');
+
+        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
+        PhpSfEventDispatcher::dispatch('phpsf.test_event', new stdClass());
+
+        $this->assertSame(1, DispatcherTestSubscriber::$calls);
+    }
 
     protected function setUp(): void
     {
@@ -53,94 +148,6 @@ final class PhpSfEventDispatcherTest extends TestCase
         $this->restoreState($this->savedState);
     }
 
-    public function testDispatchWithNoDirectoriesDoesNotThrow(): void
-    {
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-        $this->assertSame(0, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testNonExistentDirectoryIsIgnored(): void
-    {
-        PhpSfEventDispatcher::addSubscriberDirectory('/nonexistent/path/that/does/not/exist');
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(0, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testNonPhpFileIsIgnored(): void
-    {
-        file_put_contents($this->tmpDir . '/readme.txt', 'not PHP');
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(0, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testPhpFileWithoutNamespaceIsIgnored(): void
-    {
-        file_put_contents($this->tmpDir . '/NoNamespace.php', "<?php\nclass NoNamespace {}");
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(0, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testNonSubscriberClassIsIgnored(): void
-    {
-        // File declares DispatcherTestNonSubscriber — already loaded, is_a() returns false.
-        $this->writeClassFile(DispatcherTestNonSubscriber::class);
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(0, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testSubscriberInDirectoryReceivesDispatchedEvent(): void
-    {
-        // File declares DispatcherTestSubscriber — already loaded, is_a() returns true.
-        $this->writeClassFile(DispatcherTestSubscriber::class);
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(1, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testSubscriberCalledOncePerDispatch(): void
-    {
-        $this->writeClassFile(DispatcherTestSubscriber::class);
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(2, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testUnrelatedEventDoesNotTriggerSubscriber(): void
-    {
-        $this->writeClassFile(DispatcherTestSubscriber::class);
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-
-        PhpSfEventDispatcher::dispatch('phpsf.different_event', new \stdClass());
-
-        $this->assertSame(0, DispatcherTestSubscriber::$calls);
-    }
-
-    public function testDuplicateFilesDeduplicatedByFqcn(): void
-    {
-        $subDir = $this->tmpDir . '/sub';
-        mkdir($subDir, 0777, true);
-
-        // Same FQCN in two files — must only register the subscriber once.
-        $this->writeClassFile(DispatcherTestSubscriber::class);
-        $this->writeClassFile(DispatcherTestSubscriber::class, $subDir . '/Duplicate.php');
-
-        PhpSfEventDispatcher::addSubscriberDirectory($this->tmpDir);
-        PhpSfEventDispatcher::dispatch('phpsf.test_event', new \stdClass());
-
-        $this->assertSame(1, DispatcherTestSubscriber::$calls);
-    }
-
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -157,7 +164,7 @@ final class PhpSfEventDispatcherTest extends TestCase
 
     private function captureState(): array
     {
-        $ref = new \ReflectionClass(PhpSfEventDispatcher::class);
+        $ref = new ReflectionClass(PhpSfEventDispatcher::class);
 
         return [
             'dirs' => $ref->getProperty('subscriberDirs')->getValue(null),
@@ -168,7 +175,7 @@ final class PhpSfEventDispatcherTest extends TestCase
 
     private function restoreState(array $state): void
     {
-        $ref = new \ReflectionClass(PhpSfEventDispatcher::class);
+        $ref = new ReflectionClass(PhpSfEventDispatcher::class);
         $ref->getProperty('subscriberDirs')->setValue(null, $state['dirs']);
         $ref->getProperty('initialized')->setValue(null, $state['initialized']);
         $ref->getProperty('dispatcher')->setValue(null, $state['dispatcher']);
@@ -176,7 +183,7 @@ final class PhpSfEventDispatcherTest extends TestCase
 
     private function resetDispatcher(array $dirs, bool $initialized, mixed $dispatcher): void
     {
-        $ref = new \ReflectionClass(PhpSfEventDispatcher::class);
+        $ref = new ReflectionClass(PhpSfEventDispatcher::class);
         $ref->getProperty('subscriberDirs')->setValue(null, $dirs);
         $ref->getProperty('initialized')->setValue(null, $initialized);
         $ref->getProperty('dispatcher')->setValue(null, $dispatcher);
@@ -188,9 +195,9 @@ final class PhpSfEventDispatcherTest extends TestCase
             return;
         }
 
-        foreach (new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
+        foreach (new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
         ) as $item) {
             $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
         }

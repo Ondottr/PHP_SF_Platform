@@ -8,6 +8,41 @@ use PHPUnit\Framework\TestCase;
 // @noinspection PhpIllegalPsrClassPathInspection
 final class FunctionTest extends TestCase
 {
+    #[DataProvider('caseProvider')]
+    public function testStringToSnake(array $case): void
+    {
+        [$input, $expected] = $case;
+        self::assertSame($expected, string_to_snake($input));
+    }
+
+    #[DataProvider('caseProvider')]
+    public function testStringToScreamingSnake(array $case): void
+    {
+        [$input, , $expected] = $case;
+        self::assertSame($expected, string_to_screaming_snake($input));
+    }
+
+    #[DataProvider('caseProvider')]
+    public function testStringToCamel(array $case): void
+    {
+        [$input, , , $expected] = $case;
+        self::assertSame($expected, string_to_camel($input));
+    }
+
+    #[DataProvider('caseProvider')]
+    public function testStringToPascal(array $case): void
+    {
+        [$input, , , , $expected] = $case;
+        self::assertSame($expected, string_to_pascal($input));
+    }
+
+    #[DataProvider('caseProvider')]
+    public function testStringToKebab(array $case): void
+    {
+        [$input, , , , , $expected] = $case;
+        self::assertSame($expected, string_to_kebab($input));
+    }
+
     /**
      * @return array<string, array{array{string, string, string, string, string, string}}>
      *                                                                                     [input, snake, screaming_snake, camel, pascal, kebab]
@@ -79,40 +114,5 @@ final class FunctionTest extends TestCase
         ];
 
         return array_map(static fn (array $row) => [$row], $cases);
-    }
-
-    #[DataProvider('caseProvider')]
-    public function testStringToSnake(array $case): void
-    {
-        [$input, $expected] = $case;
-        self::assertSame($expected, string_to_snake($input));
-    }
-
-    #[DataProvider('caseProvider')]
-    public function testStringToScreamingSnake(array $case): void
-    {
-        [$input, , $expected] = $case;
-        self::assertSame($expected, string_to_screaming_snake($input));
-    }
-
-    #[DataProvider('caseProvider')]
-    public function testStringToCamel(array $case): void
-    {
-        [$input, , , $expected] = $case;
-        self::assertSame($expected, string_to_camel($input));
-    }
-
-    #[DataProvider('caseProvider')]
-    public function testStringToPascal(array $case): void
-    {
-        [$input, , , , $expected] = $case;
-        self::assertSame($expected, string_to_pascal($input));
-    }
-
-    #[DataProvider('caseProvider')]
-    public function testStringToKebab(array $case): void
-    {
-        [$input, , , , , $expected] = $case;
-        self::assertSame($expected, string_to_kebab($input));
     }
 }

@@ -10,8 +10,8 @@ abstract class AbstractDoctrineLifecycleCallback
     public function __construct(
         protected AbstractEntity $entity,
         protected EventArgs $args,
-    ) {
-    }
+    ) {}
+
 
     abstract public function callback(): void;
 }

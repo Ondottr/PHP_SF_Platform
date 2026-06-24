@@ -21,6 +21,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
      */
     public static array $activeTemplates = [];
 
+
     /**
      * @param array<string, string> $headers
      * @param array<string, mixed>  $dataFromController
@@ -34,6 +35,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     ) {
         parent::__construct(status: $status, headers: $headers);
     }
+
 
     /**
      * Renders the full page (header + view + footer) into a string and stores it

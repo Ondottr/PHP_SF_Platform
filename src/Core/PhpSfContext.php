@@ -8,6 +8,7 @@ final class PhpSfContext
 {
     private static ?self $current = null;
 
+
     /**
      * @param array<array-key, mixed> $middleware
      */
@@ -15,18 +16,8 @@ final class PhpSfContext
         private readonly object $route,
         private readonly array $middleware,
         private readonly Kernel $kernel,
-    ) {
-    }
+    ) {}
 
-    public static function set(self $ctx): void
-    {
-        self::$current = $ctx;
-    }
-
-    public static function current(): ?self
-    {
-        return self::$current;
-    }
 
     public function getRoute(): object
     {
@@ -44,5 +35,15 @@ final class PhpSfContext
     public function getKernel(): Kernel
     {
         return $this->kernel;
+    }
+
+    public static function set(self $ctx): void
+    {
+        self::$current = $ctx;
+    }
+
+    public static function current(): ?self
+    {
+        return self::$current;
     }
 }

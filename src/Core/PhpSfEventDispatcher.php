@@ -2,6 +2,10 @@
 
 namespace PHP_SF\System\Core;
 
+use FilesystemIterator;
+use LogicException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -12,16 +16,18 @@ final class PhpSfEventDispatcher
      * @var list<string>
      */
     private static array $subscriberDirs = [];
+
     private static bool $initialized = false;
     /**
      * @var list<array{event: string, subscribers: list<string>}>
      */
     private static array $dispatchLog = [];
 
+
     public static function addSubscriberDirectory(string $dir): void
     {
         if (self::$initialized) {
-            throw new \LogicException('Cannot register subscriber directory after the dispatcher is initialized.');
+            throw new LogicException('Cannot register subscriber directory after the dispatcher is initialized.');
         }
 
         self::$subscriberDirs[] = $dir;
@@ -94,8 +100,8 @@ final class PhpSfEventDispatcher
                 continue;
             }
 
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
             );
 
             foreach ($iterator as $file) {

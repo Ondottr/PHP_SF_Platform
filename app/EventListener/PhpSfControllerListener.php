@@ -7,6 +7,9 @@ use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Core\RedirectResponse as PhpSfRedirectResponse;
 use PHP_SF\System\Core\Response as PhpSfResponse;
 use PHP_SF\System\Router;
+use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionProperty;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
@@ -41,14 +44,6 @@ final class PhpSfControllerListener implements EventSubscriberInterface
      */
     private static array $flashBag = [];
 
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            KernelEvents::REQUEST => ['onKernelRequest', 10],
-            KernelEvents::CONTROLLER => ['onKernelController', 10],
-            KernelEvents::RESPONSE => ['onKernelResponse', 10],
-        ];
-    }
 
     /**
      * On every main request: consume the static flash bag and populate the globals
@@ -62,7 +57,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
 
         // Router::$requestData is normally set by Router::init() which does not run during
         // functional tests. Seed it here so r() works inside PHP_SF controller methods.
-        $ref = new \ReflectionProperty(Router::class, 'requestData');
+        $ref = new ReflectionProperty(Router::class, 'requestData');
         $ref->setValue(null, $event->getRequest());
 
         $GLOBALS['errors'] = self::$flashBag['errors'] ?? [];
@@ -126,7 +121,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             // Mirror Router::setRouteParameters(): positional matching by URL placeholder order.
             // Method param N maps to URL placeholder N — names may differ for entity params.
             $urlPlaceholderNames = array_keys($rawParams);
-            $reflection = new \ReflectionMethod($class, $method);
+            $reflection = new ReflectionMethod($class, $method);
             $params = [];
 
             foreach ($reflection->getParameters() as $index => $rp) {
@@ -137,7 +132,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
 
                 $value = $rawParams[$urlPlaceholderName];
                 $reflectionType = $rp->getType();
-                $type = $reflectionType instanceof \ReflectionNamedType ? $reflectionType->getName() : null;
+                $type = $reflectionType instanceof ReflectionNamedType ? $reflectionType->getName() : null;
 
                 if (null !== $type && is_a($type, AbstractEntity::class, true)) {
                     $entity = $type::findOneBy([$urlPlaceholderName => $value]);
@@ -201,5 +196,14 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             $routeUrl = $event->getRequest()->attributes->get('_php_sf_url', '/');
             $response->captureContent($routeUrl);
         }
+    }
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            KernelEvents::REQUEST => ['onKernelRequest', 10],
+            KernelEvents::CONTROLLER => ['onKernelController', 10],
+            KernelEvents::RESPONSE => ['onKernelResponse', 10],
+        ];
     }
 }

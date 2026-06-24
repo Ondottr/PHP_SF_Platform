@@ -9,6 +9,7 @@ final class MiddlewareTracker
      */
     private static array $log = [];
 
+
     public static function record(string $class, bool $passed): void
     {
         self::$log[] = ['middleware' => $class, 'passed' => $passed];

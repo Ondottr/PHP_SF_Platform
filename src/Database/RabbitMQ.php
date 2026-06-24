@@ -30,6 +30,7 @@ final class RabbitMQ
 
     private QueueEnum $queue;
 
+
     private function __construct(QueueEnum $queue)
     {
         $this->parseConfig();
@@ -47,14 +48,6 @@ final class RabbitMQ
         $this->connection->close();
     }
 
-    public static function getInstance(QueueEnum $queue = QueueEnum::DEFAULT): self
-    {
-        if (false === array_key_exists($queue->value, self::$instances)) {
-            self::$instances[$queue->value] = (new self($queue));
-        }
-
-        return self::$instances[$queue->value];
-    }
 
     public function dispatch(string $message): void
     {
@@ -62,6 +55,15 @@ final class RabbitMQ
             msg: new AMQPMessage($message),
             routing_key: $this->queue->value,
         );
+    }
+
+    public static function getInstance(QueueEnum $queue = QueueEnum::DEFAULT): self
+    {
+        if (false === array_key_exists($queue->value, self::$instances)) {
+            self::$instances[$queue->value] = (new self($queue));
+        }
+
+        return self::$instances[$queue->value];
     }
 
     private function parseConfig(): void

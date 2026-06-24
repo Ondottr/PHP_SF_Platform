@@ -17,10 +17,12 @@ class EntityManagerHelper extends Helper
      */
     protected EntityManagerInterface $_em;
 
+
     public function __construct(EntityManagerInterface $em)
     {
         $this->_em = $em;
     }
+
 
     /**
      * Retrieves Doctrine ORM EntityManager.

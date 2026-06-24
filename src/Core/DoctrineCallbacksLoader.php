@@ -23,11 +23,6 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
         Events::postUpdate,
     ];
 
-    /**
-     * Clears the cached query builders after a write so stale results are not served.
-     */
-    abstract public static function clearQueryBuilderCache(): void;
-
 
     #[ORM\PreFlush]
     final public function __preFlush(EventArgs $args): void
@@ -82,6 +77,12 @@ abstract class DoctrineCallbacksLoader implements DoctrineCallbacksLoaderInterfa
 
         $this->getCallbackClass(Events::postUpdate, $args)?->callback();
     }
+
+
+    /**
+     * Clears the cached query builders after a write so stale results are not served.
+     */
+    abstract public static function clearQueryBuilderCache(): void;
 
     /**
      * @return array<string, class-string>

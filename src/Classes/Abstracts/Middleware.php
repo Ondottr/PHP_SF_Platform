@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use Deprecated;
 use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Debug\MiddlewareTracker;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 abstract class Middleware
 {
     use RedirectTrait;
+
 
     abstract protected function result(): bool|JsonResponse|RedirectResponse;
 
@@ -42,7 +44,7 @@ abstract class Middleware
     /**
      * @deprecated since 3.0.0 Use direct {@see Kernel::setHeaderTemplateClassName()} call instead.
      */
-    #[\Deprecated(message: 'Use direct Kernel::setHeaderTemplateClassName() call instead.', since: '3.0.0')]
+    #[Deprecated(message: 'Use direct Kernel::setHeaderTemplateClassName() call instead.', since: '3.0.0')]
     final protected function changeHeaderTemplateClassName(string $headerClassName): void
     {
         Kernel::setHeaderTemplateClassName($headerClassName);
@@ -51,7 +53,7 @@ abstract class Middleware
     /**
      * @deprecated since 3.0.0 Use direct {@see Kernel::setFooterTemplateClassName()} call instead.
      */
-    #[\Deprecated(message: 'Use direct Kernel::setFooterTemplateClassName() call instead.', since: '3.0.0')]
+    #[Deprecated(message: 'Use direct Kernel::setFooterTemplateClassName() call instead.', since: '3.0.0')]
     final protected function changeFooterTemplateClassName(string $footerClassName): void
     {
         Kernel::setFooterTemplateClassName($footerClassName);

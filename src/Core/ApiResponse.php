@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System\Core;
 
+use JsonSerializable;
 use PHP_SF\System\Classes\Abstracts\AbstractDataTransferObject;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Helpers\CursorPaginationResult;
@@ -35,6 +36,7 @@ final class ApiResponse extends JsonResponse
             headers: $headers,
         );
     }
+
 
     /**
      * Builds a successful envelope response.
@@ -190,7 +192,7 @@ final class ApiResponse extends JsonResponse
             return $data->toArray();
         }
 
-        if ($data instanceof \JsonSerializable) {
+        if ($data instanceof JsonSerializable) {
             return $data->jsonSerialize();
         }
 

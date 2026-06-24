@@ -6,6 +6,7 @@ use PHP_SF\System\Classes\Abstracts\MiddlewareType;
 use PHP_SF\System\Classes\Exception\RouteMiddlewareException;
 use PHP_SF\System\Core\RedirectResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Throwable;
 
 final class MiddlewaresExecutor
 {
@@ -14,8 +15,8 @@ final class MiddlewaresExecutor
      */
     public function __construct(
         private string|array $middlewares,
-    ) {
-    }
+    ) {}
+
 
     final public function execute(): bool|RedirectResponse|JsonResponse
     {
@@ -55,7 +56,7 @@ final class MiddlewaresExecutor
                 (new $middlewareType($this->getMiddlewares()))
                     ->validate()
                     ->execute();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new RouteMiddlewareException($e->getMessage(), $e->getCode(), $e);
         }
 

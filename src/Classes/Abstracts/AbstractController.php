@@ -11,13 +11,14 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 abstract class AbstractController
 {
     use RedirectTrait;
+
     use JsonResponseHelperTrait;
 
 
     /**
      * @param array<string, mixed> $data
      */
-    final protected function render( string $view, array $data = [], string $pageTitle = null ): Response
+    final protected function render(string $view, array $data = [], ?string $pageTitle = null): Response
     {
         s()->set('page_title', $pageTitle ?? APPLICATION_NAME);
 

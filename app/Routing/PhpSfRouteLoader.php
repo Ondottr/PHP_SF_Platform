@@ -3,6 +3,7 @@
 namespace PHP_SF\Framework\Routing;
 
 use PHP_SF\System\Router;
+use RuntimeException;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -18,15 +19,17 @@ final class PhpSfRouteLoader extends Loader
 {
     private bool $loaded = false;
 
+
     public function __construct(private readonly string $controllersDir)
     {
         parent::__construct();
     }
 
+
     public function load(mixed $resource, ?string $type = null): RouteCollection
     {
         if ($this->loaded) {
-            throw new \RuntimeException('PHP_SF routes have already been loaded — do not add this loader more than once.');
+            throw new RuntimeException('PHP_SF routes have already been loaded — do not add this loader more than once.');
         }
 
         $this->loaded = true;

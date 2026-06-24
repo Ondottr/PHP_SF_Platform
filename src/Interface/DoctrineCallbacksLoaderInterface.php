@@ -78,6 +78,7 @@ interface DoctrineCallbacksLoaderInterface
      */
     public function __postUpdate(EventArgs $args): void;
 
+
     /**
      * @return array<string, class-string>
      */

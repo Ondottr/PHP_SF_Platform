@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System;
 
+use LogicException;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
@@ -10,6 +11,7 @@ use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
+use ReflectionClass;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
@@ -23,8 +25,11 @@ final class Kernel implements HttpKernelInterface
      * @var class-string<AbstractEntity&UserInterface>
      */
     private static string $applicationUserClassName;
+
     private static string $headerTemplateClassName = header::class;
+
     private static string $footerTemplateClassName = footer::class;
+
 
     public function __construct()
     {
@@ -48,14 +53,15 @@ final class Kernel implements HttpKernelInterface
 
         PhpSfEventDispatcher::addSubscriberDirectory(__DIR__ . '/../app/EventSubscriber');
 
-        register_shutdown_function(function () {
+        register_shutdown_function(function (): void {
             rp()->execute();
         });
     }
 
+
     public function handle(Request $request, int $type = self::MAIN_REQUEST, bool $catch = true): SymfonyResponse
     {
-        throw new \LogicException('PHP_SF\System\Kernel does not support Symfony request handling.');
+        throw new LogicException('PHP_SF\System\Kernel does not support Symfony request handling.');
     }
 
     public function addEventSubscriberDirectory(string $dir): self
@@ -95,6 +101,20 @@ final class Kernel implements HttpKernelInterface
         return $this;
     }
 
+    /**
+     * @param class-string<AbstractEntity&UserInterface> $className
+     */
+    public function setApplicationUserClassName(string $className): self
+    {
+        if (false === class_exists($className)) {
+            throw new InvalidConfigurationException(sprintf("User Class '%s' does not exist", $className));
+        }
+
+        self::$applicationUserClassName = $className;
+
+        return $this;
+    }
+
     public static function getHeaderTemplateClassName(): string
     {
         return self::$headerTemplateClassName;
@@ -120,21 +140,7 @@ final class Kernel implements HttpKernelInterface
         return self::$applicationUserClassName;
     }
 
-    /**
-     * @param class-string<AbstractEntity&UserInterface> $className
-     */
-    public function setApplicationUserClassName(string $className): self
-    {
-        if (false === class_exists($className)) {
-            throw new InvalidConfigurationException(sprintf("User Class '%s' does not exist", $className));
-        }
-
-        self::$applicationUserClassName = $className;
-
-        return $this;
-    }
-
-    public static function setHeaderTemplateClassName( string $headerTemplateClassName ): void
+    public static function setHeaderTemplateClassName(string $headerTemplateClassName): void
     {
         if (false === class_exists($headerTemplateClassName)) {
             throw new InvalidConfigurationException(
@@ -145,7 +151,7 @@ final class Kernel implements HttpKernelInterface
         self::$headerTemplateClassName = $headerTemplateClassName;
     }
 
-    public static function setFooterTemplateClassName( string $footerTemplateClassName ): void
+    public static function setFooterTemplateClassName(string $footerTemplateClassName): void
     {
         if (false === class_exists($footerTemplateClassName)) {
             throw new InvalidConfigurationException(
@@ -171,7 +177,7 @@ final class Kernel implements HttpKernelInterface
             return;
         }
 
-        $rc = new \ReflectionClass(Locale::class);
+        $rc = new ReflectionClass(Locale::class);
         /** @noinspection GlobalVariableUsageInspection */
         $acceptLanguages = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
 

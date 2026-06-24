@@ -33,6 +33,27 @@ class auth extends Middleware
      */
     public static false|UserInterface $user = false;
 
+
+    /**
+     * Runs the authentication gate.
+     *
+     * Returns {@see true} when a valid session exists.
+     * Unauthenticated requests to {@code /api/*} routes receive a 401 JSON response;
+     * all other unauthenticated requests are redirected to the named {@code login_page} route.
+     */
+    final public function result(): bool|RedirectResponse|JsonResponse
+    {
+        if (false === self::isAuthenticated()) {
+            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
+                return ApiResponse::unauthorized();
+            }
+
+            return $this->redirectTo('login_page');
+        }
+
+        return true;
+    }
+
     /**
      * Returns a fresh entity instance for the authenticated user (re-fetched from the database),
      * or {@see false} when no user is authenticated.
@@ -59,26 +80,6 @@ class auth extends Middleware
         s()->clear();
 
         self::$user = false;
-    }
-
-    /**
-     * Runs the authentication gate.
-     *
-     * Returns {@see true} when a valid session exists.
-     * Unauthenticated requests to {@code /api/*} routes receive a 401 JSON response;
-     * all other unauthenticated requests are redirected to the named {@code login_page} route.
-     */
-    final public function result(): bool|RedirectResponse|JsonResponse
-    {
-        if (false === self::isAuthenticated()) {
-            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
-                return ApiResponse::unauthorized();
-            }
-
-            return $this->redirectTo('login_page');
-        }
-
-        return true;
     }
 
     /**

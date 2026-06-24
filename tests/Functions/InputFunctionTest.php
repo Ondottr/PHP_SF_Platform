@@ -2,6 +2,7 @@
 
 namespace PHP_SF\Tests\Functions;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -57,14 +58,6 @@ final class InputFunctionTest extends TestCase
         $this->assertStringContainsString($expected, $actual);
     }
 
-    public static function nameProvider(): array
-    {
-        return [
-            ['first_name', "<input type='text' required id='first_name' name='first_name' minlength='1' maxlength='255'>"],
-            ['last_name', "<input type='text' required id='last_name' name='last_name' minlength='1' maxlength='255'>"],
-            ['email', "<input type='text' required id='email' name='email' minlength='1' maxlength='255'>"],
-        ];
-    }
     // endregion
 
     // region Length
@@ -78,15 +71,6 @@ final class InputFunctionTest extends TestCase
         input('name', $length);
     }
 
-    public static function lengthProvider(): array
-    {
-        return [
-            [[1, 'a'], \InvalidArgumentException::class],
-            [['a', 'b'], \InvalidArgumentException::class],
-            [[1], \InvalidArgumentException::class],
-            [[], \InvalidArgumentException::class],
-        ];
-    }
     // endregion
 
     // region Type
@@ -116,7 +100,7 @@ final class InputFunctionTest extends TestCase
         $this->assertEquals($expected, $actual);
 
         // Test step must be set
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', [1, 255], 'number');
     }
 
@@ -127,6 +111,7 @@ final class InputFunctionTest extends TestCase
 
         $this->assertEquals($expected, $actual);
     }
+
     // endregion
 
     // region minMax
@@ -135,14 +120,6 @@ final class InputFunctionTest extends TestCase
     {
         $actual = input('input_name', [1, 255], 'number', true, $minMax, step: 1);
         $this->assertStringContainsString($expected, $actual);
-    }
-
-    public static function minMaxProvider(): array
-    {
-        return [
-            [[1, 10], "min='1' max='10'"],
-            [[2, 20], "min='2' max='20'"],
-        ];
     }
 
     /**
@@ -155,14 +132,6 @@ final class InputFunctionTest extends TestCase
         input('input_name', [1, 255], 'number', true, $minMax, step: 1);
     }
 
-    public static function invalidMinMaxProvider(): array
-    {
-        return [
-            [[1, 'a'], \InvalidArgumentException::class],
-            [['a', 'b'], \InvalidArgumentException::class],
-            [[1], \InvalidArgumentException::class],
-        ];
-    }
     // endregion
 
     // region Classes
@@ -174,16 +143,17 @@ final class InputFunctionTest extends TestCase
         $this->assertEquals($expected, $actual);
 
         // Test not unique values
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', classes: ['class1', 'class1']);
     }
 
     public function testClassesInvalidValues(): void
     {
         // Invalid values
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', classes: ['class1', 1]);
     }
+
     // endregion
 
     // region Styles
@@ -197,15 +167,16 @@ final class InputFunctionTest extends TestCase
 
     public function testStylesInvalidKey(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', styles: ['color' => 'red', 1 => 'blue']);
     }
 
     public function testStylesInvalidValue(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', styles: ['color' => 'red', 'background-color' => 1]);
     }
+
     // endregion
 
     // region Custom Attributes
@@ -219,14 +190,50 @@ final class InputFunctionTest extends TestCase
 
     public function testCustomAttributesInvalidKey(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', customAttributes: ['data-attr' => 'value', 1 => 'value2']);
     }
 
     public function testCustomAttributesInvalidValue(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         input('input_name', customAttributes: ['data-attr' => 'value', 'data-attr2' => 1]);
+    }
+
+    public static function nameProvider(): array
+    {
+        return [
+            ['first_name', "<input type='text' required id='first_name' name='first_name' minlength='1' maxlength='255'>"],
+            ['last_name', "<input type='text' required id='last_name' name='last_name' minlength='1' maxlength='255'>"],
+            ['email', "<input type='text' required id='email' name='email' minlength='1' maxlength='255'>"],
+        ];
+    }
+
+    public static function lengthProvider(): array
+    {
+        return [
+            [[1, 'a'], InvalidArgumentException::class],
+            [['a', 'b'], InvalidArgumentException::class],
+            [[1], InvalidArgumentException::class],
+            [[], InvalidArgumentException::class],
+        ];
+    }
+
+    public static function minMaxProvider(): array
+    {
+        return [
+            [[1, 10], "min='1' max='10'"],
+            [[2, 20], "min='2' max='20'"],
+        ];
+    }
+
+    public static function invalidMinMaxProvider(): array
+    {
+        return [
+            [[1, 'a'], InvalidArgumentException::class],
+            [['a', 'b'], InvalidArgumentException::class],
+            [[1], InvalidArgumentException::class],
+        ];
     }
     // endregion
 }

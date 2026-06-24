@@ -16,6 +16,7 @@ final class DefaultController extends AbstractController
 {
     use JsonResponseHelperTrait;
 
+
     #[Route(url: 'base', httpMethod: 'GET')]
     public function base(): Response
     {
@@ -28,7 +29,9 @@ final class DefaultController extends AbstractController
         return $this->render(base::class);
     }
 
-    /** @noinspection ForgottenDebugOutputInspection */
+    /**
+     * @noinspection ForgottenDebugOutputInspection
+     */
     #[Route(url: 'api/routes_list', httpMethod: 'GET')]
     final public function api_routes_list(): JsonResponse
     {

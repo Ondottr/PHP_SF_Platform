@@ -13,7 +13,9 @@ use PhpAmqpLib\Message\AMQPMessage;
 final class RabbitMQConsumer
 {
     private AMQPStreamConnection $connection;
+
     private AMQPChannel $channel;
+
 
     public function __construct()
     {
@@ -35,11 +37,12 @@ final class RabbitMQConsumer
         $this->connection->close();
     }
 
+
     public function consume(QueueEnum $queue, callable $callback): void
     {
         $this->channel->queue_declare($queue->value, false, true, false, false);
 
-        $internalCallback = function (AMQPMessage $msg) use ($callback) {
+        $internalCallback = function (AMQPMessage $msg) use ($callback): void {
             $data = json_decode($msg->getBody(), true);
             $callback($data);
         };

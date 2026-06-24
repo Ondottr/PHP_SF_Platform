@@ -4,10 +4,13 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Persistence\Proxy;
+use JsonSerializable;
 use PHP_SF\System\Core\DoctrineCallbacksLoader;
 use PHP_SF\System\Core\Lang;
 use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
+use ReflectionClass;
+use ReflectionProperty;
 use Symfony\Component\Translation\Loader\XliffFileLoader;
 use Symfony\Component\Translation\Translator as SymfonyTranslator;
 use Symfony\Component\Validator\Validation;
@@ -17,9 +20,10 @@ use Symfony\Component\Validator\Validation;
  */
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
-abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSerializable
+abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSerializable
 {
     use ModelPropertyIdTrait;
+
     use EntityRepositoriesTrait;
 
     /**
@@ -27,15 +31,6 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
      */
     private array $validationErrors = [];
 
-    final public static function new(): static
-    {
-        return new static();
-    }
-
-    public static function clearQueryBuilderCache(): void
-    {
-        ca()->deleteByKeyPattern('*doctrine_result_cache:*');
-    }
 
     final public function validate(): bool
     {
@@ -62,7 +57,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
 
     final public function getTranslatablePropertyName(string $propertyName): string
     {
-        $rc = new \ReflectionClass(static::class);
+        $rc = new ReflectionClass(static::class);
 
         return string_to_snake($rc->getShortName()) . '.fields.' . string_to_snake($propertyName);
     }
@@ -90,10 +85,10 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
 
         $arr = [];
 
-        $reflectionClass = new \ReflectionClass(static::class);
+        $reflectionClass = new ReflectionClass(static::class);
 
         $properties = [];
-        foreach ($reflectionClass->getProperties(\ReflectionProperty::IS_PROTECTED) as $ReflectionProperty) {
+        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $ReflectionProperty) {
             $properties[] = $ReflectionProperty->getName();
         }
 
@@ -102,6 +97,16 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
         }
 
         return $arr;
+    }
+
+    final public static function new(): static
+    {
+        return new static();
+    }
+
+    public static function clearQueryBuilderCache(): void
+    {
+        ca()->deleteByKeyPattern('*doctrine_result_cache:*');
     }
 
     /**
@@ -126,7 +131,7 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
 
         // symfony/validator ships its translations under Resources/translations/
         // relative to its own root; derive it from the Validation class file path.
-        $translationsDir = dirname((new \ReflectionClass(Validation::class))->getFileName())
+        $translationsDir = dirname((new ReflectionClass(Validation::class))->getFileName())
             . '/Resources/translations';
 
         $localXlf = $translationsDir . '/validators.' . $locale . '.xlf';

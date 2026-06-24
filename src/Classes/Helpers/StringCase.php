@@ -4,25 +4,33 @@ namespace PHP_SF\System\Classes\Helpers;
 
 final class StringCase
 {
-    /** @see string_to_snake() for full behaviour description and examples. */
+    /**
+     * @see string_to_snake() for full behaviour description and examples.
+     */
     public static function snake(string $input): string
     {
         return implode('_', self::words($input));
     }
 
-    /** @see string_to_screaming_snake() for full behaviour description and examples. */
+    /**
+     * @see string_to_screaming_snake() for full behaviour description and examples.
+     */
     public static function screamingSnake(string $input): string
     {
         return mb_strtoupper(self::snake($input));
     }
 
-    /** @see string_to_kebab() for full behaviour description and examples. */
+    /**
+     * @see string_to_kebab() for full behaviour description and examples.
+     */
     public static function kebab(string $input): string
     {
         return implode('-', self::words($input));
     }
 
-    /** @see string_to_camel() for full behaviour description and examples. */
+    /**
+     * @see string_to_camel() for full behaviour description and examples.
+     */
     public static function camel(string $input): string
     {
         $words = self::words($input);
@@ -45,7 +53,9 @@ final class StringCase
         );
     }
 
-    /** @see string_to_pascal() for full behaviour description and examples. */
+    /**
+     * @see string_to_pascal() for full behaviour description and examples.
+     */
     public static function pascal(string $input): string
     {
         return implode(

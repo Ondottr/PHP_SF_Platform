@@ -18,10 +18,10 @@ trait JsonResponseHelperTrait
     /**
      * Generic method to create a JsonResponse.
      *
-     * @param mixed|null $data    The data to be returned in the response. Can be of any type.
-     * @param int        $status  HTTP status code for the response
+     * @param mixed|null            $data    The data to be returned in the response. Can be of any type.
+     * @param int                   $status  HTTP status code for the response
      * @param array<string, string> $headers additional headers to include in the response
-     * @param bool       $json    indicates if the provided data is already a JSON string
+     * @param bool                  $json    indicates if the provided data is already a JSON string
      *
      * @return JsonResponse returns a JsonResponse object
      */
@@ -33,7 +33,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 200 OK response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 200 OK JsonResponse
@@ -46,7 +46,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 201 Created response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 201 Created JsonResponse
@@ -59,7 +59,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 202 Accepted response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 202 Accepted JsonResponse
@@ -84,7 +84,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 400 Bad Request response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 400 Bad Request JsonResponse
@@ -97,7 +97,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 401 Unauthorized response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 401 Unauthorized JsonResponse
@@ -110,7 +110,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 403 Forbidden response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 403 Forbidden JsonResponse
@@ -123,7 +123,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 404 Not Found response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 404 Not Found JsonResponse
@@ -136,7 +136,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 406 Not Acceptable response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 406 Not Acceptable JsonResponse
@@ -149,7 +149,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 410 Gone response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 410 Gone JsonResponse
@@ -162,7 +162,7 @@ trait JsonResponseHelperTrait
     /**
      * Shortcut to return a 422 Unprocessable Entity response.
      *
-     * @param mixed|null $data    the response data
+     * @param mixed|null            $data    the response data
      * @param array<string, string> $headers additional headers for the response
      *
      * @return JsonResponse returns a 422 Unprocessable Entity JsonResponse

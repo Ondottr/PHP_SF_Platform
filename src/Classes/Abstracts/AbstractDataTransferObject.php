@@ -22,20 +22,6 @@ abstract readonly class AbstractDataTransferObject
         }
     }
 
-    /**
-     * Create an instance of DTO class from array.
-     *
-     * @param array<string, mixed> $array
-     */
-    public static function fromArray(array $array): static
-    {
-        return new static(...$array);
-    }
-
-    public static function fromJSON(string $json): static
-    {
-        return static::fromArray(j_decode($json, true));
-    }
 
     /**
      * Convert the DTO to an associative array.
@@ -53,5 +39,20 @@ abstract readonly class AbstractDataTransferObject
     public function toString(): string
     {
         return json_encode($this->toArray());
+    }
+
+    /**
+     * Create an instance of DTO class from array.
+     *
+     * @param array<string, mixed> $array
+     */
+    public static function fromArray(array $array): static
+    {
+        return new static(...$array);
+    }
+
+    public static function fromJSON(string $json): static
+    {
+        return static::fromArray(j_decode($json, true));
     }
 }

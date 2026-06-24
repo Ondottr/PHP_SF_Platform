@@ -20,7 +20,6 @@ use PHPStan\Type\TypeCombinator;
  */
 final class CaReturnTypeExtension implements DynamicFunctionReturnTypeExtension
 {
-
     public function getFunctionName(): string
     {
         return 'ca';
@@ -28,7 +27,7 @@ final class CaReturnTypeExtension implements DynamicFunctionReturnTypeExtension
 
     public function isFunctionSupported(FunctionReflection $functionReflection): bool
     {
-        return $functionReflection->getName() === 'ca';
+        return 'ca' === $functionReflection->getName();
     }
 
     public function getTypeFromFunctionCall(
@@ -65,5 +64,4 @@ final class CaReturnTypeExtension implements DynamicFunctionReturnTypeExtension
 
         return TypeCombinator::union(...$types);
     }
-
 }

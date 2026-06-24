@@ -2,8 +2,10 @@
 
 namespace PHP_SF\Tests\System\Core;
 
+use MessageFormatter;
 use PHP_SF\System\Core\TranslatorV2;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use Symfony\Component\Yaml\Yaml;
 
 final class TranslatorV2Test extends TestCase
@@ -12,31 +14,6 @@ final class TranslatorV2Test extends TestCase
     private array $savedDirs;
     private ?TranslatorV2 $savedInstance;
 
-    protected function setUp(): void
-    {
-        $ref = new \ReflectionClass(TranslatorV2::class);
-
-        $this->savedDirs = $ref->getProperty('dirs')->getValue(null);
-        $this->savedInstance = $ref->getProperty('instance')->getValue(null);
-
-        $this->dir = sys_get_temp_dir() . '/translator_v2_test_' . uniqid('', true);
-        mkdir($this->dir, 0777, true);
-
-        $this->resetTranslatorState();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->removeDir($this->dir);
-
-        $ref = new \ReflectionClass(TranslatorV2::class);
-        $ref->getProperty('instance')->setValue(null, $this->savedInstance);
-        $ref->getProperty('dirs')->setValue(null, $this->savedDirs);
-
-        if (null !== $this->savedInstance) {
-            $ref->getProperty('catalogsLoaded')->setValue($this->savedInstance, false);
-        }
-    }
 
     // ── basic lookup ─────────────────────────────────────────────────────
 
@@ -224,7 +201,7 @@ final class TranslatorV2Test extends TestCase
          * string when the intl extension is available. strtr() can't do this because
          * {count} doesn't appear verbatim inside {count, plural, ...}.
          */
-        if (!class_exists(\MessageFormatter::class)) {
+        if (!class_exists(MessageFormatter::class)) {
             $this->markTestSkipped('intl extension not available');
         }
 
@@ -240,7 +217,7 @@ final class TranslatorV2Test extends TestCase
          * MessageFormatter handles simple {name} arguments the same as strtr(),
          * so existing translations are not broken by the ICU upgrade.
          */
-        if (!class_exists(\MessageFormatter::class)) {
+        if (!class_exists(MessageFormatter::class)) {
             $this->markTestSkipped('intl extension not available');
         }
 
@@ -277,7 +254,7 @@ final class TranslatorV2Test extends TestCase
         TranslatorV2::addTranslationDir($this->dir);
 
         // Inject a 'fr' catalog entry directly so we can verify it is used.
-        $ref = new \ReflectionClass(TranslatorV2::class);
+        $ref = new ReflectionClass(TranslatorV2::class);
         $catalogs = $ref->getProperty('catalogs');
         $current = $catalogs->getValue(TranslatorV2::getInstance());
         $current['fr'] = ['greeting' => 'Bonjour!'];
@@ -481,11 +458,37 @@ final class TranslatorV2Test extends TestCase
         $this->assertMatchesRegularExpression('/common\.time\.years: \|[-+]?\n/', $fileContents);
     }
 
+    protected function setUp(): void
+    {
+        $ref = new ReflectionClass(TranslatorV2::class);
+
+        $this->savedDirs = $ref->getProperty('dirs')->getValue(null);
+        $this->savedInstance = $ref->getProperty('instance')->getValue(null);
+
+        $this->dir = sys_get_temp_dir() . '/translator_v2_test_' . uniqid('', true);
+        mkdir($this->dir, 0777, true);
+
+        $this->resetTranslatorState();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->removeDir($this->dir);
+
+        $ref = new ReflectionClass(TranslatorV2::class);
+        $ref->getProperty('instance')->setValue(null, $this->savedInstance);
+        $ref->getProperty('dirs')->setValue(null, $this->savedDirs);
+
+        if (null !== $this->savedInstance) {
+            $ref->getProperty('catalogsLoaded')->setValue($this->savedInstance, false);
+        }
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────
 
     private function resetTranslatorState(): void
     {
-        $ref = new \ReflectionClass(TranslatorV2::class);
+        $ref = new ReflectionClass(TranslatorV2::class);
 
         $ref->getProperty('instance')->setValue(null, null);
         $ref->getProperty('dirs')->setValue(null, []);

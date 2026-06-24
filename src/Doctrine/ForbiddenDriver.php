@@ -9,6 +9,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\ServerVersionProvider;
 use LogicException;
+use SensitiveParameter;
 
 /**
  * A deliberately non-functional Doctrine DBAL driver.
@@ -24,9 +25,10 @@ final class ForbiddenDriver implements Driver
         'You MUST explicitly use a named entity manager: em(\'name\') or --em=name. ' .
         'See config/packages/doctrine.yaml for configured connections.';
 
-    public function connect(#[\SensitiveParameter] array $params): DriverConnection
+
+    public function connect(#[SensitiveParameter] array $params): DriverConnection
     {
-        throw new \LogicException(self::ERROR_MESSAGE);
+        throw new LogicException(self::ERROR_MESSAGE);
     }
 
     public function getDatabasePlatform(ServerVersionProvider $versionProvider): AbstractPlatform
@@ -39,6 +41,6 @@ final class ForbiddenDriver implements Driver
 
     public function getExceptionConverter(): ExceptionConverter
     {
-        throw new \LogicException(self::ERROR_MESSAGE);
+        throw new LogicException(self::ERROR_MESSAGE);
     }
 }

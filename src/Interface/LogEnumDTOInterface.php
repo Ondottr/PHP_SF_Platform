@@ -5,6 +5,4 @@ namespace PHP_SF\System\Interface;
 /**
  * Interface LogEnumDTOInterface.
  */
-interface LogEnumDTOInterface
-{
-}
+interface LogEnumDTOInterface {}

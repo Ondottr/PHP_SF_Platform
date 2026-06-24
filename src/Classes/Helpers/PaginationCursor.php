@@ -2,7 +2,9 @@
 
 namespace PHP_SF\System\Classes\Helpers;
 
+use DateTimeInterface;
 use InvalidArgumentException;
+use JsonException;
 
 final class PaginationCursor
 {
@@ -11,10 +13,16 @@ final class PaginationCursor
         public readonly int $id,
         public readonly bool $isForward,
         private readonly string $encoded,
-    ) {
-    }
+    ) {}
+
 
     public function __toString(): string
+    {
+        return $this->encoded;
+    }
+
+
+    public function toString(): string
     {
         return $this->encoded;
     }
@@ -28,21 +36,21 @@ final class PaginationCursor
         $decoded = base64_decode($raw, strict: true);
 
         if (false === $decoded) {
-            throw new \InvalidArgumentException('Invalid cursor: not valid base64.');
+            throw new InvalidArgumentException('Invalid cursor: not valid base64.');
         }
 
         try {
             $data = json_decode($decoded, associative: true, flags: JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
-            throw new \InvalidArgumentException('Invalid cursor: malformed JSON payload.', previous: $e);
+        } catch (JsonException $e) {
+            throw new InvalidArgumentException('Invalid cursor: malformed JSON payload.', previous: $e);
         }
 
         if (!is_array($data)) {
-            throw new \InvalidArgumentException('Invalid cursor: decoded payload must be a JSON object.');
+            throw new InvalidArgumentException('Invalid cursor: decoded payload must be a JSON object.');
         }
 
         if (!array_key_exists('field', $data) || !isset($data['id'])) {
-            throw new \InvalidArgumentException('Invalid cursor: missing required keys.');
+            throw new InvalidArgumentException('Invalid cursor: missing required keys.');
         }
 
         return new self(
@@ -81,24 +89,19 @@ final class PaginationCursor
         return self::encode($entity, $sortField, isForward: false);
     }
 
-    public function toString(): string
-    {
-        return $this->encoded;
-    }
-
     private static function encode(object $entity, string $sortField, bool $isForward): self
     {
         $getter = 'get' . ucfirst($sortField);
 
         if (!method_exists($entity, $getter)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 sprintf('Entity %s has no getter %s() for sort field "%s".', $entity::class, $getter, $sortField),
             );
         }
 
         $fieldValue = $entity->$getter();
 
-        if ($fieldValue instanceof \DateTimeInterface) {
+        if ($fieldValue instanceof DateTimeInterface) {
             $fieldValue = $fieldValue->getTimestamp();
         }
 

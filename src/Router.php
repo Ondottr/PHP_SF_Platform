@@ -18,6 +18,12 @@ use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Traits\RedirectTrait;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionUnionType;
+use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -30,6 +36,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\VarDumper\VarDumper;
+use Throwable;
 
 /**
  * @phpstan-type RouteData array{url: string, class: class-string, method: string, name: string, httpMethod: string, middleware: mixed, routeParams: list<string>}
@@ -38,21 +45,26 @@ class Router
 {
     use RedirectTrait;
 
+
     private const array ALLOWED_HTTP_METHODS = [
         'GET' => '', 'POST' => '', 'PUT' => '', 'PATCH' => '', 'DELETE' => '',
     ];
 
     public static ?object $currentRoute = null;
 
-    /** @var array<string> Middleware classes run before every matched route's own middleware. */
+    /**
+     * @var array<string> middleware classes run before every matched route's own middleware
+     */
     protected static array $globalMiddlewares = [];
 
     private static AbstractController $controller;
+
     private static SymfonyResponse $routeMethodResponse;
     /**
      * @var array<string, mixed>
      */
     private static array $routeParams = [];
+
     private static Request $requestData;
     /**
      * @var array<string, RouteData>
@@ -69,13 +81,12 @@ class Router
 
     private static Kernel $kernel;
 
-    private function __construct()
-    {
-    }
 
-    private function __clone()
-    {
-    }
+    private function __construct() {}
+
+
+    private function __clone() {}
+
 
     /**
      * Registers one or more middleware classes to run globally on every matched route,
@@ -132,7 +143,7 @@ class Router
         if (static::setCurrentRoute()) {
             try {
                 self::route();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $exceptionEvent = new ExceptionEvent(
                     self::$kernel,
                     self::$requestData,
@@ -193,6 +204,11 @@ class Router
     public static function getRoutesList(): array
     {
         return self::$routesList;
+    }
+
+    final public static function getRequest(): Request
+    {
+        return self::$requestData;
     }
 
     protected static function parseRoutes(): void
@@ -283,10 +299,10 @@ class Router
 
     protected static function routesFromController(string $namespace, string $fileName): void
     {
-        $reflectionClass = new \ReflectionClass("$namespace\\$fileName");
+        $reflectionClass = new ReflectionClass("$namespace\\$fileName");
         $routeMethods = [];
 
-        foreach ($reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
+        foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
             $routeAttributes = $reflectionMethod->getAttributes(Route::class);
 
             if (!empty($routeAttributes)) {
@@ -364,7 +380,7 @@ class Router
      * @param object $data The object containing data for route definition
      *
      * @throws RouteParameterException If the provided data object contains invalid parameters for route definition
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     protected static function checkParams(object $data): void
     {
@@ -381,22 +397,22 @@ class Router
                             // If middleware is another nested array, check each of them
                             foreach ($mm as $mmm) {
                                 // Check if middleware extends Middleware class, if not throw an exception
-                                if (Middleware::class !== (new \ReflectionClass($mmm))->getParentClass()->getName()) {
-                                    throw new \RuntimeException(
+                                if (Middleware::class !== (new ReflectionClass($mmm))->getParentClass()->getName()) {
+                                    throw new RuntimeException(
                                         "Middleware for route $data->name in class $data->class must be extended from " . Middleware::class,
                                     );
                                 }
                             }
-                        } elseif (Middleware::class !== (new \ReflectionClass($mm))->getParentClass()->getName()) {
+                        } elseif (Middleware::class !== (new ReflectionClass($mm))->getParentClass()->getName()) {
                             // Check if middleware extends Middleware class, if not throw an exception
-                            throw new \RuntimeException(
+                            throw new RuntimeException(
                                 "Middleware for route $data->name in class $data->class must be extended from " . Middleware::class,
                             );
                         }
                     }
-                } elseif (Middleware::class !== (new \ReflectionClass($m))->getParentClass()->getName()) {
+                } elseif (Middleware::class !== (new ReflectionClass($m))->getParentClass()->getName()) {
                     // Check if middleware extends Middleware class, if not throw an exception
-                    throw new \RuntimeException(
+                    throw new RuntimeException(
                         "Middleware for route $data->name in class $data->class must be extended from " . Middleware::class,
                     );
                 }
@@ -576,15 +592,10 @@ class Router
         self::$controller = \App\Kernel::getInstance()->getContainer()->get(static::$currentRoute->class);
     }
 
-    final public static function getRequest(): Request
-    {
-        return self::$requestData;
-    }
-
     protected static function setRouteParameters(): void
     {
         if (!empty(self::$routeParams)) {
-            $reflectionMethod = new \ReflectionMethod(static::$currentRoute->class, static::$currentRoute->method);
+            $reflectionMethod = new ReflectionMethod(static::$currentRoute->class, static::$currentRoute->method);
             $urlPlaceholderNames = array_keys(self::$routeParams);
             $methodParameters = $reflectionMethod->getParameters();
 
@@ -603,7 +614,7 @@ class Router
                 $urlPlaceholderName = $urlPlaceholderNames[$index];
                 $paramValue = self::$routeParams[$urlPlaceholderName];
                 $reflectionType = $reflectionParameter->getType();
-                $paramType = $reflectionType instanceof \ReflectionNamedType ? $reflectionType->getName() : '';
+                $paramType = $reflectionType instanceof ReflectionNamedType ? $reflectionType->getName() : '';
 
                 if (is_a($paramType, AbstractEntity::class, true)) {
                     $entity = $paramType::findOneBy([$urlPlaceholderName => $paramValue]);
@@ -651,7 +662,7 @@ class Router
 
             try {
                 $response->send();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 ob_end_clean();
                 throw new ViewException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e);
             }
@@ -665,10 +676,10 @@ class Router
 
     private static function checkMethodParameterTypes(object $data): void
     {
-        $reflectionMethod = new \ReflectionMethod($data->class, $data->method);
+        $reflectionMethod = new ReflectionMethod($data->class, $data->method);
 
         foreach ($reflectionMethod->getParameters() as $index => $reflectionParameter) {
-            if ($reflectionParameter->getType() instanceof \ReflectionUnionType) {
+            if ($reflectionParameter->getType() instanceof ReflectionUnionType) {
                 throw new RouteParameterException(
                     sprintf(
                         'Method parameter "%s" in the %s::%s route cannot be a union type!',
@@ -681,7 +692,7 @@ class Router
 
             $reflectionType = $reflectionParameter->getType();
             self::checkMethodParameterType(
-                $reflectionType instanceof \ReflectionNamedType ? $reflectionType->getName() : '',
+                $reflectionType instanceof ReflectionNamedType ? $reflectionType->getName() : '',
                 $reflectionParameter->getName(),
                 $data,
                 $index,
@@ -699,7 +710,7 @@ class Router
             default:
                 if (is_a($type, AbstractEntity::class, true)) {
                     $urlPlaceholder = $data->routeParams[$paramIndex] ?? null;
-                    if (null !== $urlPlaceholder && !(new \ReflectionClass($type))->hasProperty($urlPlaceholder)) {
+                    if (null !== $urlPlaceholder && !(new ReflectionClass($type))->hasProperty($urlPlaceholder)) {
                         throw new RouteParameterException(
                             sprintf(
                                 'Entity "%s" has no property "%s" (from URL placeholder {%s}) used in %s::%s route.',
@@ -799,12 +810,12 @@ class Router
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      * @throws RouteParameterException
      */
     private static function initializeRouteMethod(): void
     {
-        $reflectionMethod = new \ReflectionMethod(static::$currentRoute->class, static::$currentRoute->method);
+        $reflectionMethod = new ReflectionMethod(static::$currentRoute->class, static::$currentRoute->method);
         $methodParameters = $reflectionMethod->getParameters();
         $methodParametersCount = \count($methodParameters);
         if (0 === $methodParametersCount) {
@@ -851,7 +862,7 @@ class Router
 
         try {
             self::$routeMethodResponse = $reflectionMethod->invokeArgs(self::$controller, $methodParametersValues);
-        } catch (\ReflectionException $e) {
+        } catch (ReflectionException $e) {
             throw new RouteParameterException(
                 sprintf(
                     'Method parameters in the %s::%s route do not match the variables from route URL!',

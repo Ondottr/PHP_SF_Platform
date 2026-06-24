@@ -21,6 +21,7 @@ final class csrf extends Middleware
 {
     private const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
+
     protected function result(): bool|RedirectResponse
     {
         if (!in_array(Router::$currentRoute->httpMethod, self::MUTATING_METHODS, true)) {

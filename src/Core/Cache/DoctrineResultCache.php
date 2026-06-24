@@ -22,6 +22,7 @@ final class DoctrineResultCache implements DriverResult
      */
     private ?Collection $fetchOneResult;
 
+
     public function __construct(private readonly string $cacheKey)
     {
         $this->numericResult = new ArrayCollection();
@@ -34,6 +35,7 @@ final class DoctrineResultCache implements DriverResult
 
         $this->setAll();
     }
+
 
     /**
      * Returns the next row of the result as a numeric array or FALSE if there are no more rows.

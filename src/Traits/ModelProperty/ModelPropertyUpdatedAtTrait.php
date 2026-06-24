@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System\Traits\ModelProperty;
 
+use DateTimeInterface;
 use Doctrine\DBAL\Schema\DefaultExpression\CurrentTimestamp;
 use Doctrine\ORM\Mapping as ORM;
 use PHP_SF\System\Core\DateTime;
@@ -11,9 +12,10 @@ trait ModelPropertyUpdatedAtTrait
 {
     #[ORM\Column(name: 'updated_at', type: 'datetime', nullable: true, options: ['default' => new CurrentTimestamp()])]
     #[Groups(['read', 'write'])]
-    protected string|\DateTimeInterface|null $updatedAt = null;
+    protected string|DateTimeInterface|null $updatedAt = null;
 
-    public function getUpdatedAt(): \DateTimeInterface
+
+    public function getUpdatedAt(): DateTimeInterface
     {
         if (is_string($this->updatedAt)) {
             return $this->updatedAt = new DateTime($this->updatedAt);
@@ -22,7 +24,7 @@ trait ModelPropertyUpdatedAtTrait
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): void
+    public function setUpdatedAt(DateTimeInterface $updatedAt): void
     {
         $this->updatedAt = $updatedAt;
     }

@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
+use InvalidArgumentException;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
@@ -19,6 +20,7 @@ abstract class AbstractView
         Response::$activeTemplates[] = static::class;
     }
 
+
     /**
      * @noinspection MagicMethodsValidityInspection
      */
@@ -28,7 +30,7 @@ abstract class AbstractView
             return $this->data[$name];
         }
 
-        throw new \InvalidArgumentException("Undefined Property `$name` in view: " . static::class);
+        throw new InvalidArgumentException("Undefined Property `$name` in view: " . static::class);
     }
 
     /**
@@ -39,12 +41,13 @@ abstract class AbstractView
         return array_key_exists($name, $this->data);
     }
 
+
+    abstract public function show(): void;
+
     final public function isViewClassTagEnabled(): bool
     {
         return $this->viewClassTagEnabled;
     }
-
-    abstract public function show(): void;
 
     /**
      * @param array<string, mixed> $data

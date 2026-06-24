@@ -2,8 +2,6 @@
 
 namespace PHP_SF\System\Core;
 
-use function function_exists;
-
 use JetBrains\PhpStorm\Immutable;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Router;
@@ -11,13 +9,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+use function function_exists;
+
 final class RedirectResponse extends Response
 {
     public const ALERT_PRIMARY = 'primary';
+
     public const ALERT_SECONDARY = 'secondary';
+
     public const ALERT_SUCCESS = 'success';
+
     public const ALERT_DANGER = 'danger';
+
     public const ALERT_WARNING = 'warning';
+
     public const ALERT_INFO = 'info';
 
     public const ALERT_TYPES = [
@@ -31,6 +36,7 @@ final class RedirectResponse extends Response
 
     private static ?string $cspNonce = null;
 
+
     public function __construct(
         #[Immutable]
         private readonly string $targetUrl,
@@ -40,15 +46,6 @@ final class RedirectResponse extends Response
         parent::__construct();
     }
 
-    public static function setCspNonce(string $nonce): void
-    {
-        self::$cspNonce = $nonce;
-    }
-
-    public static function getCspNonce(): ?string
-    {
-        return self::$cspNonce;
-    }
 
     /**
      * @noinspection GlobalVariableUsageInspection
@@ -125,6 +122,16 @@ final class RedirectResponse extends Response
     public function getRequestDataId(): ?string
     {
         return $this->requestDataId;
+    }
+
+    public static function setCspNonce(string $nonce): void
+    {
+        self::$cspNonce = $nonce;
+    }
+
+    public static function getCspNonce(): ?string
+    {
+        return self::$cspNonce;
     }
 
     /**

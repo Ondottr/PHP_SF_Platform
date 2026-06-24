@@ -2,7 +2,9 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-final class UndefinedLocaleNameException extends \Exception
+use Exception;
+
+final class UndefinedLocaleNameException extends Exception
 {
     public function __construct(string $localeName)
     {
