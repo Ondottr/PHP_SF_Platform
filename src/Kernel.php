@@ -2,10 +2,12 @@
 
 namespace PHP_SF\System;
 
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\TranslatorV2;
+use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -17,8 +19,10 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 final class Kernel implements HttpKernelInterface
 {
-    /** @var class-string */
-    private static string $applicationUserClassName = '';
+    /**
+     * @var class-string<AbstractEntity&UserInterface>
+     */
+    private static string $applicationUserClassName;
     private static string $headerTemplateClassName = header::class;
     private static string $footerTemplateClassName = footer::class;
 
@@ -101,7 +105,9 @@ final class Kernel implements HttpKernelInterface
         return self::$footerTemplateClassName;
     }
 
-    /** @return class-string */
+    /**
+     * @return class-string<AbstractEntity&UserInterface>
+     */
     public static function getApplicationUserClassName(): string
     {
         if (empty(self::$applicationUserClassName)) {
@@ -114,7 +120,9 @@ final class Kernel implements HttpKernelInterface
         return self::$applicationUserClassName;
     }
 
-    /** @param class-string $className */
+    /**
+     * @param class-string<AbstractEntity&UserInterface> $className
+     */
     public function setApplicationUserClassName(string $className): self
     {
         if (false === class_exists($className)) {

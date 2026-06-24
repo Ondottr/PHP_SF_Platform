@@ -12,7 +12,7 @@ trait RedirectTrait
      *                                If you want to redirect to a route, you can use the routeLink() function.
      *                                Works with Symfony routes too.
      *                                <br />
-     * @param array|null $withParams
+     * @param array<string, mixed>|null $withParams
      *                                Route parameters optional if <b>$linkOrRoute</b> is a route name
      *                                and not used if <b>$linkOrRoute</b> is a link.
      *                                <br />
@@ -21,14 +21,14 @@ trait RedirectTrait
      *                                <i>$this->redirectTo( routeLink( 'example_route', [ 'id' => 1 ] ) )</i> or <br />
      *                                <i>$this->redirectTo ( '/example/1 ) </i>
      *                                <br />
-     * @param array|null $get         Additional GET parameters. <br />
+     * @param array<string, string>|null $get  Additional GET parameters. <br />
      *                                If request already has a GET parameter with the same name, it will be replaced!
      *                                <br />
-     * @param array|null $post        Additional POST parameters. <br />
+     * @param array<string, string>|null $post  Additional POST parameters. <br />
      *                                If request already has a POST parameter with the same name, it will be replaced! <br />
      *                                Works with all HTTP methods, not only POST
      *                                <br />
-     * @param array|null $errors      Errors to be transferred to the next request. <br />
+     * @param array<int|string, string>|null $errors  Errors to be transferred to the next request. <br />
      *                                To add errors to the current request, you can use the following code: <br />
      *                                <i>$this->redirectTo( routeLink( 'example_route' ), errors: [ 'Error 1', 'Error 2' ] )</i> or <br />
      *                                <i>$this->redirectTo( routeLink( 'example_route' ), errors: [
@@ -37,7 +37,7 @@ trait RedirectTrait
      *                                To get all errors, use: {@see getErrors()} <br />
      *                                To get a specific error, use: {@see getErrors(RedirectResponse::ALERT_DANGER)}
      *                                <br />
-     * @param array|null $messages    Messages to be transferred to the next request.
+     * @param array<int|string, string>|null $messages  Messages to be transferred to the next request.
      *                                To add messages to the current request, you can use the following code: <br />
      *                                <i>$this->redirectTo( routeLink( 'example_route' ), messages: [ 'Message 1', 'Message 2' ] )</i> or <br />
      *                                <i>$this->redirectTo( routeLink( 'example_route' ), messages: [
@@ -46,7 +46,7 @@ trait RedirectTrait
      *                                To get all messages, use: {@see getMessages()} <br />
      *                                To get a specific message, use: {@see getMessages(RedirectResponse::ALERT_SUCCESS)}
      *                                <br />
-     * @param array|null $formData    Additional form data to be transferred to the next request
+     * @param array<string, mixed>|null $formData  Additional form data to be transferred to the next request
      *                                (useful for example when you want to redirect to the same page with the same form data) <br />
      *                                If request already has a form data with the same name, it will be replaced <br />
      *                                Works with all HTTP methods, not only POST
@@ -81,6 +81,15 @@ trait RedirectTrait
         return $rr;
     }
 
+    /**
+     * Redirects back to the referring URL, carrying the given payload.
+     *
+     * @param array<string, string>|null     $get
+     * @param array<string, string>|null     $post
+     * @param array<int|string, string>|null $errors
+     * @param array<int|string, string>|null $messages
+     * @param array<string, mixed>|null      $formData
+     */
     final protected function redirectBack(?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null): RedirectResponse
     {
         $get ??= [];
@@ -107,6 +116,15 @@ trait RedirectTrait
         );
     }
 
+    /**
+     * Builds a RedirectResponse to an absolute URL.
+     *
+     * @param array<string, string>|null     $get
+     * @param array<string, string>|null     $post
+     * @param array<int|string, string>|null $errors
+     * @param array<int|string, string>|null $messages
+     * @param array<string, mixed>|null      $formData
+     */
     private function toUrl(string $url, ?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null): RedirectResponse
     {
         $get ??= [];
@@ -128,6 +146,16 @@ trait RedirectTrait
         );
     }
 
+    /**
+     * Builds a RedirectResponse to a named route.
+     *
+     * @param array<string, string>|null     $get
+     * @param array<string, string>|null     $post
+     * @param array<int|string, string>|null $errors
+     * @param array<int|string, string>|null $messages
+     * @param array<string, mixed>|null      $formData
+     * @param array<string, mixed>|null      $with
+     */
     private function toRoute(string $routeName, ?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null, ?array $with = null): RedirectResponse
     {
         $get ??= [];
@@ -147,6 +175,15 @@ trait RedirectTrait
         );
     }
 
+    /**
+     * Validates and caches the redirect payload, returning its redirect id.
+     *
+     * @param array<string, string>|null     $get
+     * @param array<string, string>|null     $post
+     * @param array<int|string, string>|null $errors
+     * @param array<int|string, string>|null $messages
+     * @param array<string, mixed>|null      $formData
+     */
     private function generateData(string $url, ?array $get = null, ?array $post = null, ?array $errors = null, ?array $messages = null, ?array $formData = null): string
     {
         $get ??= [];
@@ -170,6 +207,12 @@ trait RedirectTrait
         return $redirectId;
     }
 
+    /**
+     * Asserts every GET and POST parameter value is a string.
+     *
+     * @param array<string, string> $get
+     * @param array<string, string> $post
+     */
     private function validateParams(array $get, array $post): void
     {
         foreach ($get as $param) {
@@ -185,6 +228,11 @@ trait RedirectTrait
         }
     }
 
+    /**
+     * Asserts error keys are int or alert types and values are strings.
+     *
+     * @param array<int|string, string> $errors
+     */
     private function validateErrors(array $errors): void
     {
         foreach ($errors as $errorType => $error) {
@@ -204,6 +252,11 @@ trait RedirectTrait
         }
     }
 
+    /**
+     * Asserts message keys are int or alert types and values are strings.
+     *
+     * @param array<int|string, string> $messages
+     */
     private function validateMessages(array $messages): void
     {
         foreach ($messages as $messageType => $message) {

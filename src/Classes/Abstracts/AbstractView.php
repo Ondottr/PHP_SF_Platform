@@ -9,6 +9,9 @@ use PHP_SF\Templates\Layout\HeaderComponents\head;
 
 abstract class AbstractView
 {
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(
         protected readonly array $data = [],
         protected readonly bool $viewClassTagEnabled = true,
@@ -43,6 +46,9 @@ abstract class AbstractView
 
     abstract public function show(): void;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     final protected function import(string $view, array $data = [], bool $htmlClassTagEnabled = true): void
     {
         if (TEMPLATES_CACHE_ENABLED) {

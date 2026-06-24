@@ -12,6 +12,9 @@ use Symfony\Component\Translation\Loader\XliffFileLoader;
 use Symfony\Component\Translation\Translator as SymfonyTranslator;
 use Symfony\Component\Validator\Validation;
 
+/**
+ * @phpstan-consistent-constructor
+ */
 #[ORM\MappedSuperclass]
 #[ORM\HasLifecycleCallbacks]
 abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSerializable
@@ -19,7 +22,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
     use ModelPropertyIdTrait;
     use EntityRepositoriesTrait;
 
-    private static array $entitiesList = [];
+    /**
+     * @var array<string, string>
+     */
     private array $validationErrors = [];
 
     final public static function new(): static
@@ -59,9 +64,12 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
     {
         $rc = new \ReflectionClass(static::class);
 
-        return camel_to_snake($rc->getShortName()) . '.fields.' . camel_to_snake($propertyName);
+        return string_to_snake($rc->getShortName()) . '.fields.' . string_to_snake($propertyName);
     }
 
+    /**
+     * @return array<string, string>|bool
+     */
     final public function getValidationErrors(): array|bool
     {
         if (empty($this->validationErrors)) {
@@ -71,6 +79,9 @@ abstract class AbstractEntity extends DoctrineCallbacksLoader implements \JsonSe
         return $this->validationErrors;
     }
 
+    /**
+     * @return array<string, mixed>|int
+     */
     final public function jsonSerialize(): array|int
     {
         if ($this instanceof Proxy) {

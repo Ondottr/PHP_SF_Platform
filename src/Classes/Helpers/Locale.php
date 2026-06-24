@@ -662,6 +662,8 @@ final class Locale
      * The list of all locales.
      *
      * This is a cache for the {@see self::getLocaleList()} method.
+     *
+     * @var array<string, string>
      */
     private static array $localesList;
 
@@ -669,6 +671,8 @@ final class Locale
      * The list of all locale keys.
      *
      * This is a cache for the {@see self::getLocaleKeysList()} method.
+     *
+     * @var array<string, string>
      */
     private static array $localeKeysList;
 
@@ -711,7 +715,7 @@ final class Locale
      *
      * Example getLocaleNamesList() will return [ 'English (United States)' => 'en_US', ... ] {@see self::en_US}
      *
-     * @return array the list of locale keys
+     * @return array<string, string> the list of locale keys
      */
     public static function getLocaleKeysList(): array
     {
@@ -731,7 +735,7 @@ final class Locale
      *
      * Example getLocaleNamesList() will return [ 'en_US' => 'English (United States)', ... ] {@see self::en_US}
      *
-     * @return array the list of locale names
+     * @return array<string, string> the list of locale names
      */
     public static function getLocaleNamesList(): array
     {

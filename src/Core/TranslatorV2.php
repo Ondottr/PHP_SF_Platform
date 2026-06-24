@@ -24,11 +24,15 @@ final class TranslatorV2 implements TranslatorInterface
     private static ?self $instance = null;
     /**
      * Ordered list of registered directories; last entry is the DEV_MODE write target.
+     *
+     * @var list<string>
      */
     private static array $dirs = [];
 
     /**
      * Flat catalogs per locale: ['en' => ['some.key' => 'Some value']].
+     *
+     * @var array<string, array<string, string>>
      */
     private array $catalogs = [];
     private bool $catalogsLoaded = false;
@@ -87,10 +91,10 @@ final class TranslatorV2 implements TranslatorInterface
      *   YAML: entities.post.title: "Title"
      *   Result: "Title is too long"
      *
-     * @param string      $id         Translation key (dot-notation)
-     * @param array       $parameters Named parameters; values may be @:key references
-     * @param string|null $domain     Accepted for interface compatibility, ignored
-     * @param string|null $locale     Defaults to current locale
+     * @param string               $id         Translation key (dot-notation)
+     * @param array<string, mixed> $parameters Named parameters; values may be @:key references
+     * @param string|null          $domain     Accepted for interface compatibility, ignored
+     * @param string|null          $locale     Defaults to current locale
      */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
@@ -140,6 +144,11 @@ final class TranslatorV2 implements TranslatorInterface
         }
     }
 
+    /**
+     * Loads and flattens all YAML files for a locale into a single catalog.
+     *
+     * @return array<string, string>
+     */
     private function loadLocale(string $locale): array
     {
         if (DEV_MODE === false) {
@@ -173,6 +182,13 @@ final class TranslatorV2 implements TranslatorInterface
         return $merged;
     }
 
+    /**
+     * Recursively flattens a nested YAML structure into dot-notation keys.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, string>
+     */
     private function flattenKeys(array $data, string $prefix = ''): array
     {
         $result = [];
@@ -190,6 +206,11 @@ final class TranslatorV2 implements TranslatorInterface
         return $result;
     }
 
+    /**
+     * Resolves @:key references in parameter values, then formats the message.
+     *
+     * @param array<string, mixed> $parameters
+     */
     private function resolveValue(string $raw, array $parameters, string $locale, int $depth): string
     {
         if (empty($parameters)) {

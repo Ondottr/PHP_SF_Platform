@@ -1,0 +1,50 @@
+includes:
+    - phpstan-extension.neon
+
+parameters:
+    level: 6
+
+    paths:
+        - src
+        - app
+
+    # Symfony/Doctrine are soft dependencies provided by the consuming
+    # application. Register the parent template's autoloader so their classes
+    # are reflectable; the framework's own classes are always resolved from the
+    # analysed src/ + app/ paths, never from the vendored copy.
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+        - functions/functions.php
+        - functions/time_functions.php
+        - functions/view_functions.php
+
+    treatPhpDocTypesAsCertain: false
+
+    # Environment/consumer-driven constants — values vary at runtime, so do not
+    # let PHPStan fold them into always-true/false branch conclusions.
+    dynamicConstantNames:
+        - DEV_MODE
+        - TEMPLATES_CACHE_ENABLED
+        - DEFAULT_LOCALE
+
+    ignoreErrors:
+        # Constructor-injected DI dependency; written by the container, not read in PHP.
+        -
+            identifier: property.onlyWritten
+            path: src/Classes/Abstracts/AbstractEntityMaker.php
+        # Our own dynamic-return-type extension intentionally uses is_a() on class-strings.
+        -
+            identifier: phpstanApi.runtimeReflection
+            path: src/PHPStan/CaReturnTypeExtension.php
+        # Public timestamp traits consumed by application entities, which live outside this package.
+        -
+            identifier: trait.unused
+            paths:
+                - src/Traits/ModelProperty/ModelPropertyCreatedAtTrait.php
+                - src/Traits/ModelProperty/ModelPropertyUpdatedAtTrait.php
+        # The bundled auth controller's registration assumes the application's User entity
+        # exposes setLogin(); that setter is app-specific and intentionally not part of the
+        # minimal UserInterface contract (the reference User is email-based).
+        -
+            message: '#Call to an undefined method .+::setLogin\(\)\.#'
+            path: app/Http/Controller/AuthController.php

@@ -15,12 +15,10 @@ use PHP_SF\System\Classes\MiddlewareChecks\MiddlewaresExecutor;
 use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\PhpSfContext;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
-use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Traits\RedirectTrait;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
@@ -33,6 +31,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\VarDumper\VarDumper;
 
+/**
+ * @phpstan-type RouteData array{url: string, class: class-string, method: string, name: string, httpMethod: string, middleware: mixed, routeParams: list<string>}
+ */
 class Router
 {
     use RedirectTrait;
@@ -47,18 +48,23 @@ class Router
     protected static array $globalMiddlewares = [];
 
     private static AbstractController $controller;
-    private static JsonResponse|Response|RedirectResponse $routeMethodResponse;
+    private static SymfonyResponse $routeMethodResponse;
+    /**
+     * @var array<string, mixed>
+     */
     private static array $routeParams = [];
     private static Request $requestData;
     /**
-     * @var array<object>
+     * @var array<string, RouteData>
      */
     private static array $routesList = [];
     /**
-     * @var array<object>
+     * @var array<string, array<string, RouteData>>
      */
     private static array $routesByUrl = [];
-    private static string $currentHttpMethod;
+    /**
+     * @var list<string>
+     */
     private static array $controllersDirectories = [];
 
     private static Kernel $kernel;
@@ -125,11 +131,11 @@ class Router
 
         if (static::setCurrentRoute()) {
             try {
-                static::route();
+                self::route();
             } catch (\Throwable $e) {
                 $exceptionEvent = new ExceptionEvent(
                     self::$kernel,
-                    static::$requestData,
+                    self::$requestData,
                     HttpKernelInterface::MAIN_REQUEST,
                     $e,
                 );
@@ -139,7 +145,7 @@ class Router
                     $exResponse = $exceptionEvent->getResponse();
                     $exResponseEvent = new ResponseEvent(
                         self::$kernel,
-                        static::$requestData,
+                        self::$requestData,
                         HttpKernelInterface::MAIN_REQUEST,
                         $exResponse,
                     );
@@ -156,7 +162,7 @@ class Router
     public static function getRouteLink(string $routeName): string
     {
         return false === self::isRouteExists($routeName) ?
-            "#$routeName" : static::$routesList[$routeName]['url'];
+            "#$routeName" : self::$routesList[$routeName]['url'];
     }
 
     final public static function isRouteExists(string $routeName): bool
@@ -164,6 +170,9 @@ class Router
         return \array_key_exists($routeName, self::$routesList);
     }
 
+    /**
+     * @return RouteData
+     */
     public static function getRouteInfo(string $routeName): array
     {
         if (false === self::isRouteExists($routeName)) {
@@ -175,17 +184,20 @@ class Router
 
     public static function addControllersDirectory(string $controllersDirectory): void
     {
-        static::$controllersDirectories[] = $controllersDirectory;
+        self::$controllersDirectories[] = $controllersDirectory;
     }
 
+    /**
+     * @return array<string, RouteData>
+     */
     public static function getRoutesList(): array
     {
-        return static::$routesList;
+        return self::$routesList;
     }
 
     protected static function parseRoutes(): void
     {
-        if (false === empty(static::$routesList)) {
+        if (false === empty(self::$routesList)) {
             return;
         }
 
@@ -196,35 +208,38 @@ class Router
             }
 
             if (DEV_MODE === false) {
-                ca()->set('cache:routes_list', j_encode(static::$routesList), null);
+                ca()->set('cache:routes_list', j_encode(self::$routesList), null);
             }
         } else {
-            static::$routesList = j_decode($routesList, true);
+            self::$routesList = j_decode($routesList, true);
         }
 
-        if (false === empty(static::$routesByUrl)) {
+        if (false === empty(self::$routesByUrl)) {
             return;
         }
 
         $routesByUrl = ca()->get('cache:routes_by_url_list');
         if (null !== $routesByUrl) {
-            static::$routesByUrl = j_decode($routesByUrl, true);
+            self::$routesByUrl = j_decode($routesByUrl, true);
 
             return;
         }
 
-        foreach (static::$routesList as $route) {
-            static::$routesByUrl[$route['httpMethod']][$route['url']] = $route;
+        foreach (self::$routesList as $route) {
+            self::$routesByUrl[$route['httpMethod']][$route['url']] = $route;
         }
 
         if (DEV_MODE === false) {
-            ca()->set('cache:routes_by_url_list', j_encode(static::$routesByUrl), null);
+            ca()->set('cache:routes_by_url_list', j_encode(self::$routesByUrl), null);
         }
     }
 
+    /**
+     * @return list<string>
+     */
     protected static function getControllersDirectories(): array
     {
-        return static::$controllersDirectories;
+        return self::$controllersDirectories;
     }
 
     protected static function controllersFromDir(string $dir): void
@@ -340,7 +355,7 @@ class Router
 
         self::checkParams((object) $data);
 
-        static::$routesList[$data['name']] = $data;
+        self::$routesList[$data['name']] = $data;
     }
 
     /**
@@ -392,7 +407,7 @@ class Router
         self::checkMethodParameterTypes($data);
 
         // Check if HTTP method is allowed
-        if (false === \array_key_exists($data->httpMethod, static::ALLOWED_HTTP_METHODS)) {
+        if (false === \array_key_exists($data->httpMethod, self::ALLOWED_HTTP_METHODS)) {
             throw new InvalidConfigurationException(
                 "Undefined HTTP method `$data->httpMethod` for route `$data->name` in class `$data->class`",
             );
@@ -403,7 +418,7 @@ class Router
     {
         // We need to clear the current route, because it can be set before redirecting to another route
         static::$currentRoute = null;
-        static::$routeParams = [];
+        self::$routeParams = [];
 
         /**
          * Values from {@see Router::ALLOWED_HTTP_METHODS} constant }.
@@ -426,7 +441,7 @@ class Router
 
         if (ca()->get(sprintf('parsed_url:%s:%s', $httpMethod, $urlHash))) {
             static::$currentRoute = j_decode(ca()->get(sprintf('parsed_url:%s:route:%s', $httpMethod, $urlHash)));
-            static::$routeParams = j_decode(ca()->get(sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash)), true);
+            self::$routeParams = j_decode(ca()->get(sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash)), true);
 
             return true;
         }
@@ -443,9 +458,9 @@ class Router
         }
 
         // Looking for a route with the same url (without parameters)
-        foreach (static::$routesByUrl[$httpMethod] as $routeUrl => $route) {
+        foreach (self::$routesByUrl[$httpMethod] as $routeUrl => $route) {
             if ($currentUrl === $routeUrl) {
-                static::$currentRoute = (object) static::$routesByUrl[$httpMethod][$currentUrl];
+                static::$currentRoute = (object) self::$routesByUrl[$httpMethod][$currentUrl];
 
                 ca()->setMultiple([
                     sprintf('parsed_url:%s:%s', $httpMethod, $urlHash) => $currentUrl,
@@ -457,7 +472,7 @@ class Router
             }
         }
 
-        $arr = static::$routesByUrl[$httpMethod];
+        $arr = self::$routesByUrl[$httpMethod];
         $possibleRoutes = [];
 
         // Looking for a route with the same url (with parameters)
@@ -497,11 +512,11 @@ class Router
          * So, if we have two routes: <b>/product/edit/{$id}</b> and <b>/product/{$category}/{$id}</b>,
          * router will select <b>/product/edit/{$id}</b>
          *
-         * Save route parameters to {@see static::$routeParams}
+         * Save route parameters to {@see self::$routeParams}
          */
         if (false === empty($possibleRoutes)) {
             // Sort and save route with the least number of parameters
-            arsort($possibleRoutes, SORT_DESC);
+            arsort($possibleRoutes, SORT_NUMERIC);
             static::$currentRoute = (object) $arr[array_key_last($possibleRoutes)];
 
             // Split the URL of the selected route into an array of components
@@ -511,7 +526,7 @@ class Router
             // Save the parameters of the route
             foreach ($routeUrlArray as $key => $str) {
                 if (str_starts_with($str, '{') && str_ends_with($str, '}')) {
-                    static::$routeParams[str_replace(['{', '}'], '', $str)] = $currentUrlArray[$key];
+                    self::$routeParams[str_replace(['{', '}'], '', $str)] = $currentUrlArray[$key];
                 }
             }
 
@@ -519,7 +534,7 @@ class Router
             ca()->setMultiple([
                 sprintf('parsed_url:%s:%s', $httpMethod, $urlHash) => $currentUrl,
                 sprintf('parsed_url:%s:route:%s', $httpMethod, $urlHash) => j_encode(static::$currentRoute),
-                sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash) => j_encode(static::$routeParams),
+                sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash) => j_encode(self::$routeParams),
             ]);
         }
 
@@ -538,7 +553,7 @@ class Router
 
     protected static function setRequest(): void
     {
-        static::$requestData = new Request(
+        self::$requestData = new Request(
             query: $_GET,
             request: array_merge($_POST, json_decode(file_get_contents('php://input'), true) ?? []),
             cookies: $_COOKIE,
@@ -551,7 +566,7 @@ class Router
     {
         if (\function_exists('apache_request_headers')) {
             foreach (\apache_request_headers() as $headerName => $value) {
-                static::$requestData->headers->set($headerName, $value);
+                self::$requestData->headers->set($headerName, $value);
             }
         }
     }
@@ -563,14 +578,14 @@ class Router
 
     final public static function getRequest(): Request
     {
-        return static::$requestData;
+        return self::$requestData;
     }
 
     protected static function setRouteParameters(): void
     {
-        if (!empty(static::$routeParams)) {
+        if (!empty(self::$routeParams)) {
             $reflectionMethod = new \ReflectionMethod(static::$currentRoute->class, static::$currentRoute->method);
-            $urlPlaceholderNames = array_keys(static::$routeParams);
+            $urlPlaceholderNames = array_keys(self::$routeParams);
             $methodParameters = $reflectionMethod->getParameters();
 
             if (\count($urlPlaceholderNames) !== \count($methodParameters)) {
@@ -586,14 +601,15 @@ class Router
             $resolvedParams = [];
             foreach ($methodParameters as $index => $reflectionParameter) {
                 $urlPlaceholderName = $urlPlaceholderNames[$index];
-                $paramValue = static::$routeParams[$urlPlaceholderName];
-                $paramType = $reflectionParameter->getType()?->getName();
+                $paramValue = self::$routeParams[$urlPlaceholderName];
+                $reflectionType = $reflectionParameter->getType();
+                $paramType = $reflectionType instanceof \ReflectionNamedType ? $reflectionType->getName() : '';
 
                 if (is_a($paramType, AbstractEntity::class, true)) {
                     $entity = $paramType::findOneBy([$urlPlaceholderName => $paramValue]);
 
-                    if (null === $entity && false === $reflectionParameter->getType()->allowsNull()) {
-                        static::sendEntityNotFoundResponse();
+                    if (null === $entity && false === $reflectionType->allowsNull()) {
+                        self::sendEntityNotFoundResponse();
                     }
 
                     $resolvedParams[$reflectionParameter->getName()] = $entity;
@@ -603,7 +619,7 @@ class Router
                 }
             }
 
-            static::$routeParams = $resolvedParams;
+            self::$routeParams = $resolvedParams;
         }
     }
 
@@ -612,16 +628,14 @@ class Router
     {
         $response = self::$routeMethodResponse;
 
-        if ($response instanceof SymfonyResponse) {
-            $responseEvent = new ResponseEvent(
-                self::$kernel,
-                static::$requestData,
-                HttpKernelInterface::MAIN_REQUEST,
-                $response,
-            );
-            PhpSfEventDispatcher::dispatch(KernelEvents::RESPONSE, $responseEvent);
-            $response = self::$routeMethodResponse = $responseEvent->getResponse();
-        }
+        $responseEvent = new ResponseEvent(
+            self::$kernel,
+            self::$requestData,
+            HttpKernelInterface::MAIN_REQUEST,
+            $response,
+        );
+        PhpSfEventDispatcher::dispatch(KernelEvents::RESPONSE, $responseEvent);
+        $response = self::$routeMethodResponse = $responseEvent->getResponse();
 
         if ($response instanceof Response) {
             VarDumper::setHandler(null);
@@ -665,8 +679,9 @@ class Router
                 );
             }
 
+            $reflectionType = $reflectionParameter->getType();
             self::checkMethodParameterType(
-                $reflectionParameter->getType()?->getName(),
+                $reflectionType instanceof \ReflectionNamedType ? $reflectionType->getName() : '',
                 $reflectionParameter->getName(),
                 $data,
                 $index,
@@ -708,7 +723,7 @@ class Router
     {
         static::setRequest();
         static::setRequestHeaders();
-        static::setHttpMethod(static::$currentRoute->httpMethod);
+        self::setHttpMethod(static::$currentRoute->httpMethod);
 
         static::initializeController();
 
@@ -724,14 +739,14 @@ class Router
 
         PhpSfEventDispatcher::dispatch(KernelEvents::REQUEST, new RequestEvent(
             self::$kernel,
-            static::$requestData,
+            self::$requestData,
             HttpKernelInterface::MAIN_REQUEST,
         ));
 
         $controllerEvent = new ControllerEvent(
             self::$kernel,
             [self::$controller, static::$currentRoute->method],
-            static::$requestData,
+            self::$requestData,
             HttpKernelInterface::MAIN_REQUEST,
         );
         PhpSfEventDispatcher::dispatch(KernelEvents::CONTROLLER, $controllerEvent);
@@ -739,21 +754,21 @@ class Router
         PhpSfEventDispatcher::dispatch(KernelEvents::CONTROLLER_ARGUMENTS, new ControllerArgumentsEvent(
             self::$kernel,
             $controllerEvent,
-            array_values(static::$routeParams),
-            static::$requestData,
+            array_values(self::$routeParams),
+            self::$requestData,
             HttpKernelInterface::MAIN_REQUEST,
         ));
 
-        static::initializeRouteMiddlewares();
+        self::initializeRouteMiddlewares();
 
-        static::initializeRouteMethod();
+        self::initializeRouteMethod();
 
         static::sendRouteMethodResponse();
     }
 
     private static function setHttpMethod(string $method): void
     {
-        static::$requestData->setMethod($method);
+        self::$requestData->setMethod($method);
     }
 
     /**
@@ -765,11 +780,7 @@ class Router
     private static function initializeRouteMiddlewares(): void
     {
         if (!empty(self::$globalMiddlewares)) {
-            $global = new MiddlewaresExecutor(
-                self::$globalMiddlewares,
-                self::getRequest(),
-                self::$kernel,
-            );
+            $global = new MiddlewaresExecutor(self::$globalMiddlewares);
 
             $globalResult = $global->execute();
 
@@ -778,11 +789,7 @@ class Router
             }
         }
 
-        $me = new MiddlewaresExecutor(
-            static::$currentRoute->middleware ?? [],
-            self::getRequest(),
-            self::$kernel,
-        );
+        $me = new MiddlewaresExecutor(static::$currentRoute->middleware ?? []);
 
         $mResult = $me->execute();
 
@@ -801,7 +808,7 @@ class Router
         $methodParameters = $reflectionMethod->getParameters();
         $methodParametersCount = \count($methodParameters);
         if (0 === $methodParametersCount) {
-            if (0 !== \count(static::$routeParams)) {
+            if (0 !== \count(self::$routeParams)) {
                 throw new RouteParameterException(
                     sprintf(
                         'Method parameters count in the %s::%s route do not match the variables count from route URL!',
@@ -811,14 +818,14 @@ class Router
                 );
             }
 
-            static::$routeMethodResponse = $reflectionMethod->invoke(self::$controller);
+            self::$routeMethodResponse = $reflectionMethod->invoke(self::$controller);
 
             return;
         }
 
         $methodParametersValues = [];
         foreach ($methodParameters as $reflectionParameter) {
-            if (false === \array_key_exists($reflectionParameter->getName(), static::$routeParams)) {
+            if (false === \array_key_exists($reflectionParameter->getName(), self::$routeParams)) {
                 throw new RouteParameterException(
                     sprintf(
                         'Route url does not contain the "%s" parameter in the %s::%s route!',
@@ -829,10 +836,10 @@ class Router
                 );
             }
 
-            $methodParametersValues[] = static::$routeParams[$reflectionParameter->getName()];
+            $methodParametersValues[] = self::$routeParams[$reflectionParameter->getName()];
         }
 
-        if ($methodParametersCount !== \count($methodParametersValues) || $methodParametersCount !== \count(static::$routeParams)) {
+        if ($methodParametersCount !== \count($methodParametersValues) || $methodParametersCount !== \count(self::$routeParams)) {
             throw new RouteParameterException(
                 sprintf(
                     'Method parameters count in the %s::%s route do not match the variables count from route URL!',
@@ -843,7 +850,7 @@ class Router
         }
 
         try {
-            static::$routeMethodResponse = $reflectionMethod->invokeArgs(self::$controller, $methodParametersValues);
+            self::$routeMethodResponse = $reflectionMethod->invokeArgs(self::$controller, $methodParametersValues);
         } catch (\ReflectionException $e) {
             throw new RouteParameterException(
                 sprintf(

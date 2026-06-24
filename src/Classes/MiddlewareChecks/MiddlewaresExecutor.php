@@ -9,6 +9,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class MiddlewaresExecutor
 {
+    /**
+     * @param string|array<array-key, mixed> $middlewares
+     */
     public function __construct(
         private string|array $middlewares,
     ) {
@@ -41,7 +44,7 @@ final class MiddlewaresExecutor
 
         // Check if that first key is a valid class which extends MiddlewareCheck
         $middlewareType = array_key_first($this->getMiddlewares());
-        if (false === class_exists($middlewareType) || false === is_subclass_of($middlewareType, MiddlewareType::class)) {
+        if (false === is_string($middlewareType) || false === class_exists($middlewareType) || false === is_subclass_of($middlewareType, MiddlewareType::class)) {
             throw new RouteMiddlewareException(
                 'Middleware array keys must be a valid class which extends MiddlewareCheck!',
             );
@@ -59,11 +62,17 @@ final class MiddlewaresExecutor
         return $result;
     }
 
+    /**
+     * @return array<array-key, mixed>|string
+     */
     private function getMiddlewares(): array|string
     {
         return $this->middlewares;
     }
 
+    /**
+     * @param array<array-key, mixed>|string $middleware
+     */
     private function setMiddlewares(array|string $middleware): void
     {
         $this->middlewares = $middleware;

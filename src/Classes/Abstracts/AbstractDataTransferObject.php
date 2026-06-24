@@ -3,7 +3,7 @@
 namespace PHP_SF\System\Classes\Abstracts;
 
 /**
- * Class AbstractDataTransferObject.
+ * @phpstan-consistent-constructor
  */
 abstract readonly class AbstractDataTransferObject
 {
@@ -12,6 +12,9 @@ abstract readonly class AbstractDataTransferObject
         return $this->toArray();
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __unserialize(array $data): void
     {
         foreach ($data as $key => $value) {
@@ -21,6 +24,8 @@ abstract readonly class AbstractDataTransferObject
 
     /**
      * Create an instance of DTO class from array.
+     *
+     * @param array<string, mixed> $array
      */
     public static function fromArray(array $array): static
     {
@@ -34,6 +39,8 @@ abstract readonly class AbstractDataTransferObject
 
     /**
      * Convert the DTO to an associative array.
+     *
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {

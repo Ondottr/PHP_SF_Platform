@@ -15,7 +15,7 @@ abstract class AbstractEntityRepository extends EntityRepository
         $this->getEntityManager()->persist($entity);
 
         if ($flush) {
-            $this->getEntityManager()->flush($entity);
+            $this->getEntityManager()->flush();
         }
     }
 
@@ -24,7 +24,7 @@ abstract class AbstractEntityRepository extends EntityRepository
         $this->getEntityManager()->remove($entity);
 
         if ($flush) {
-            $this->getEntityManager()->flush($entity);
+            $this->getEntityManager()->flush();
         }
     }
 }

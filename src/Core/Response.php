@@ -16,8 +16,15 @@ use function function_exists;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
 {
+    /**
+     * @var list<string>
+     */
     public static array $activeTemplates = [];
 
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, mixed>  $dataFromController
+     */
     public function __construct(
         #[ExpectedValues(valuesFromClass: parent::class)]
         public readonly int $status = 200,

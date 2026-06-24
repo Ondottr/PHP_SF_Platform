@@ -4,14 +4,17 @@ namespace PHP_SF\System\Debug;
 
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Driver\Connection as DriverConnection;
+use Doctrine\DBAL\Driver\Middleware as MiddlewareInterface;
 use Doctrine\DBAL\Driver\Middleware\AbstractConnectionMiddleware;
 use Doctrine\DBAL\Driver\Middleware\AbstractDriverMiddleware;
-use Doctrine\DBAL\Driver\Middleware as MiddlewareInterface;
 use Doctrine\DBAL\Driver\Result;
 use Doctrine\DBAL\Driver\Statement;
 
 final class QueryCounterMiddleware implements MiddlewareInterface
 {
+    /**
+     * @var array<string, int>
+     */
     private static array $counts = [];
 
     public function wrap(Driver $driver): Driver
@@ -57,6 +60,9 @@ final class QueryCounterMiddleware implements MiddlewareInterface
         self::$counts[$key] = (self::$counts[$key] ?? 0) + 1;
     }
 
+    /**
+     * @return array<string, int>
+     */
     public static function getCounts(): array
     {
         return self::$counts;

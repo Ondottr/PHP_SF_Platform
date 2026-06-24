@@ -6,22 +6,21 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Driver\Result as DriverResult;
 use PHP_SF\Cache\Exception\InvalidCacheArgumentException;
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 
 final class DoctrineResultCache implements DriverResult
 {
     /**
-     * @var Collection<AbstractEntity[]>
+     * @var Collection<int, list<mixed>>|null
      */
-    private Collection $numericResult;
+    private ?Collection $numericResult;
     /**
-     * @var Collection<AbstractEntity[]>
+     * @var Collection<int, array<string, mixed>>|null
      */
-    private Collection $associativeResult;
+    private ?Collection $associativeResult;
     /**
-     * @var Collection<AbstractEntity[]>
+     * @var Collection<int, mixed>|null
      */
-    private Collection $fetchOneResult;
+    private ?Collection $fetchOneResult;
 
     public function __construct(private readonly string $cacheKey)
     {
@@ -29,7 +28,7 @@ final class DoctrineResultCache implements DriverResult
         $this->associativeResult = new ArrayCollection();
         $this->fetchOneResult = new ArrayCollection();
 
-        if (null === ca()->has($this->cacheKey)) {
+        if (false === ca()->has($this->cacheKey)) {
             throw new InvalidCacheArgumentException('Cache key does not exist!');
         }
 
@@ -43,7 +42,7 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchNumeric(): array|false
     {
-        $result = $this->numericResult->current();
+        $result = $this->numericResult?->current() ?? false;
 
         $this->next();
 
@@ -57,7 +56,7 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchAssociative(): array|false
     {
-        $result = $this->associativeResult->current();
+        $result = $this->associativeResult?->current() ?? false;
 
         $this->next();
 
@@ -71,7 +70,7 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchOne(): mixed
     {
-        $result = $this->fetchOneResult->current();
+        $result = $this->fetchOneResult?->current();
 
         $this->next();
 
@@ -85,7 +84,7 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchAllNumeric(): array
     {
-        if (false === isset($this->numericResult)) {
+        if (null === $this->numericResult) {
             return [];
         }
 
@@ -103,7 +102,7 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchAllAssociative(): array
     {
-        if (false === isset($this->associativeResult)) {
+        if (null === $this->associativeResult) {
             return [];
         }
 
@@ -121,7 +120,7 @@ final class DoctrineResultCache implements DriverResult
      */
     public function fetchFirstColumn(): array
     {
-        if (false === isset($this->fetchOneResult)) {
+        if (null === $this->fetchOneResult) {
             return [];
         }
 
@@ -162,7 +161,9 @@ final class DoctrineResultCache implements DriverResult
      */
     public function free(): void
     {
-        unset($this->numericResult, $this->associativeResult, $this->fetchOneResult, $this->fetchAllNumericResult, $this->fetchAllAssociativeResult, $this->fetchAllFirstColumnResult);
+        $this->numericResult = null;
+        $this->associativeResult = null;
+        $this->fetchOneResult = null;
     }
 
     private function setAll(): void
@@ -171,6 +172,7 @@ final class DoctrineResultCache implements DriverResult
             $result = '[]';
         }
 
+        /** @var list<array<string, mixed>> $cachedValue */
         $cachedValue = j_decode($result, true);
 
         $this->associativeResult = new ArrayCollection($cachedValue);
@@ -194,9 +196,13 @@ final class DoctrineResultCache implements DriverResult
 
     private function next(): void
     {
-        $this->numericResult->removeElement($this->numericResult->key());
-        $this->associativeResult->removeElement($this->associativeResult->key());
-        $this->fetchOneResult->removeElement($this->fetchOneResult->key());
+        if (null === $this->numericResult || null === $this->associativeResult || null === $this->fetchOneResult) {
+            return;
+        }
+
+        $this->numericResult->remove($this->numericResult->key());
+        $this->associativeResult->remove($this->associativeResult->key());
+        $this->fetchOneResult->remove($this->fetchOneResult->key());
 
         $this->numericResult->next();
         $this->associativeResult->next();

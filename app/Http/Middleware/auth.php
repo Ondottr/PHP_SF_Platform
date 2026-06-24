@@ -29,7 +29,7 @@ class auth extends Middleware
     /**
      * Holds the currently authenticated user, or {@see false} when no session is active.
      *
-     * @var false|UserInterface&AbstractEntity
+     * @var false|(UserInterface&AbstractEntity)
      */
     public static false|UserInterface $user = false;
 
@@ -41,7 +41,7 @@ class auth extends Middleware
     {
         if (false !== self::$user) {
             /**
-             * @var UserInterface&AbstractEntity $userClass
+             * @var class-string<UserInterface&AbstractEntity> $userClass
              */
             $userClass = Kernel::getApplicationUserClassName();
 
@@ -99,7 +99,7 @@ class auth extends Middleware
 
             if (null !== $userId) {
                 /**
-                 * @var UserInterface&AbstractEntity $userClass
+                 * @var class-string<UserInterface&AbstractEntity> $userClass
                  */
                 $userClass = Kernel::getApplicationUserClassName();
                 $user = $userClass::find($userId);

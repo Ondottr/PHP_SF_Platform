@@ -4,6 +4,9 @@ namespace PHP_SF\System\Classes\Helpers;
 
 final readonly class CursorPaginationResult
 {
+    /**
+     * @param list<mixed> $items
+     */
     public function __construct(
         public array $items,
         public ?PaginationCursor $cursor,
@@ -14,6 +17,9 @@ final readonly class CursorPaginationResult
     ) {
     }
 
+    /**
+     * @return array{cursor: ?string, next_cursor: ?string, prev_cursor: ?string, per_page: int, has_more: bool}
+     */
     public function getPaginationMeta(): array
     {
         return [

@@ -8,8 +8,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class PhpSfEventDispatcher
 {
     private static ?EventDispatcher $dispatcher = null;
+    /**
+     * @var list<string>
+     */
     private static array $subscriberDirs = [];
     private static bool $initialized = false;
+    /**
+     * @var list<array{event: string, subscribers: list<string>}>
+     */
     private static array $dispatchLog = [];
 
     public static function addSubscriberDirectory(string $dir): void
@@ -59,7 +65,7 @@ final class PhpSfEventDispatcher
             self::$dispatchLog[] = [
                 'event' => $eventName,
                 'subscribers' => array_map(
-                    static fn ($l) => is_array($l) ? get_class($l[0]) . '::' . $l[1] : (is_object($l) ? get_class($l) : (string) $l),
+                    static fn ($l): string => is_array($l) ? get_class($l[0]) . '::' . $l[1] : (is_object($l) ? get_class($l) : (is_string($l) ? $l : '')),
                     self::$dispatcher->getListeners($eventName),
                 ),
             ];
@@ -68,11 +74,17 @@ final class PhpSfEventDispatcher
         return $result;
     }
 
+    /**
+     * @return list<array{event: string, subscribers: list<string>}>
+     */
     public static function getDispatchLog(): array
     {
         return self::$dispatchLog;
     }
 
+    /**
+     * @return list<class-string>
+     */
     private static function discoverSubscriberClasses(): array
     {
         $found = [];

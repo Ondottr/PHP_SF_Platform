@@ -3,7 +3,6 @@
 namespace PHP_SF\Framework\Http\Controller\Defaults;
 
 use App\Kernel;
-use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
@@ -11,6 +10,7 @@ use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
 use PHP_SF\System\Traits\JsonResponseHelperTrait;
 use PHP_SF\Templates\base;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class DefaultController extends AbstractController
 {
@@ -29,9 +29,8 @@ final class DefaultController extends AbstractController
     }
 
     /** @noinspection ForgottenDebugOutputInspection */
-    #[NoReturn]
     #[Route(url: 'api/routes_list', httpMethod: 'GET')]
-    final public function api_routes_list(): Response
+    final public function api_routes_list(): JsonResponse
     {
         // restrict to dev mode only
         if (DEV_MODE === false) {
@@ -44,8 +43,8 @@ final class DefaultController extends AbstractController
                 Kernel::getInstance()
                     ->getContainer()
                     ->get('router')
-                    ?->getRouteCollection()
-                    ?->all() ?? [],
+                    ->getRouteCollection()
+                    ->all(),
             ),
         );
     }

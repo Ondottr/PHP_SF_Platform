@@ -93,8 +93,6 @@ final class MiddlewareCustom extends MiddlewareType
         if (array_key_exists(MiddlewareAll::class, $middlewares)) {
             $all = new MiddlewaresExecutor(
                 [MiddlewareAll::class => $middlewares[MiddlewareAll::class]],
-                $this->request,
-                $this->kernel,
             );
 
             $result = $all->execute();
@@ -107,8 +105,6 @@ final class MiddlewareCustom extends MiddlewareType
         if (array_key_exists(MiddlewareAny::class, $middlewares)) {
             $any = new MiddlewaresExecutor(
                 [MiddlewareAny::class => $middlewares[MiddlewareAny::class]],
-                $this->request,
-                $this->kernel,
             );
 
             $result = $any->execute();

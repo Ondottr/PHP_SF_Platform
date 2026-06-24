@@ -34,7 +34,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final class PhpSfControllerListener implements EventSubscriberInterface
 {
-    /** Flash bag: populated on redirect response, consumed on the next request. */
+    /**
+     * Flash bag: populated on redirect response, consumed on the next request.
+     *
+     * @var array<string, mixed>
+     */
     private static array $flashBag = [];
 
     public static function getSubscribedEvents(): array
@@ -132,12 +136,13 @@ final class PhpSfControllerListener implements EventSubscriberInterface
                 }
 
                 $value = $rawParams[$urlPlaceholderName];
-                $type = $rp->getType()?->getName();
+                $reflectionType = $rp->getType();
+                $type = $reflectionType instanceof \ReflectionNamedType ? $reflectionType->getName() : null;
 
                 if (null !== $type && is_a($type, AbstractEntity::class, true)) {
                     $entity = $type::findOneBy([$urlPlaceholderName => $value]);
 
-                    if (null === $entity && false === $rp->getType()->allowsNull()) {
+                    if (null === $entity && false === $reflectionType->allowsNull()) {
                         if (str_starts_with($routeUrl, '/api/')) {
                             return new JsonResponse(['error' => _t('common.errors.not_found')], JsonResponse::HTTP_NOT_FOUND);
                         }

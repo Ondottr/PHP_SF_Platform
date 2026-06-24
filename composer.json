@@ -29,6 +29,26 @@
     "nations-original/php-sf-cache": "^2.0"
   },
   "require-dev": {
-    "roave/security-advisories": "dev-latest"
+    "roave/security-advisories": "dev-latest",
+    "phpstan/phpstan": "^2.0",
+    "phpstan/extension-installer": "^1.4",
+    "phpstan/phpstan-doctrine": "^2.0",
+    "phpstan/phpstan-symfony": "^2.0",
+    "phpstan/phpstan-phpunit": "^2.0"
+  },
+  "scripts": {
+    "stan": "phpstan analyse --no-progress"
+  },
+  "extra": {
+    "phpstan": {
+      "includes": [
+        "phpstan-extension.neon"
+      ]
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "phpstan/extension-installer": true
+    }
   }
 }

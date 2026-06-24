@@ -60,6 +60,11 @@ final class StringCase
         );
     }
 
+    /**
+     * Splits the input into normalized lowercase words.
+     *
+     * @return list<string>
+     */
     private static function words(string $input): array
     {
         $input = trim($input);

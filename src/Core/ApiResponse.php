@@ -9,6 +9,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class ApiResponse extends JsonResponse
 {
+    /**
+     * @param array<array-key, mixed>|string|null $errors
+     * @param array<string, string>               $headers
+     */
     private function __construct(
         bool $success,
         mixed $data,
@@ -32,6 +36,11 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds a successful envelope response.
+     *
+     * @param array<string, string> $headers
+     */
     public static function success(
         mixed $data = null,
         ?CursorPaginationResult $pagination = null,
@@ -48,6 +57,11 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds a 201 Created envelope response.
+     *
+     * @param array<string, string> $headers
+     */
     public static function created(
         mixed $data = null,
         array $headers = [],
@@ -62,6 +76,12 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds an error envelope response.
+     *
+     * @param array<array-key, mixed>|string $errors
+     * @param array<string, string>          $headers
+     */
     public static function error(
         string|array $errors,
         int $status = self::HTTP_BAD_REQUEST,
@@ -77,6 +97,11 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds a 404 Not Found envelope response.
+     *
+     * @param array<string, string> $headers
+     */
     public static function notFound(
         ?string $error = null,
         array $headers = [],
@@ -88,6 +113,11 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds a 403 Forbidden envelope response.
+     *
+     * @param array<string, string> $headers
+     */
     public static function forbidden(
         ?string $error = null,
         array $headers = [],
@@ -99,6 +129,11 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds a 401 Unauthorized envelope response.
+     *
+     * @param array<string, string> $headers
+     */
     public static function unauthorized(
         ?string $error = null,
         array $headers = [],
@@ -110,6 +145,12 @@ final class ApiResponse extends JsonResponse
         );
     }
 
+    /**
+     * Builds a 422 Unprocessable Entity envelope response.
+     *
+     * @param array<string, mixed>  $errors
+     * @param array<string, string> $headers
+     */
     public static function unprocessableEntity(
         array $errors,
         array $headers = [],
@@ -124,7 +165,12 @@ final class ApiResponse extends JsonResponse
         );
     }
 
-    // 204 — no envelope, empty body (HTTP spec prohibits content on 204)
+    /**
+     * Builds a 204 No Content response — no envelope, empty body
+     * (the HTTP spec prohibits content on 204).
+     *
+     * @param array<string, string> $headers
+     */
     public static function noContent(array $headers = []): JsonResponse
     {
         return new JsonResponse(status: self::HTTP_NO_CONTENT, headers: $headers);
@@ -155,6 +201,13 @@ final class ApiResponse extends JsonResponse
         return $data;
     }
 
+    /**
+     * Normalizes errors into a list, wrapping a bare string.
+     *
+     * @param array<array-key, mixed>|string|null $errors
+     *
+     * @return array<array-key, mixed>|null
+     */
     private static function normalizeErrors(array|string|null $errors): ?array
     {
         if (null === $errors) {

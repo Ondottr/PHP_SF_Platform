@@ -23,6 +23,9 @@ final class RabbitMQ
     private AMQPStreamConnection $connection;
     private AMQPChannel&AbstractChannel $channel;
 
+    /**
+     * @var array<string, null>
+     */
     private array $queues = [];
 
     private QueueEnum $queue;

@@ -66,6 +66,8 @@ final class MiddlewareAny extends MiddlewareType
             return true;
         }
 
+        $mResult = false;
+
         // Loop through each middleware to be executed and check its result.
         foreach ($middlewares as $middleware) {
             // Instantiate the middleware class

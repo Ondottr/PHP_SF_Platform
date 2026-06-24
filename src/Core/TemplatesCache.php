@@ -27,10 +27,19 @@ final class TemplatesCache
 
     private static self $instance;
 
+    /**
+     * @var array<string, string>
+     */
     #[Immutable(Immutable::CONSTRUCTOR_WRITE_SCOPE)]
     private static array $templatesDefinition = [];
 
+    /**
+     * @var list<string>
+     */
     private static array $templatesNamespaces = [];
+    /**
+     * @var list<string>
+     */
     private static array $templatesDirectories = [];
 
     /**
@@ -124,7 +133,7 @@ final class TemplatesCache
             );
         }
 
-        if (false === isset($newClassName, $currentClassDirectory)) {
+        if (false === isset($newClassName, $currentClassDirectory, $currentNamespace)) {
             return false;
         }
 
