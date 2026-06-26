@@ -2,6 +2,8 @@
 
 namespace PHP_SF\System\Core;
 
+use function function_exists;
+
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
@@ -11,8 +13,6 @@ use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
-
-use function function_exists;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
 {

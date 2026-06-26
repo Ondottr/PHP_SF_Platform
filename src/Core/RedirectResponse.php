@@ -2,14 +2,14 @@
 
 namespace PHP_SF\System\Core;
 
+use function function_exists;
+
 use JetBrains\PhpStorm\Immutable;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-
-use function function_exists;
 
 final class RedirectResponse extends Response
 {
