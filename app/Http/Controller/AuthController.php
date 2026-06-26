@@ -3,29 +3,35 @@ declare(strict_types=1);
 
 namespace PHP_SF\Framework\Http\Controller;
 
-use Doctrine\ORM\EntityRepository;
-use Doctrine\Persistence\ObjectRepository;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
+use PHP_SF\System\Classes\Abstracts\AbstractEntity;
+use PHP_SF\System\Classes\Abstracts\AbstractEntityRepository;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\System\Kernel;
 use PHP_SF\Templates\Auth\login_page;
 use PHP_SF\Templates\Auth\register_page;
 
 class AuthController extends AbstractController
 {
-    protected EntityRepository|ObjectRepository $userRepository;
+    /**
+     * @var AbstractEntityRepository<AbstractEntity&UserInterface>
+     */
+    protected AbstractEntityRepository $userRepository;
+
 
     public function __construct()
     {
         /**
-         * @var \PHP_SF\System\Interface\UserInterface&\PHP_SF\System\Classes\Abstracts\AbstractEntity $userClass
+         * @var class-string<AbstractEntity&UserInterface> $userClass
          */
         $userClass = Kernel::getApplicationUserClassName();
         $this->userRepository = $userClass::rep();
     }
+
 
     #[Route(url: 'auth/login', httpMethod: 'GET')]
     public function login_page(): Response|RedirectResponse

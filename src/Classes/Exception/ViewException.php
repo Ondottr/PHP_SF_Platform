@@ -2,7 +2,10 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-class ViewException extends \ErrorException
+use ErrorException;
+use Throwable;
+
+class ViewException extends ErrorException
 {
     public function __construct(
         string $message = '',
@@ -10,7 +13,7 @@ class ViewException extends \ErrorException
         int $severity = 1,
         ?string $filename = __FILE__,
         ?int $line = __LINE__,
-        ?\Throwable $previous = null,
+        ?Throwable $previous = null,
     ) {
         parent::__construct(
             sprintf('There was an error while rendering the view: %s', $message),

@@ -16,24 +16,24 @@ use Symfony\Component\Console\Input\InputInterface;
 abstract class AbstractEntityMaker extends AbstractMaker
 {
     protected string $entityNamespace;
+
     protected string $repositoryNamespace;
+
     protected string $entityDir;
+
     protected string $repositoryDir;
+
     protected string $schema;
+
 
     public function __construct(
         private readonly CommandLoaderInterface $commandLoader,
-    ) {
-    }
+    ) {}
+
 
     abstract public static function getCommandName(): string;
 
-    public static function getCommandDescription(): string
-    {
-        return 'Creates a new entity & repository for a specific DB schema';
-    }
-
-    public function configureCommand(Command $command, InputConfiguration $inputConfig)
+    public function configureCommand(Command $command, InputConfiguration $inputConfig): void
     {
         $command
             ->setName(static::getCommandName())
@@ -41,7 +41,7 @@ abstract class AbstractEntityMaker extends AbstractMaker
             ->addArgument('name', InputArgument::REQUIRED, 'The class name of the entity (e.g. User)');
     }
 
-    public function generate(InputInterface $input, ConsoleStyle $io, Generator $generator)
+    public function generate(InputInterface $input, ConsoleStyle $io, Generator $generator): int
     {
         $className = Str::asClassName($input->getArgument('name'));
         $entityFqcn = $this->entityNamespace . '\\' . $className;
@@ -98,8 +98,13 @@ abstract class AbstractEntityMaker extends AbstractMaker
         return Command::SUCCESS;
     }
 
-    public function configureDependencies(DependencyBuilder $dependencies)
+    public function configureDependencies(DependencyBuilder $dependencies): void
     {
         // we don’t need DoctrineBundle internal stuff, just make sure Doctrine exists
+    }
+
+    public static function getCommandDescription(): string
+    {
+        return 'Creates a new entity & repository for a specific DB schema';
     }
 }

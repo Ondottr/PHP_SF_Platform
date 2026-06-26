@@ -9,24 +9,41 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 trait EntityRepositoriesTrait
 {
-    /** @var array<class-string, AbstractEntityRepository<object>> */
+    /**
+     * @var array<class-string, AbstractEntityRepository<object>>
+     */
     private static array $repositories = [];
+
 
     public static function find(int $id): ?static
     {
-        return self::rep()->find($id);
-    }
+        /** @var static|null $entity */
+        $entity = self::rep()->find($id);
 
-    public static function findOneBy(array $criteria, ?array $orderBy = null): ?static
-    {
-        return self::rep()->findOneBy($criteria, $orderBy);
+        return $entity;
     }
 
     /**
+     * @param array<string, mixed>       $criteria
+     * @param array<string, string>|null $orderBy
+     */
+    public static function findOneBy(array $criteria, ?array $orderBy = null): ?static
+    {
+        /** @var static|null $entity */
+        $entity = self::rep()->findOneBy($criteria, $orderBy);
+
+        return $entity;
+    }
+
+    /**
+     * @param array<string, mixed>       $criteria
+     * @param array<string, string>|null $orderBy
+     *
      * @return array<static>
      */
     public static function findBy(array $criteria = [], ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array
     {
+        /** @var array<static> $arr */
         $arr = self::rep()->findBy($criteria, $orderBy, $limit, $offset);
 
         $res = [];
@@ -42,6 +59,7 @@ trait EntityRepositoriesTrait
      */
     public static function findAll(): array
     {
+        /** @var array<static> $arr */
         $arr = self::rep()->findAll();
 
         $res = [];
@@ -52,15 +70,19 @@ trait EntityRepositoriesTrait
         return $res;
     }
 
-
-    /** @return AbstractEntityRepository<static> */
+    /**
+     * @return AbstractEntityRepository<static>
+     */
     public static function rep(): AbstractEntityRepository
     {
         if (false === array_key_exists(static::class, self::$repositories)) {
             self::setRepository();
         }
 
-        return self::$repositories[static::class];
+        /** @var AbstractEntityRepository<static> $repository */
+        $repository = self::$repositories[static::class];
+
+        return $repository;
     }
 
     private static function setRepository(): void

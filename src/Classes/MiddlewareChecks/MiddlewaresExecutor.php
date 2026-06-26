@@ -6,13 +6,17 @@ use PHP_SF\System\Classes\Abstracts\MiddlewareType;
 use PHP_SF\System\Classes\Exception\RouteMiddlewareException;
 use PHP_SF\System\Core\RedirectResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Throwable;
 
 final class MiddlewaresExecutor
 {
+    /**
+     * @param string|array<array-key, mixed> $middlewares
+     */
     public function __construct(
         private string|array $middlewares,
-    ) {
-    }
+    ) {}
+
 
     final public function execute(): bool|RedirectResponse|JsonResponse
     {
@@ -41,7 +45,7 @@ final class MiddlewaresExecutor
 
         // Check if that first key is a valid class which extends MiddlewareCheck
         $middlewareType = array_key_first($this->getMiddlewares());
-        if (false === class_exists($middlewareType) || false === is_subclass_of($middlewareType, MiddlewareType::class)) {
+        if (false === is_string($middlewareType) || false === class_exists($middlewareType) || false === is_subclass_of($middlewareType, MiddlewareType::class)) {
             throw new RouteMiddlewareException(
                 'Middleware array keys must be a valid class which extends MiddlewareCheck!',
             );
@@ -52,18 +56,24 @@ final class MiddlewaresExecutor
                 (new $middlewareType($this->getMiddlewares()))
                     ->validate()
                     ->execute();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new RouteMiddlewareException($e->getMessage(), $e->getCode(), $e);
         }
 
         return $result;
     }
 
+    /**
+     * @return array<array-key, mixed>|string
+     */
     private function getMiddlewares(): array|string
     {
         return $this->middlewares;
     }
 
+    /**
+     * @param array<array-key, mixed>|string $middleware
+     */
     private function setMiddlewares(array|string $middleware): void
     {
         $this->middlewares = $middleware;

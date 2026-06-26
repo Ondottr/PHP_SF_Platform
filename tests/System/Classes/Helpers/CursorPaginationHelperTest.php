@@ -2,6 +2,7 @@
 
 namespace PHP_SF\Tests\System\Classes\Helpers;
 
+use InvalidArgumentException;
 use PHP_SF\System\Classes\Helpers\CursorPaginationHelper;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +21,7 @@ final class CursorPaginationHelperTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('invalidIdentifierProvider')]
     public function testInvalidSortFieldThrows(string $value): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/sortField/');
 
         $qb = $this->createStub(\Doctrine\ORM\QueryBuilder::class);
@@ -30,7 +31,7 @@ final class CursorPaginationHelperTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('invalidIdentifierProvider')]
     public function testInvalidEntityAliasThrows(string $value): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/entityAlias/');
 
         $qb = $this->createStub(\Doctrine\ORM\QueryBuilder::class);

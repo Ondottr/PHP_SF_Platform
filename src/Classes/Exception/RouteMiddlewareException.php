@@ -2,6 +2,6 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-final class RouteMiddlewareException extends \RuntimeException
-{
-}
+use RuntimeException;
+
+final class RouteMiddlewareException extends RuntimeException {}

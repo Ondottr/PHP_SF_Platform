@@ -2,9 +2,11 @@
 
 namespace PHP_SF\System\Classes\Exception;
 
-final class UndefinedLocaleKeyException extends \Exception
+use Exception;
+
+final class UndefinedLocaleKeyException extends Exception
 {
-    public function __construct($localeKey)
+    public function __construct(string $localeKey)
     {
         parent::__construct(sprintf('Undefined locale key “%s”', $localeKey));
     }

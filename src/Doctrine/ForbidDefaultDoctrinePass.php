@@ -2,6 +2,7 @@
 
 namespace PHP_SF\System\Doctrine;
 
+use LogicException;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -19,6 +20,7 @@ final class ForbidDefaultDoctrinePass implements CompilerPassInterface
         'doctrine.orm.entity_manager' => 'Use a named EM: @doctrine.orm.invoices_uk_entity_manager, etc.',
         'doctrine.dbal.connection' => 'Use a named connection: @doctrine.dbal.invoices_uk_connection, etc.',
     ];
+
 
     public function process(ContainerBuilder $container): void
     {
@@ -44,7 +46,7 @@ final class ForbidDefaultDoctrinePass implements CompilerPassInterface
         $referencedId = (string) $argument;
 
         if (isset(self::FORBIDDEN_SERVICES[$referencedId])) {
-            throw new \LogicException(sprintf(
+            throw new LogicException(sprintf(
                 'Service "%s" injects the forbidden default Doctrine service "%s". %s',
                 $serviceId,
                 $referencedId,

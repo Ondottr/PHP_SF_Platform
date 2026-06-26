@@ -3,14 +3,18 @@ declare(strict_types=1);
 
 namespace PHP_SF\System\Attributes;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+use Attribute;
+
+#[Attribute(Attribute::TARGET_METHOD)]
 class Route
 {
+    /**
+     * @param string|array<array-key, mixed> $middleware
+     */
     public function __construct(
-        private readonly string $url,
-        private readonly string $httpMethod,
-        private readonly ?string $name = null,
-        private readonly string|array $middleware = [],
-    ) {
-    }
+        public readonly string $url,
+        public readonly string $httpMethod,
+        public readonly ?string $name = null,
+        public readonly string|array $middleware = [],
+    ) {}
 }

@@ -5,6 +5,11 @@ namespace PHP_SF\System\Core;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Doctrine\ORM\Mapping\JoinColumns;
+use MessageFormatter;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ReflectionClass;
+use ReflectionProperty;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -19,61 +24,32 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class TranslatorV2 implements TranslatorInterface
 {
     private const int    MAX_REF_DEPTH = 5;
+
     private const string CACHE_KEY_PREFIX = 'translator_v2:';
 
     private static ?self $instance = null;
     /**
      * Ordered list of registered directories; last entry is the DEV_MODE write target.
+     *
+     * @var list<string>
      */
     private static array $dirs = [];
 
     /**
      * Flat catalogs per locale: ['en' => ['some.key' => 'Some value']].
+     *
+     * @var array<string, array<string, string>>
      */
     private array $catalogs = [];
+
     private bool $catalogsLoaded = false;
 
-    private function __construct()
-    {
-    }
 
-    private function __clone()
-    {
-    }
+    private function __construct() {}
 
-    public static function getInstance(): self
-    {
-        if (null === self::$instance) {
-            self::$instance = new self();
-        }
 
-        return self::$instance;
-    }
+    private function __clone() {}
 
-    /**
-     * Register a directory containing {locale}.yaml translation files.
-     * Directories registered later override earlier ones on key collision.
-     * The last registered directory receives missing-key writes in DEV_MODE.
-     */
-    public static function addTranslationDir(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            throw new DirectoryNotFoundException(
-                sprintf('Translation directory "%s" does not exist.', $dir),
-            );
-        }
-
-        self::$dirs[] = $dir;
-
-        if (null !== self::$instance) {
-            self::$instance->catalogsLoaded = false;
-        }
-
-        if (defined('DEV_MODE') && DEV_MODE === true) {
-            self::getInstance()->catalogsLoaded = false;
-            self::getInstance()->loadCatalogs();
-        }
-    }
 
     /**
      * Translate a key with optional named parameters.
@@ -87,10 +63,10 @@ final class TranslatorV2 implements TranslatorInterface
      *   YAML: entities.post.title: "Title"
      *   Result: "Title is too long"
      *
-     * @param string      $id         Translation key (dot-notation)
-     * @param array       $parameters Named parameters; values may be @:key references
-     * @param string|null $domain     Accepted for interface compatibility, ignored
-     * @param string|null $locale     Defaults to current locale
+     * @param string               $id         Translation key (dot-notation)
+     * @param array<string, mixed> $parameters Named parameters; values may be @:key references
+     * @param string|null          $domain     Accepted for interface compatibility, ignored
+     * @param string|null          $locale     Defaults to current locale
      */
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {
@@ -140,6 +116,45 @@ final class TranslatorV2 implements TranslatorInterface
         }
     }
 
+    public static function getInstance(): self
+    {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * Register a directory containing {locale}.yaml translation files.
+     * Directories registered later override earlier ones on key collision.
+     * The last registered directory receives missing-key writes in DEV_MODE.
+     */
+    public static function addTranslationDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            throw new DirectoryNotFoundException(
+                sprintf('Translation directory "%s" does not exist.', $dir),
+            );
+        }
+
+        self::$dirs[] = $dir;
+
+        if (null !== self::$instance) {
+            self::$instance->catalogsLoaded = false;
+        }
+
+        if (defined('DEV_MODE') && DEV_MODE === true) {
+            self::getInstance()->catalogsLoaded = false;
+            self::getInstance()->loadCatalogs();
+        }
+    }
+
+    /**
+     * Loads and flattens all YAML files for a locale into a single catalog.
+     *
+     * @return array<string, string>
+     */
     private function loadLocale(string $locale): array
     {
         if (DEV_MODE === false) {
@@ -173,6 +188,13 @@ final class TranslatorV2 implements TranslatorInterface
         return $merged;
     }
 
+    /**
+     * Recursively flattens a nested YAML structure into dot-notation keys.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, string>
+     */
     private function flattenKeys(array $data, string $prefix = ''): array
     {
         $result = [];
@@ -190,6 +212,11 @@ final class TranslatorV2 implements TranslatorInterface
         return $result;
     }
 
+    /**
+     * Resolves @:key references in parameter values, then formats the message.
+     *
+     * @param array<string, mixed> $parameters
+     */
     private function resolveValue(string $raw, array $parameters, string $locale, int $depth): string
     {
         if (empty($parameters)) {
@@ -208,8 +235,8 @@ final class TranslatorV2 implements TranslatorInterface
 
         // Try ICU MessageFormatter first — handles plural, select, and simple {name} substitution.
         // Falls back to strtr() if the intl extension is unavailable or the value is not valid ICU.
-        if (class_exists(\MessageFormatter::class)) {
-            $formatted = \MessageFormatter::formatMessage($locale, $raw, $resolved);
+        if (class_exists(MessageFormatter::class)) {
+            $formatted = MessageFormatter::formatMessage($locale, $raw, $resolved);
 
             if (false !== $formatted) {
                 return $formatted;
@@ -276,8 +303,8 @@ final class TranslatorV2 implements TranslatorInterface
             return;
         }
 
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($entityDir, \RecursiveDirectoryIterator::FOLLOW_SYMLINKS),
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($entityDir, RecursiveDirectoryIterator::FOLLOW_SYMLINKS),
         );
 
         $newEntityKeys = [];
@@ -299,9 +326,9 @@ final class TranslatorV2 implements TranslatorInterface
                 continue;
             }
 
-            $rc = new \ReflectionClass($className);
+            $rc = new ReflectionClass($className);
             $entityKey = camel_to_snake($rc->getShortName());
-            $properties = $rc->getProperties(\ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PUBLIC);
+            $properties = $rc->getProperties(ReflectionProperty::IS_PROTECTED | ReflectionProperty::IS_PUBLIC);
 
             foreach ($properties as $property) {
                 $attrs = $property->getAttributes();

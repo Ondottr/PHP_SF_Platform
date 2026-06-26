@@ -1,0 +1,7 @@
+services:
+    -
+        class: PHP_SF\System\PHPStan\CaReturnTypeExtension
+        tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]
+    -
+        class: PHP_SF\System\PHPStan\RepReturnTypeExtension
+        tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]

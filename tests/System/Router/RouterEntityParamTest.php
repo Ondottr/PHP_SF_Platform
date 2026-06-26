@@ -6,6 +6,8 @@ use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
 use PHP_SF\System\Router;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
+use ReflectionProperty;
 
 // ---------------------------------------------------------------------------
 // Stub entity — self-contained, no Doctrine ORM setup required.
@@ -31,12 +33,12 @@ final class TestableRouter extends Router
 
     public static function setRouteParams(array $params): void
     {
-        (new \ReflectionProperty(Router::class, 'routeParams'))->setValue(null, $params);
+        (new ReflectionProperty(Router::class, 'routeParams'))->setValue(null, $params);
     }
 
     public static function getRouteParams(): array
     {
-        return (new \ReflectionProperty(Router::class, 'routeParams'))->getValue(null);
+        return (new ReflectionProperty(Router::class, 'routeParams'))->getValue(null);
     }
 }
 
@@ -46,40 +48,21 @@ final class TestableRouter extends Router
 
 final class StubController
 {
-    public function actionWithEntity(StubEntity $entity): void
-    {
-    }
+    public function actionWithEntity(StubEntity $entity): void {}
 
-    public function actionWithNullableEntity(?StubEntity $entity): void
-    {
-    }
+    public function actionWithNullableEntity(?StubEntity $entity): void {}
 
-    public function actionWithPlainTypes(int $count, string $name): void
-    {
-    }
+    public function actionWithPlainTypes(int $count, string $name): void {}
 
-    public function actionWithMixed(StubEntity $entity, int $page): void
-    {
-    }
+    public function actionWithMixed(StubEntity $entity, int $page): void {}
 }
 
 final class RouterEntityParamTest extends TestCase
 {
     private array $savedRouteParams;
+
     private mixed $savedCurrentRoute;
 
-    protected function setUp(): void
-    {
-        $ref = new \ReflectionProperty(Router::class, 'routeParams');
-        $this->savedRouteParams = $ref->getValue(null);
-        $this->savedCurrentRoute = Router::$currentRoute;
-    }
-
-    protected function tearDown(): void
-    {
-        (new \ReflectionProperty(Router::class, 'routeParams'))->setValue(null, $this->savedRouteParams);
-        Router::$currentRoute = $this->savedCurrentRoute;
-    }
 
     // -----------------------------------------------------------------------
     // checkMethodParameterType — field existence validation at route-registration time
@@ -215,6 +198,19 @@ final class RouterEntityParamTest extends TestCase
         $this->assertSame([], TestableRouter::getRouteParams());
     }
 
+    protected function setUp(): void
+    {
+        $ref = new ReflectionProperty(Router::class, 'routeParams');
+        $this->savedRouteParams = $ref->getValue(null);
+        $this->savedCurrentRoute = Router::$currentRoute;
+    }
+
+    protected function tearDown(): void
+    {
+        (new ReflectionProperty(Router::class, 'routeParams'))->setValue(null, $this->savedRouteParams);
+        Router::$currentRoute = $this->savedCurrentRoute;
+    }
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -230,7 +226,7 @@ final class RouterEntityParamTest extends TestCase
 
     private function callCheckMethodParameterType(string $type, string $propertyName, object $data, int $paramIndex): void
     {
-        $method = new \ReflectionMethod(Router::class, 'checkMethodParameterType');
+        $method = new ReflectionMethod(Router::class, 'checkMethodParameterType');
         $method->invoke(null, $type, $propertyName, $data, $paramIndex);
     }
 }

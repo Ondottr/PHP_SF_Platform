@@ -11,6 +11,10 @@ abstract class MiddlewareType
 {
     public const DEFAULT = MiddlewareAll::class;
 
+
+    /**
+     * @param array<array-key, mixed> $middlewares
+     */
     public function __construct(
         protected readonly string|array $middlewares,
     ) {}

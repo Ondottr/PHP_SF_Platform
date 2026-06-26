@@ -2,6 +2,8 @@
 
 namespace PHP_SF\Tests\System\Classes\Helpers;
 
+use DateTime;
+use InvalidArgumentException;
 use PHP_SF\System\Classes\Helpers\PaginationCursor;
 use PHPUnit\Framework\TestCase;
 
@@ -36,7 +38,7 @@ final class PaginationCursorTest extends TestCase
     public function testDateTimeSerializedToTimestamp(): void
     {
         $ts = 1700000000;
-        $entity = $this->makeEntity(new \DateTime("@{$ts}"), 1);
+        $entity = $this->makeEntity(new DateTime("@{$ts}"), 1);
         $cursor = PaginationCursor::after($entity, 'createdAt');
 
         self::assertIsInt($cursor->field);
@@ -54,7 +56,7 @@ final class PaginationCursorTest extends TestCase
 
     public function testFromStringThrowsOnInvalidBase64(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/not valid base64/');
 
         PaginationCursor::fromString('!!not-base64!!');
@@ -62,7 +64,7 @@ final class PaginationCursorTest extends TestCase
 
     public function testFromStringThrowsOnMissingKeys(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/missing required keys/');
 
         PaginationCursor::fromString(base64_encode(json_encode(['only_id' => 1])));
@@ -75,7 +77,7 @@ final class PaginationCursorTest extends TestCase
 
     public function testTryFromStringThrowsOnInvalidNonNullString(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         PaginationCursor::tryFromString('garbage');
     }
@@ -101,7 +103,7 @@ final class PaginationCursorTest extends TestCase
             // no getCreatedAt()
         };
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/getter getCreatedAt/');
 
         PaginationCursor::after($entity, 'createdAt');
@@ -113,8 +115,7 @@ final class PaginationCursorTest extends TestCase
             public function __construct(
                 private readonly mixed $val,
                 private readonly int $id,
-            ) {
-            }
+            ) {}
 
             public function getCreatedAt(): mixed
             {

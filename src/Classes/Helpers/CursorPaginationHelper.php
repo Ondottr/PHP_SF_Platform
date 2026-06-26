@@ -3,16 +3,19 @@
 namespace PHP_SF\System\Classes\Helpers;
 
 use Doctrine\ORM\QueryBuilder;
+use InvalidArgumentException;
 
 final class CursorPaginationHelper
 {
     public const int DEFAULT_PER_PAGE = 20;
+
     public const int MAX_PER_PAGE = 100;
 
     // Allowlist pattern: DQL identifiers must be word characters only.
     // $sortField and $entityAlias are interpolated into DQL — they must never
     // come from user input. This guard is a last-resort safety net.
     private const IDENTIFIER_PATTERN = '/^[a-zA-Z_][a-zA-Z0-9_]*$/';
+
 
     /**
      * Paginates a Doctrine QueryBuilder using cursor-based pagination.
@@ -30,13 +33,13 @@ final class CursorPaginationHelper
         int $perPage = self::DEFAULT_PER_PAGE,
     ): CursorPaginationResult {
         if (!preg_match(self::IDENTIFIER_PATTERN, $sortField)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 sprintf('Invalid sortField "%s": must be a valid DQL identifier.', $sortField),
             );
         }
 
         if (!preg_match(self::IDENTIFIER_PATTERN, $entityAlias)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 sprintf('Invalid entityAlias "%s": must be a valid DQL identifier.', $entityAlias),
             );
         }

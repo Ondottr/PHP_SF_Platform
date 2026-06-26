@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityRepository;
 
 /**
  * @template T of object
+ *
  * @extends EntityRepository<T>
  */
 abstract class AbstractEntityRepository extends EntityRepository
@@ -15,7 +16,7 @@ abstract class AbstractEntityRepository extends EntityRepository
         $this->getEntityManager()->persist($entity);
 
         if ($flush) {
-            $this->getEntityManager()->flush($entity);
+            $this->getEntityManager()->flush();
         }
     }
 
@@ -24,7 +25,7 @@ abstract class AbstractEntityRepository extends EntityRepository
         $this->getEntityManager()->remove($entity);
 
         if ($flush) {
-            $this->getEntityManager()->flush($entity);
+            $this->getEntityManager()->flush();
         }
     }
 }

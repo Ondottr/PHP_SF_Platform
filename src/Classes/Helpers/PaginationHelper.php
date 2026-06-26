@@ -3,7 +3,9 @@
 namespace PHP_SF\System\Classes\Helpers;
 
 use App\View\Components\pagination;
+use Countable;
 use JetBrains\PhpStorm\ArrayShape;
+use Traversable;
 
 /**
  * Class is used to paginate an iterable object.
@@ -28,12 +30,13 @@ final class PaginationHelper
      */
     private int $totalPages;
 
+
     /**
      * Constructor method.
      *
-     * @param iterable $arr             the iterable object to be paginated
-     * @param int      $messagesPerPage the number of items per page
-     * @param int      $page            the current page number
+     * @param array<array-key, mixed>|(Countable&Traversable<array-key, mixed>) $arr             the iterable object to be paginated
+     * @param int                                                               $messagesPerPage the number of items per page
+     * @param int                                                               $page            the current page number
      */
     public function __construct(
         private readonly iterable $arr,
@@ -45,6 +48,7 @@ final class PaginationHelper
             $this->page = $this->getTotalPages();
         }
     }
+
 
     /**
      * Get the total number of pages.
@@ -66,7 +70,7 @@ final class PaginationHelper
     /**
      * Get the items of the current page.
      *
-     * @return array the items of the current page
+     * @return array<array-key, mixed> the items of the current page
      */
     public function paginate(): array
     {
@@ -95,7 +99,7 @@ final class PaginationHelper
     /**
      * Get the page numbers surrounding the current page.
      *
-     * @return array the page numbers surrounding the current page
+     * @return array<string, int> the page numbers surrounding the current page
      */
     #[ArrayShape(['first' => 'int', 'page2left' => 'int', 'page1left' => 'int', 'current' => 'int', 'page1right' => 'int', 'page2right' => 'int', 'last' => 'int'])]
     public function getPages(): array

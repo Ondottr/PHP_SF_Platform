@@ -23,15 +23,27 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 final class TemplatesCache
 {
     private const TEMPLATES_NAMESPACE = 'PHP_SF\\CachedTemplates';
+
     private const COMPILED_DIR = 'var/cache/templates';
+
 
     private static self $instance;
 
+    /**
+     * @var array<string, string>
+     */
     #[Immutable(Immutable::CONSTRUCTOR_WRITE_SCOPE)]
     private static array $templatesDefinition = [];
 
+    /**
+     * @var list<string>
+     */
     private static array $templatesNamespaces = [];
+    /**
+     * @var list<string>
+     */
     private static array $templatesDirectories = [];
+
 
     /**
      * Constructor for TemplatesCache class.
@@ -55,39 +67,6 @@ final class TemplatesCache
         self::$templatesDefinition = array_combine($this->getTemplatesDirectories(), $this->getTemplatesNamespaces());
     }
 
-    /**
-     * Add the templates namespaces to the list of templates namespaces.
-     */
-    public static function addTemplatesNamespace(string ...$templateNamespaces): void
-    {
-        self::$templatesNamespaces = [
-            ...self::$templatesNamespaces,
-            ...$templateNamespaces,
-        ];
-    }
-
-    /**
-     * Add the templates directories to the list of templates directories.
-     */
-    public static function addTemplatesDirectory(string ...$templateDirectories): void
-    {
-        self::$templatesDirectories = [
-            ...self::$templatesDirectories,
-            ...$templateDirectories,
-        ];
-    }
-
-    /**
-     * Get the instance of the TemplatesCache class.
-     */
-    public static function getInstance(): self
-    {
-        if (false === isset(self::$instance)) {
-            self::setInstance();
-        }
-
-        return self::$instance;
-    }
 
     /**
      * Get the cached template class if it exists.
@@ -124,7 +103,7 @@ final class TemplatesCache
             );
         }
 
-        if (false === isset($newClassName, $currentClassDirectory)) {
+        if (false === isset($newClassName, $currentClassDirectory, $currentNamespace)) {
             return false;
         }
 
@@ -247,6 +226,50 @@ final class TemplatesCache
     }
 
     /**
+     * Get templates definition.
+     *
+     * @return string[]
+     */
+    public function getTemplatesDefinition(): array
+    {
+        return self::$templatesDefinition;
+    }
+
+    /**
+     * Add the templates namespaces to the list of templates namespaces.
+     */
+    public static function addTemplatesNamespace(string ...$templateNamespaces): void
+    {
+        self::$templatesNamespaces = [
+            ...self::$templatesNamespaces,
+            ...$templateNamespaces,
+        ];
+    }
+
+    /**
+     * Add the templates directories to the list of templates directories.
+     */
+    public static function addTemplatesDirectory(string ...$templateDirectories): void
+    {
+        self::$templatesDirectories = [
+            ...self::$templatesDirectories,
+            ...$templateDirectories,
+        ];
+    }
+
+    /**
+     * Get the instance of the TemplatesCache class.
+     */
+    public static function getInstance(): self
+    {
+        if (false === isset(self::$instance)) {
+            self::setInstance();
+        }
+
+        return self::$instance;
+    }
+
+    /**
      * Delete all compiled template files and invalidate OPcache entries.
      * Called by {@link AppCacheClearCommand} when clearing application cache.
      */
@@ -259,16 +282,6 @@ final class TemplatesCache
             }
             unlink($file);
         }
-    }
-
-    /**
-     * Get templates definition.
-     *
-     * @return string[]
-     */
-    public function getTemplatesDefinition(): array
-    {
-        return self::$templatesDefinition;
     }
 
     /**
@@ -289,14 +302,6 @@ final class TemplatesCache
     private function getTemplatesNamespaces(): array
     {
         return self::$templatesNamespaces;
-    }
-
-    /**
-     * Set the instance of the TemplatesCache class.
-     */
-    private static function setInstance(): void
-    {
-        self::$instance = new self();
     }
 
     /**
@@ -343,5 +348,13 @@ final class TemplatesCache
         }
 
         return $s;
+    }
+
+    /**
+     * Set the instance of the TemplatesCache class.
+     */
+    private static function setInstance(): void
+    {
+        self::$instance = new self();
     }
 }

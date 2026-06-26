@@ -29,37 +29,10 @@ class auth extends Middleware
     /**
      * Holds the currently authenticated user, or {@see false} when no session is active.
      *
-     * @var false|UserInterface&AbstractEntity
+     * @var false|(UserInterface&AbstractEntity)
      */
     public static false|UserInterface $user = false;
 
-    /**
-     * Returns a fresh entity instance for the authenticated user (re-fetched from the database),
-     * or {@see false} when no user is authenticated.
-     */
-    final public static function user(): false|UserInterface
-    {
-        if (false !== self::$user) {
-            /**
-             * @var UserInterface&AbstractEntity $userClass
-             */
-            $userClass = Kernel::getApplicationUserClassName();
-
-            return $userClass::find(self::$user->getId());
-        }
-
-        return self::$user;
-    }
-
-    /**
-     * Destroys the current session and clears the in-memory user reference.
-     */
-    public static function logOutUser(): void
-    {
-        s()->clear();
-
-        self::$user = false;
-    }
 
     /**
      * Runs the authentication gate.
@@ -82,6 +55,34 @@ class auth extends Middleware
     }
 
     /**
+     * Returns a fresh entity instance for the authenticated user (re-fetched from the database),
+     * or {@see false} when no user is authenticated.
+     */
+    final public static function user(): false|UserInterface
+    {
+        if (false !== self::$user) {
+            /**
+             * @var class-string<UserInterface&AbstractEntity> $userClass
+             */
+            $userClass = Kernel::getApplicationUserClassName();
+
+            return $userClass::find(self::$user->getId());
+        }
+
+        return self::$user;
+    }
+
+    /**
+     * Destroys the current session and clears the in-memory user reference.
+     */
+    public static function logOutUser(): void
+    {
+        s()->clear();
+
+        self::$user = false;
+    }
+
+    /**
      * Establishes the authenticated user for this request.
      *
      * - Called with no argument (or {@see null}) during bootstrap: reads the user ID from the
@@ -99,7 +100,7 @@ class auth extends Middleware
 
             if (null !== $userId) {
                 /**
-                 * @var UserInterface&AbstractEntity $userClass
+                 * @var class-string<UserInterface&AbstractEntity> $userClass
                  */
                 $userClass = Kernel::getApplicationUserClassName();
                 $user = $userClass::find($userId);

@@ -4,19 +4,10 @@ namespace PHP_SF\Tests\System\Core;
 
 use PHP_SF\System\Core\PhpSfContext;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class PhpSfContextTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->reset();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->reset();
-    }
-
     public function testCurrentReturnsNullInitially(): void
     {
         $this->assertNull(PhpSfContext::current());
@@ -42,7 +33,7 @@ final class PhpSfContextTest extends TestCase
     public function testGetRoute(): void
     {
         $route = (object) ['url' => '/foo', 'name' => 'foo_route'];
-        PhpSfContext::set( new PhpSfContext( $route, [], $GLOBALS['kernel'] ) );
+        PhpSfContext::set(new PhpSfContext($route, [], $GLOBALS['kernel']));
 
         $this->assertSame($route, PhpSfContext::current()->getRoute());
     }
@@ -50,7 +41,7 @@ final class PhpSfContextTest extends TestCase
     public function testGetMiddleware(): void
     {
         $middleware = ['SomeMiddleware', 'AnotherMiddleware'];
-        PhpSfContext::set( new PhpSfContext( (object)[], $middleware, $GLOBALS['kernel'] ) );
+        PhpSfContext::set(new PhpSfContext((object) [], $middleware, $GLOBALS['kernel']));
 
         $this->assertSame($middleware, PhpSfContext::current()->getMiddleware());
     }
@@ -58,18 +49,28 @@ final class PhpSfContextTest extends TestCase
     public function testGetKernel(): void
     {
         $kernel = $GLOBALS['kernel'];
-        PhpSfContext::set( new PhpSfContext( (object)[], [], $kernel ) );
+        PhpSfContext::set(new PhpSfContext((object) [], [], $kernel));
 
         $this->assertSame($kernel, PhpSfContext::current()->getKernel());
     }
 
+    protected function setUp(): void
+    {
+        $this->reset();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->reset();
+    }
+
     private function ctx(string $url): PhpSfContext
     {
-        return new PhpSfContext( (object)[ 'url' => $url ], [], $GLOBALS['kernel'] );
+        return new PhpSfContext((object) ['url' => $url], [], $GLOBALS['kernel']);
     }
 
     private function reset(): void
     {
-        (new \ReflectionClass(PhpSfContext::class))->getProperty('current')->setValue(null, null);
+        (new ReflectionClass(PhpSfContext::class))->getProperty('current')->setValue(null, null);
     }
 }

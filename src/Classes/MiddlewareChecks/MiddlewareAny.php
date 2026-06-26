@@ -66,11 +66,13 @@ final class MiddlewareAny extends MiddlewareType
             return true;
         }
 
+        $mResult = false;
+
         // Loop through each middleware to be executed and check its result.
         foreach ($middlewares as $middleware) {
             // Instantiate the middleware class
             $mResult = (new $middleware())
-                    ->execute();
+                ->execute();
 
             // If the middleware result is not true, send the result and exit.
             if (true === $mResult) {

@@ -2,6 +2,8 @@
 
 namespace PHP_SF\System\Core;
 
+use function function_exists;
+
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
@@ -12,12 +14,18 @@ use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-use function function_exists;
-
 final class Response extends \Symfony\Component\HttpFoundation\Response
 {
+    /**
+     * @var list<string>
+     */
     public static array $activeTemplates = [];
 
+
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, mixed>  $dataFromController
+     */
     public function __construct(
         #[ExpectedValues(valuesFromClass: parent::class)]
         public readonly int $status = 200,
@@ -27,6 +35,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     ) {
         parent::__construct(status: $status, headers: $headers);
     }
+
 
     /**
      * Renders the full page (header + view + footer) into a string and stores it

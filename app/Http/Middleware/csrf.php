@@ -5,7 +5,6 @@ namespace PHP_SF\Framework\Http\Middleware;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Router;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Global CSRF middleware — registered via Router::addGlobalMiddleware( csrf::class ).
@@ -22,7 +21,8 @@ final class csrf extends Middleware
 {
     private const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-    protected function result(): bool|RedirectResponse|JsonResponse
+
+    protected function result(): bool|RedirectResponse
     {
         if (!in_array(Router::$currentRoute->httpMethod, self::MUTATING_METHODS, true)) {
             return true;

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace PHP_SF\Framework\Http\Controller\Api;
 
+use Memcached;
 use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,7 +18,7 @@ class ApiCacheController extends AbstractController
         }
 
         rca()->clear();
-        if (class_exists(\Memcached::class)) {
+        if (class_exists(Memcached::class)) {
             mca()->clear();
         }
 
