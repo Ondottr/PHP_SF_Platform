@@ -38,7 +38,9 @@
     "phpstan/phpstan-phpunit": "^2.0"
   },
   "scripts": {
-    "stan": "phpstan analyse --no-progress"
+    "stan": "phpstan analyse --no-progress",
+    "cs-fix": "php-cs-fixer fix",
+    "cs-check": "php-cs-fixer fix --dry-run --diff"
   },
   "extra": {
     "phpstan": {
