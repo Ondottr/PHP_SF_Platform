@@ -37,6 +37,10 @@
     "phpstan/phpstan-symfony": "^2.0",
     "phpstan/phpstan-phpunit": "^2.0"
   },
+  "suggest": {
+    "symfony/twig-bundle": "Render *.twig templates from PHP_SF controllers via render()",
+    "eftec/bladeone": "Render *.blade.php templates from PHP_SF controllers via render()"
+  },
   "scripts": {
     "stan": "phpstan analyse --no-progress",
     "cs-fix": "php-cs-fixer fix",

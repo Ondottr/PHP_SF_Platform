@@ -4,6 +4,7 @@ namespace PHP_SF\System\Classes\Abstracts;
 
 use InvalidArgumentException;
 use PHP_SF\System\Core\Response;
+use PHP_SF\System\Core\TemplateEngineRegistry;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\HeaderComponents\head;
@@ -50,10 +51,28 @@ abstract class AbstractView
     }
 
     /**
+     * Includes another view or template file. Besides class-based views, template
+     * file names are dispatched to a registered template engine by extension,
+     * e.g. `partials/menu.html.twig` or `partials/menu.blade.php`.
+     *
      * @param array<string, mixed> $data
      */
     final protected function import(string $view, array $data = [], bool $htmlClassTagEnabled = true): void
     {
+        if (null !== $engine = TemplateEngineRegistry::resolve($view)) {
+            if ($htmlClassTagEnabled) {
+                echo sprintf('<div class="%s">', TemplateEngineRegistry::templateCssClass($view));
+            }
+
+            echo $engine->render($view, [...$this->data, ...$data]);
+
+            if ($htmlClassTagEnabled) {
+                echo '</div>';
+            }
+
+            return;
+        }
+
         if (TEMPLATES_CACHE_ENABLED) {
             $view = TemplatesCache::getInstance()->getCachedTemplateClass($view) ?: $view;
         }

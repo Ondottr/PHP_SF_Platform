@@ -127,7 +127,11 @@ final class TemplatesCache
             foreach ($imports as $str) {
                 $importedView = trim(explode('::class', $str)[0]);
 
-                if (!str_contains($importedView, '\\')
+                // quoted string arguments are template engine references
+                // (e.g. 'partials/menu.html.twig'), not view classes — never rewrite those
+                if (!str_starts_with($importedView, "'")
+                    && !str_starts_with($importedView, '"')
+                    && !str_contains($importedView, '\\')
                     && !str_contains($fileContent, sprintf('\%s;', $importedView))
                 ) {
                     $fileContent = str_replace(
