@@ -3,11 +3,13 @@
 namespace PHP_SF\Framework\Http\Controller\Api;
 
 use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Attributes\RouteApi;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Core\Lang;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 
+#[RouteApi]
 final class ApiLanguageController extends AbstractController
 {
     #[Route(url: 'api/lang/change_language', httpMethod: 'POST')]

@@ -99,11 +99,12 @@ final class PhpSfControllerListener implements EventSubscriberInterface
             'method' => $ctrlMethod,
             'httpMethod' => $request->getMethod(),
             'middleware' => $request->attributes->get('_php_sf_middleware', []),
+            'api' => $request->attributes->get('_php_sf_api'),
         ];
 
         // Replace the callable: ControllerResolver would do `new $class()`,
         // here we forward route params correctly.
-        $event->setController(static function () use ($class, $method, $request, $routeUrl): mixed {
+        $event->setController(static function () use ($class, $method, $request): mixed {
             $instance = new $class();
 
             $rawParams = [];
@@ -138,7 +139,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
                     $entity = $type::findOneBy([$urlPlaceholderName => $value]);
 
                     if (null === $entity && false === $reflectionType->allowsNull()) {
-                        if (str_starts_with($routeUrl, '/api/')) {
+                        if (Router::isApiRoute()) {
                             return new JsonResponse(['error' => _t('common.errors.not_found')], JsonResponse::HTTP_NOT_FOUND);
                         }
 
@@ -193,8 +194,7 @@ final class PhpSfControllerListener implements EventSubscriberInterface
         // Render the page (header + view + footer) into $response->content so that
         // KernelBrowser can read it via getContent().
         if ($response instanceof PhpSfResponse) {
-            $routeUrl = $event->getRequest()->attributes->get('_php_sf_url', '/');
-            $response->captureContent($routeUrl);
+            $response->captureContent();
         }
     }
 

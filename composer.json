@@ -26,7 +26,8 @@
   "prefer-stable": true,
   "require": {
     "php": "8.3.*",
-    "nations-original/php-sf-cache": "^2.0"
+    "nations-original/php-sf-cache": "^2.0",
+    "symfony/deprecation-contracts": "^3.7"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
@@ -35,7 +36,13 @@
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan-doctrine": "^2.0",
     "phpstan/phpstan-symfony": "^2.0",
-    "phpstan/phpstan-phpunit": "^2.0"
+    "phpstan/phpstan-phpunit": "^2.0",
+    "twig/twig": "^3.0",
+    "eftec/bladeone": "^4.19"
+  },
+  "suggest": {
+    "symfony/twig-bundle": "Render *.twig templates from PHP_SF controllers via render()",
+    "eftec/bladeone": "Render *.blade.php templates from PHP_SF controllers via render()"
   },
   "scripts": {
     "stan": "phpstan analyse --no-progress",

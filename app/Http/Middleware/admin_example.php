@@ -25,7 +25,7 @@ final class admin_example extends Middleware
     public function result(): bool|RedirectResponse|JsonResponse
     {
         if (false === auth::isAuthenticated()) {
-            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
+            if (Router::isApiRoute()) {
                 return new JsonResponse(
                     ['error' => 'Unauthorized!'],
                     JsonResponse::HTTP_UNAUTHORIZED,

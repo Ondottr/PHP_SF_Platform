@@ -25,6 +25,11 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     /**
      * @param array<string, string> $headers
      * @param array<string, mixed>  $dataFromController
+     * @param string|null           $renderedContent    Output of a template engine (Twig, Blade, …);
+     *                                                  used instead of a class-based view
+     * @param string|null           $contentCssClass    CSS class of the wrapper div around rendered content,
+     *                                                  mirroring the short-class-name wrapper of class views
+     * @param bool                  $useLayout          Whether to wrap the response in the header/footer layout
      */
     public function __construct(
         #[ExpectedValues(valuesFromClass: parent::class)]
@@ -32,6 +37,9 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
         array $headers = [],
         private readonly ?AbstractView $view = null,
         private readonly array $dataFromController = [],
+        private readonly ?string $renderedContent = null,
+        private readonly ?string $contentCssClass = null,
+        private readonly bool $useLayout = true,
     ) {
         parent::__construct(status: $status, headers: $headers);
     }
@@ -42,14 +50,14 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
      * via {@see setContent()} so that Symfony's KernelBrowser can read it in tests.
      * Unlike {@see send()}, this method does NOT flush the output buffer or call exit().
      */
-    public function captureContent(string $routeUrl): void
+    public function captureContent(): void
     {
         ob_start();
 
         try {
-            $isApi = str_starts_with($routeUrl, '/api/');
+            $withLayout = $this->useLayout && false === Router::isApiRoute();
 
-            if (!$isApi) {
+            if ($withLayout) {
                 (new (Kernel::getHeaderTemplateClassName())($this->dataFromController))->show();
             }
 
@@ -58,9 +66,15 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
                 echo '<div class="' . array_pop($array) . '">';
                 $this->view->show();
                 echo '</div>';
+            } elseif (null !== $this->renderedContent) {
+                if ($withLayout) {
+                    echo '<div class="' . $this->contentCssClass . '">' . $this->renderedContent . '</div>';
+                } else {
+                    echo $this->renderedContent;
+                }
             }
 
-            if (!$isApi) {
+            if ($withLayout) {
                 (new (Kernel::getFooterTemplateClassName())($this->dataFromController))->show();
             }
 
@@ -79,7 +93,9 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     #[NoReturn]
     public function send(bool $flush = true): never
     {
-        if (false === str_starts_with(Router::$currentRoute->url, '/api/')) {
+        $withLayout = $this->useLayout && false === Router::isApiRoute();
+
+        if ($withLayout) {
             $headerClassName = (
                 TEMPLATES_CACHE_ENABLED
                 ? TemplatesCache::getInstance()->getCachedTemplateClass(Kernel::getHeaderTemplateClassName())
@@ -97,9 +113,15 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             </div>
 
             <?php
+        } elseif (null !== $this->renderedContent) {
+            if ($withLayout) {
+                echo '<div class="' . $this->contentCssClass . '">' . $this->renderedContent . '</div>';
+            } else {
+                echo $this->renderedContent;
+            }
         }
 
-        if (false === str_starts_with(Router::$currentRoute->url, '/api/')) {
+        if ($withLayout) {
             $footerClassName = (
                 TEMPLATES_CACHE_ENABLED
                 ? TemplatesCache::getInstance()->getCachedTemplateClass(Kernel::getFooterTemplateClassName())
@@ -116,7 +138,6 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
             fastcgi_finish_request();
         }
         if (function_exists('litespeed_finish_request')) {
-            /** @noinspection PhpUndefinedFunctionInspection */
             litespeed_finish_request();
         }
 

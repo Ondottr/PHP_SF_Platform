@@ -38,13 +38,13 @@ class auth extends Middleware
      * Runs the authentication gate.
      *
      * Returns {@see true} when a valid session exists.
-     * Unauthenticated requests to {@code /api/*} routes receive a 401 JSON response;
+     * Unauthenticated requests to API routes (#[RouteApi]) receive a 401 JSON response;
      * all other unauthenticated requests are redirected to the named {@code login_page} route.
      */
     final public function result(): bool|RedirectResponse|JsonResponse
     {
         if (false === self::isAuthenticated()) {
-            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
+            if (Router::isApiRoute()) {
                 return ApiResponse::unauthorized();
             }
 

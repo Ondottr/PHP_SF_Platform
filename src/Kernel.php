@@ -6,8 +6,10 @@ use LogicException;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
+use PHP_SF\System\Core\TemplateEngineRegistry;
 use PHP_SF\System\Core\TemplatesCache;
 use PHP_SF\System\Core\TranslatorV2;
+use PHP_SF\System\Interface\TemplateEngineInterface;
 use PHP_SF\System\Interface\UserInterface;
 use PHP_SF\Templates\Layout\footer;
 use PHP_SF\Templates\Layout\header;
@@ -97,6 +99,18 @@ final class Kernel implements HttpKernelInterface
     {
         TemplatesCache::addTemplatesNamespace($namespaceName);
         TemplatesCache::addTemplatesDirectory($templatesDirectoryName);
+
+        return $this;
+    }
+
+    /**
+     * Registers an additional template engine usable from controller `render()`
+     * calls and view `import()` calls. Built-in Twig and Blade engines register
+     * themselves automatically when their backing library is installed.
+     */
+    public function addTemplateEngine(TemplateEngineInterface $engine): self
+    {
+        TemplateEngineRegistry::add($engine);
 
         return $this;
     }

@@ -5,6 +5,7 @@ namespace PHP_SF\Framework\Http\Controller\Defaults;
 use App\Kernel;
 use PHP_SF\Framework\Http\Middleware\auth;
 use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Attributes\RouteApi;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
@@ -32,6 +33,7 @@ final class DefaultController extends AbstractController
     /**
      * @noinspection ForgottenDebugOutputInspection
      */
+    #[RouteApi]
     #[Route(url: 'api/routes_list', httpMethod: 'GET')]
     final public function api_routes_list(): JsonResponse
     {
