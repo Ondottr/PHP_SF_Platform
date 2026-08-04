@@ -5,16 +5,19 @@ namespace PHP_SF\System;
 
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Attributes\RouteApi;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Classes\Exception\InvalidRouteMethodParameterTypeException;
+use PHP_SF\System\Classes\Exception\InvalidRouteReturnTypeException;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
 use PHP_SF\System\Classes\Exception\ViewException;
 use PHP_SF\System\Classes\MiddlewareChecks\MiddlewaresExecutor;
 use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\PhpSfContext;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
+use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Core\Response;
 use PHP_SF\System\Core\TranslatorV2;
 use PHP_SF\System\Traits\RedirectTrait;
@@ -25,6 +28,7 @@ use ReflectionNamedType;
 use ReflectionUnionType;
 use RuntimeException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
@@ -39,7 +43,7 @@ use Symfony\Component\VarDumper\VarDumper;
 use Throwable;
 
 /**
- * @phpstan-type RouteData array{url: string, class: class-string, method: string, name: string, httpMethod: string, middleware: mixed, routeParams: list<string>}
+ * @phpstan-type RouteData array{url: string, class: class-string, method: string, name: string, httpMethod: string, middleware: mixed, routeParams: list<string>, api: bool|null}
  */
 class Router
 {
@@ -211,6 +215,41 @@ class Router
         return self::$requestData;
     }
 
+    /**
+     * Whether the given route (or the currently matched one by default) is an API route.
+     *
+     * Uses the `api` flag resolved from #[RouteApi] attributes at route-registration time.
+     * Routes without the attribute fall back to the deprecated `/api/` URL-prefix detection
+     * (deprecated since 3.2, removed in 4.0).
+     */
+    public static function isApiRoute(?object $route = null): bool
+    {
+        $route ??= static::$currentRoute;
+
+        if (null === $route) {
+            return false;
+        }
+
+        if (isset($route->api)) {
+            return true === $route->api;
+        }
+
+        if (false === str_starts_with($route->url, '/api/')) {
+            return false;
+        }
+
+        trigger_deprecation(
+            'nations-original/php-simple-framework',
+            '3.2',
+            'Route "%s" is recognized as API by the "/api/" URL prefix, which is deprecated. '
+            . 'Add the #[RouteApi] attribute to the controller class or method instead; '
+            . 'prefix-based detection will be removed in 4.0.',
+            $route->url,
+        );
+
+        return true;
+    }
+
     protected static function parseRoutes(): void
     {
         if (false === empty(self::$routesList)) {
@@ -300,13 +339,22 @@ class Router
     protected static function routesFromController(string $namespace, string $fileName): void
     {
         $reflectionClass = new ReflectionClass("$namespace\\$fileName");
+
+        $classApiAttributes = $reflectionClass->getAttributes(RouteApi::class);
+        $classApi = empty($classApiAttributes) ? null : end($classApiAttributes)->newInstance()->api;
+
         $routeMethods = [];
+        $explicitApiMode = null !== $classApi;
 
         foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
             $routeAttributes = $reflectionMethod->getAttributes(Route::class);
 
             if (!empty($routeAttributes)) {
                 $routeMethods[] = $reflectionMethod;
+
+                if (!empty($reflectionMethod->getAttributes(RouteApi::class))) {
+                    $explicitApiMode = true;
+                }
             }
         }
 
@@ -332,6 +380,7 @@ class Router
                     'name' => $arguments['name'] ?? $routeMethod->getName(),
                     'method' => $routeMethod->getName(),
                     'middleware' => $arguments['middleware'] ?? null,
+                    'api' => self::resolveRouteApiFlag($routeMethod, $explicitApiMode, $classApi),
                 ],
             );
         }
@@ -367,6 +416,7 @@ class Router
             'httpMethod' => $data->httpMethod,
             'middleware' => $data->middleware,
             'routeParams' => $routeParams,
+            'api' => $data->api ?? null,
         ];
 
         self::checkParams((object) $data);
@@ -379,7 +429,8 @@ class Router
      *
      * @param object $data The object containing data for route definition
      *
-     * @throws RouteParameterException If the provided data object contains invalid parameters for route definition
+     * @throws RouteParameterException         If the provided data object contains invalid parameters for route definition
+     * @throws InvalidRouteReturnTypeException If an API route declares a return type that is not allowed for API routes
      * @throws ReflectionException
      */
     protected static function checkParams(object $data): void
@@ -421,6 +472,9 @@ class Router
 
         // Check if method parameters are of allowed types
         self::checkMethodParameterTypes($data);
+
+        // Check if the declared return type is allowed for API routes
+        self::checkApiRouteReturnType($data);
 
         // Check if HTTP method is allowed
         if (false === \array_key_exists($data->httpMethod, self::ALLOWED_HTTP_METHODS)) {
@@ -674,6 +728,70 @@ class Router
         exit;
     }
 
+    /**
+     * Resolves the API flag of a single route from #[RouteApi] attributes.
+     *
+     * Returns the declared value (method attribute wins over class attribute), or null when
+     * the route is not explicitly declared — null keeps the deprecated `/api/` URL-prefix
+     * detection as fallback. A controller enters "explicit mode" (no prefix fallback for any
+     * of its routes) as soon as the attribute appears on the class or on any routed method.
+     */
+    private static function resolveRouteApiFlag(ReflectionMethod $routeMethod, bool $explicitApiMode, ?bool $classApi): ?bool
+    {
+        $apiAttributes = $routeMethod->getAttributes(RouteApi::class);
+
+        if (!empty($apiAttributes)) {
+            return end($apiAttributes)->newInstance()->api;
+        }
+
+        return $explicitApiMode ? ($classApi ?? false) : null;
+    }
+
+    /**
+     * Validates the declared return type of an API route method.
+     *
+     * API routes may only return a Response or JsonResponse (subclasses included) and must
+     * never return a RedirectResponse — the redirect's JavaScript payload would corrupt the
+     * JSON response. Enforced at route-registration time for routes marked with #[RouteApi]
+     * and for routes classified as API by the deprecated `/api/` URL-prefix fallback.
+     * Methods without a declared return type cannot be validated statically and are skipped.
+     *
+     * @throws InvalidRouteReturnTypeException When the declared return type is not allowed for an API route
+     * @throws ReflectionException
+     */
+    private static function checkApiRouteReturnType(object $data): void
+    {
+        $api = $data->api ?? null;
+
+        if (false === (true === $api || (null === $api && str_starts_with($data->url, '/api/')))) {
+            return;
+        }
+
+        $returnType = (new ReflectionMethod($data->class, $data->method))->getReturnType();
+
+        if (null === $returnType) {
+            return;
+        }
+
+        foreach ($returnType instanceof ReflectionUnionType ? $returnType->getTypes() : [$returnType] as $type) {
+            if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
+                throw new InvalidRouteReturnTypeException((string) $type, $data);
+            }
+
+            $typeName = $type->getName();
+
+            // PHP_SF's RedirectResponse extends the framework Response, not Symfony's
+            // RedirectResponse — both redirect hierarchies must be rejected explicitly
+            if (
+                is_a($typeName, RedirectResponse::class, true)
+                || is_a($typeName, SymfonyRedirectResponse::class, true)
+                || false === is_a($typeName, SymfonyResponse::class, true)
+            ) {
+                throw new InvalidRouteReturnTypeException($typeName, $data);
+            }
+        }
+    }
+
     private static function checkMethodParameterTypes(object $data): void
     {
         $reflectionMethod = new ReflectionMethod($data->class, $data->method);
@@ -878,7 +996,7 @@ class Router
     #[NoReturn]
     private static function sendEntityNotFoundResponse(): never
     {
-        self::$routeMethodResponse = str_starts_with(static::$currentRoute->url, '/api/')
+        self::$routeMethodResponse = static::isApiRoute()
             ? ApiResponse::notFound()
             : new Response(status: SymfonyResponse::HTTP_NOT_FOUND);
 

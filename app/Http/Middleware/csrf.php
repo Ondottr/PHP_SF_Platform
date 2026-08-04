@@ -11,7 +11,7 @@ use PHP_SF\System\Router;
  *
  * Automatically skips:
  *   - Non-mutating HTTP methods (GET, HEAD, OPTIONS)
- *   - Routes whose URL starts with "/api/"
+ *   - API routes (#[RouteApi]; deprecated fallback: URL starts with "/api/")
  *   - Routes that include the no_csrf marker in their own middleware list
  *
  * To opt a route out, add no_csrf::class to its middleware:
@@ -28,7 +28,7 @@ final class csrf extends Middleware
             return true;
         }
 
-        if (str_starts_with(Router::$currentRoute->url, '/api/')) {
+        if (Router::isApiRoute()) {
             return true;
         }
 

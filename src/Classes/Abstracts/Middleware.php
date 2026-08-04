@@ -31,7 +31,7 @@ abstract class Middleware
         }
 
         if (false === $middlewareResult) {
-            if (str_starts_with(Router::$currentRoute->url, '/api/')) {
+            if (Router::isApiRoute()) {
                 $middlewareResult = ApiResponse::forbidden();
             } else {
                 $middlewareResult = $this->redirectBack(errors: [_t('common.errors.access_denied')]);

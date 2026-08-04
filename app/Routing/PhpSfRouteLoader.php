@@ -50,6 +50,7 @@ final class PhpSfRouteLoader extends Loader
                         '_controller' => $route['class'] . '::' . $route['method'],
                         '_php_sf_url' => $route['url'],
                         '_php_sf_middleware' => $route['middleware'] ?? [],
+                        '_php_sf_api' => $route['api'] ?? null,
                     ]),
             );
         }

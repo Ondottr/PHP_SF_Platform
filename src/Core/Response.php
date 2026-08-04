@@ -2,6 +2,8 @@
 
 namespace PHP_SF\System\Core;
 
+use function function_exists;
+
 use JetBrains\PhpStorm\ExpectedValues;
 use JetBrains\PhpStorm\NoReturn;
 use PHP_SF\System\Classes\Abstracts\AbstractView;
@@ -11,8 +13,6 @@ use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
-
-use function function_exists;
 
 final class Response extends \Symfony\Component\HttpFoundation\Response
 {
@@ -50,12 +50,12 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
      * via {@see setContent()} so that Symfony's KernelBrowser can read it in tests.
      * Unlike {@see send()}, this method does NOT flush the output buffer or call exit().
      */
-    public function captureContent(string $routeUrl): void
+    public function captureContent(): void
     {
         ob_start();
 
         try {
-            $withLayout = $this->useLayout && !str_starts_with($routeUrl, '/api/');
+            $withLayout = $this->useLayout && false === Router::isApiRoute();
 
             if ($withLayout) {
                 (new (Kernel::getHeaderTemplateClassName())($this->dataFromController))->show();
@@ -93,7 +93,7 @@ final class Response extends \Symfony\Component\HttpFoundation\Response
     #[NoReturn]
     public function send(bool $flush = true): never
     {
-        $withLayout = $this->useLayout && false === str_starts_with(Router::$currentRoute->url, '/api/');
+        $withLayout = $this->useLayout && false === Router::isApiRoute();
 
         if ($withLayout) {
             $headerClassName = (

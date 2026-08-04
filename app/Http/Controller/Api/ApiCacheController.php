@@ -5,9 +5,11 @@ namespace PHP_SF\Framework\Http\Controller\Api;
 
 use Memcached;
 use PHP_SF\System\Attributes\Route;
+use PHP_SF\System\Attributes\RouteApi;
 use PHP_SF\System\Classes\Abstracts\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+#[RouteApi]
 class ApiCacheController extends AbstractController
 {
     #[Route(url: 'api/cache_clear/all', httpMethod: 'GET')]
