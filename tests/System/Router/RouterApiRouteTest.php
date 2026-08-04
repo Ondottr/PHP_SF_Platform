@@ -45,6 +45,14 @@ final class StubNonApiClassController
     public function optedOut(): void {}
 }
 
+#[RouteApi(false)]
+final class StubOptInOverrideController
+{
+    #[RouteApi]
+    #[Route(url: '/opt_in_override', httpMethod: 'GET')]
+    public function optIn(): JsonResponse {}
+}
+
 final class StubLegacyController
 {
     #[Route(url: '/api/legacy', httpMethod: 'GET')]
@@ -162,6 +170,16 @@ final class RouterApiRouteTest extends TestCase
         $this->assertFalse($routes['optedOut']['api']);
     }
 
+    public function testMethodAttributeOptInOverridesClassLevelFalse(): void
+    {
+        $this->parseController(StubOptInOverrideController::class);
+
+        $routes = Router::getRoutesList();
+
+        // method-level #[RouteApi] overrides the class-level #[RouteApi(false)]
+        $this->assertTrue($routes['optIn']['api']);
+    }
+
     public function testNoAttributeKeepsLegacyNullFlag(): void
     {
         $this->parseController(StubLegacyController::class);
@@ -239,7 +257,7 @@ final class RouterApiRouteTest extends TestCase
 
     public function testIsApiRouteFallsBackToPrefixWithDeprecation(): void
     {
-        Router::$currentRoute = (object) ['url' => '/api/legacy'];
+        Router::$currentRoute = (object) ['url' => '/api/legacy', 'api' => null];
 
         [$result, $deprecations] = $this->captureDeprecations(static fn (): bool => Router::isApiRoute());
 
@@ -251,7 +269,7 @@ final class RouterApiRouteTest extends TestCase
 
     public function testIsApiRoutePrefixMissTriggersNoDeprecation(): void
     {
-        Router::$currentRoute = (object) ['url' => '/page'];
+        Router::$currentRoute = (object) ['url' => '/page', 'api' => null];
 
         [$result, $deprecations] = $this->captureDeprecations(static fn (): bool => Router::isApiRoute());
 

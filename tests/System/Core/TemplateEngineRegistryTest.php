@@ -2,11 +2,13 @@
 
 namespace PHP_SF\Tests\System\Core;
 
+use eftec\bladeone\BladeOne;
 use PHP_SF\System\Classes\TemplateEngines\BladeOneTemplateEngine;
 use PHP_SF\System\Classes\TemplateEngines\TwigTemplateEngine;
 use PHP_SF\System\Core\TemplateEngineRegistry;
 use PHP_SF\Tests\System\Core\Fixtures\StubTemplateEngine;
 use PHPUnit\Framework\TestCase;
+use Twig\Environment;
 
 final class TemplateEngineRegistryTest extends TestCase
 {
@@ -37,8 +39,8 @@ final class TemplateEngineRegistryTest extends TestCase
 
     public function testBuiltInTwigEngineRegisteredWhenAvailable(): void
     {
-        if (false === class_exists(\Twig\Environment::class) || false === class_exists(\App\Kernel::class)) {
-            self::markTestSkipped('Twig and the application kernel are required for this test.');
+        if (false === class_exists(Environment::class)) {
+            self::markTestSkipped('Twig is required for this test.');
         }
 
         self::assertInstanceOf(
@@ -49,7 +51,7 @@ final class TemplateEngineRegistryTest extends TestCase
 
     public function testBuiltInBladeEngineRegisteredWhenAvailable(): void
     {
-        if (false === class_exists(\eftec\bladeone\BladeOne::class)) {
+        if (false === class_exists(BladeOne::class)) {
             self::markTestSkipped('BladeOne is required for this test.');
         }
 

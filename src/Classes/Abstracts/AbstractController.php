@@ -50,6 +50,6 @@ abstract class AbstractController
             throw new InvalidConfigurationException();
         }
 
-        return new Response(view: $view, dataFromController: $data);
+        return new Response(view: $view, dataFromController: $data, useLayout: $useLayout);
     }
 }

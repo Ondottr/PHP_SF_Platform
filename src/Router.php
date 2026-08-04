@@ -54,6 +54,16 @@ class Router
         'GET' => '', 'POST' => '', 'PUT' => '', 'PATCH' => '', 'DELETE' => '',
     ];
 
+    /**
+     * Suffix versioning the route cache keys. Bump whenever the serialized route
+     * schema gains or changes a field (e.g. the #[RouteApi] `api` flag added in 3.2),
+     * so entries written by an older version cannot shadow the new field: a stale
+     * entry lacking the field would make isApiRoute() fall back to the deprecated
+     * `/api/` prefix and misclassify freshly declared API routes until the cache
+     * naturally expires.
+     */
+    private const string ROUTE_CACHE_SCHEMA = ':v2';
+
     public static ?object $currentRoute = null;
 
     /**
@@ -256,14 +266,14 @@ class Router
             return;
         }
 
-        $routesList = ca()->get('cache:routes_list');
+        $routesList = ca()->get('cache:routes_list' . self::ROUTE_CACHE_SCHEMA);
         if (null === $routesList) {
             foreach (static::getControllersDirectories() as $controllersDirectory) {
                 static::controllersFromDir($controllersDirectory);
             }
 
             if (DEV_MODE === false) {
-                ca()->set('cache:routes_list', j_encode(self::$routesList), null);
+                ca()->set('cache:routes_list' . self::ROUTE_CACHE_SCHEMA, j_encode(self::$routesList), null);
             }
         } else {
             self::$routesList = j_decode($routesList, true);
@@ -273,7 +283,7 @@ class Router
             return;
         }
 
-        $routesByUrl = ca()->get('cache:routes_by_url_list');
+        $routesByUrl = ca()->get('cache:routes_by_url_list' . self::ROUTE_CACHE_SCHEMA);
         if (null !== $routesByUrl) {
             self::$routesByUrl = j_decode($routesByUrl, true);
 
@@ -285,7 +295,7 @@ class Router
         }
 
         if (DEV_MODE === false) {
-            ca()->set('cache:routes_by_url_list', j_encode(self::$routesByUrl), null);
+            ca()->set('cache:routes_by_url_list' . self::ROUTE_CACHE_SCHEMA, j_encode(self::$routesByUrl), null);
         }
     }
 
@@ -509,9 +519,9 @@ class Router
         $currentUrl = static::getCurrentRequestUrl();
         $urlHash = hash('sha256', $currentUrl);
 
-        if (ca()->get(sprintf('parsed_url:%s:%s', $httpMethod, $urlHash))) {
-            static::$currentRoute = j_decode(ca()->get(sprintf('parsed_url:%s:route:%s', $httpMethod, $urlHash)));
-            self::$routeParams = j_decode(ca()->get(sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash)), true);
+        if (ca()->get(sprintf('parsed_url:%s:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash))) {
+            static::$currentRoute = j_decode(ca()->get(sprintf('parsed_url:%s:route:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash)));
+            self::$routeParams = j_decode(ca()->get(sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash)), true);
 
             return true;
         }
@@ -533,9 +543,9 @@ class Router
                 static::$currentRoute = (object) self::$routesByUrl[$httpMethod][$currentUrl];
 
                 ca()->setMultiple([
-                    sprintf('parsed_url:%s:%s', $httpMethod, $urlHash) => $currentUrl,
-                    sprintf('parsed_url:%s:route:%s', $httpMethod, $urlHash) => j_encode(static::$currentRoute),
-                    sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash) => j_encode([]),
+                    sprintf('parsed_url:%s:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => $currentUrl,
+                    sprintf('parsed_url:%s:route:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode(static::$currentRoute),
+                    sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode([]),
                 ]);
 
                 return true;
@@ -602,9 +612,9 @@ class Router
 
             // Store the selected URL, route and its parameters in a cache
             ca()->setMultiple([
-                sprintf('parsed_url:%s:%s', $httpMethod, $urlHash) => $currentUrl,
-                sprintf('parsed_url:%s:route:%s', $httpMethod, $urlHash) => j_encode(static::$currentRoute),
-                sprintf('parsed_url:%s:route_params:%s', $httpMethod, $urlHash) => j_encode(self::$routeParams),
+                sprintf('parsed_url:%s:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => $currentUrl,
+                sprintf('parsed_url:%s:route:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode(static::$currentRoute),
+                sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode(self::$routeParams),
             ]);
         }
 
