@@ -106,7 +106,28 @@ function routeLink(string $routeName, array $pathParams = [], array $queryParams
         if (false === empty($pathParams)) {
             // Replace parameters in route link
             foreach ($pathParams as $propertyName => $propertyValue) {
-                $link = str_replace(sprintf('{%s}', $propertyName), (string) $propertyValue, $link);
+                $placeholder = sprintf('{%s}', $propertyName);
+
+                // A placeholder name may repeat in one URL (e.g. `/users/{id}/payment/{id}`).
+                // A list value fills the occurrences left to right, one value each; a scalar
+                // fills them all, which is what a single-occurrence URL needs anyway.
+                if (is_array($propertyValue)) {
+                    $occurrences = substr_count($link, $placeholder);
+
+                    if (count($propertyValue) !== $occurrences) {
+                        throw new RouteParameterExpectedException($routeName, $propertyName);
+                    }
+
+                    foreach ($propertyValue as $value) {
+                        $position = strpos($link, $placeholder);
+
+                        $link = substr_replace($link, (string) $value, $position, strlen($placeholder));
+                    }
+
+                    continue;
+                }
+
+                $link = str_replace($placeholder, (string) $propertyValue, $link);
             }
         }
 

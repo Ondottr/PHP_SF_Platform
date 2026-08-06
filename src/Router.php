@@ -62,7 +62,19 @@ class Router
      * `/api/` prefix and misclassify freshly declared API routes until the cache
      * naturally expires.
      */
-    private const string ROUTE_CACHE_SCHEMA = ':v2';
+    private const string ROUTE_CACHE_SCHEMA = ':v3';
+
+    /**
+     * Entity property a route parameter falls back to when the URL placeholder names a
+     * foreign key rather than a property of the bound entity — see
+     * {@see self::resolveEntityLookupField()}.
+     */
+    private const string ENTITY_LOOKUP_FALLBACK_FIELD = 'id';
+
+    /**
+     * URL placeholders naming a key rather than a property: `{paymentId}`, `{payment_id}`.
+     */
+    private const string FOREIGN_KEY_PLACEHOLDER_PATTERN = '/(?:[a-z0-9]Id|_id)$/';
 
     public static ?object $currentRoute = null;
 
@@ -75,6 +87,20 @@ class Router
 
     private static SymfonyResponse $routeMethodResponse;
     /**
+     * Raw URL placeholder values for the current request, in URL order.
+     *
+     * Positional rather than name-keyed, so a URL may repeat a placeholder name:
+     * `/crud/users/{id}/payment/{id}` yields two entries instead of one overwriting
+     * the other. Binding to controller arguments is positional too.
+     *
+     * @var list<array{name: string, value: string}>
+     */
+    private static array $urlParams = [];
+
+    /**
+     * Controller arguments resolved from {@see self::$urlParams}, keyed by method
+     * parameter name.
+     *
      * @var array<string, mixed>
      */
     private static array $routeParams = [];
@@ -498,6 +524,7 @@ class Router
     {
         // We need to clear the current route, because it can be set before redirecting to another route
         static::$currentRoute = null;
+        self::$urlParams = [];
         self::$routeParams = [];
 
         /**
@@ -521,7 +548,7 @@ class Router
 
         if (ca()->get(sprintf('parsed_url:%s:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash))) {
             static::$currentRoute = j_decode(ca()->get(sprintf('parsed_url:%s:route:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash)));
-            self::$routeParams = j_decode(ca()->get(sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash)), true);
+            self::$urlParams = j_decode(ca()->get(sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash)), true);
 
             return true;
         }
@@ -603,10 +630,13 @@ class Router
             $routeUrlArray = explode('/', static::$currentRoute->url);
             array_shift($routeUrlArray);
 
-            // Save the parameters of the route
+            // Save the parameters of the route, in URL order — a name may repeat
             foreach ($routeUrlArray as $key => $str) {
                 if (str_starts_with($str, '{') && str_ends_with($str, '}')) {
-                    self::$routeParams[str_replace(['{', '}'], '', $str)] = $currentUrlArray[$key];
+                    self::$urlParams[] = [
+                        'name' => str_replace(['{', '}'], '', $str),
+                        'value' => $currentUrlArray[$key],
+                    ];
                 }
             }
 
@@ -614,7 +644,7 @@ class Router
             ca()->setMultiple([
                 sprintf('parsed_url:%s:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => $currentUrl,
                 sprintf('parsed_url:%s:route:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode(static::$currentRoute),
-                sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode(self::$routeParams),
+                sprintf('parsed_url:%s:route_params:%s' . self::ROUTE_CACHE_SCHEMA, $httpMethod, $urlHash) => j_encode(self::$urlParams),
             ]);
         }
 
@@ -658,12 +688,11 @@ class Router
 
     protected static function setRouteParameters(): void
     {
-        if (!empty(self::$routeParams)) {
+        if (!empty(self::$urlParams)) {
             $reflectionMethod = new ReflectionMethod(static::$currentRoute->class, static::$currentRoute->method);
-            $urlPlaceholderNames = array_keys(self::$routeParams);
             $methodParameters = $reflectionMethod->getParameters();
 
-            if (\count($urlPlaceholderNames) !== \count($methodParameters)) {
+            if (\count(self::$urlParams) !== \count($methodParameters)) {
                 throw new RouteParameterException(
                     sprintf(
                         'Method parameters count in the %s::%s route do not match the variables count from route URL!',
@@ -675,13 +704,17 @@ class Router
 
             $resolvedParams = [];
             foreach ($methodParameters as $index => $reflectionParameter) {
-                $urlPlaceholderName = $urlPlaceholderNames[$index];
-                $paramValue = self::$routeParams[$urlPlaceholderName];
+                ['name' => $urlPlaceholderName, 'value' => $paramValue] = self::$urlParams[$index];
                 $reflectionType = $reflectionParameter->getType();
                 $paramType = $reflectionType instanceof ReflectionNamedType ? $reflectionType->getName() : '';
 
                 if (is_a($paramType, AbstractEntity::class, true)) {
-                    $entity = $paramType::findOneBy([$urlPlaceholderName => $paramValue]);
+                    // Never null here: checkMethodParameterType() rejects unresolvable
+                    // placeholders when the route is registered
+                    $lookupField = self::resolveEntityLookupField($paramType, $urlPlaceholderName)
+                        ?? self::ENTITY_LOOKUP_FALLBACK_FIELD;
+
+                    $entity = $paramType::findOneBy([$lookupField => $paramValue]);
 
                     if (null === $entity && false === $reflectionType->allowsNull()) {
                         self::sendEntityNotFoundResponse();
@@ -802,9 +835,53 @@ class Router
         }
     }
 
+    /**
+     * Entity property the given URL placeholder is looked up by, or null when the
+     * placeholder names neither.
+     *
+     * A placeholder the entity declares as a property is looked up by it: `{slug}` -> `slug`,
+     * `{id}` -> `id`. Otherwise a key-shaped placeholder — `{paymentId}`, `{payment_id}` —
+     * falls back to {@see self::ENTITY_LOOKUP_FALLBACK_FIELD}, because it names the entity's
+     * key from the URL's point of view rather than a property of the entity.
+     *
+     * Since binding to controller arguments is positional, this is what frees the placeholder
+     * name from having to be unique: `/crud/users/{id}/payment/{paymentId}` and
+     * `/crud/users/{id}/payment/{id}` both resolve each entity by its own `id`.
+     *
+     * Anything else returns null so that a mistyped property placeholder stays a loud error
+     * instead of silently degrading into an `id` lookup.
+     *
+     * @param class-string<AbstractEntity> $entityClass
+     */
+    private static function resolveEntityLookupField(string $entityClass, string $urlPlaceholderName): ?string
+    {
+        $reflectionClass = new ReflectionClass($entityClass);
+
+        if ($reflectionClass->hasProperty($urlPlaceholderName)) {
+            return $urlPlaceholderName;
+        }
+
+        return 1 === preg_match(self::FOREIGN_KEY_PLACEHOLDER_PATTERN, $urlPlaceholderName)
+            && $reflectionClass->hasProperty(self::ENTITY_LOOKUP_FALLBACK_FIELD)
+                ? self::ENTITY_LOOKUP_FALLBACK_FIELD
+                : null;
+    }
+
     private static function checkMethodParameterTypes(object $data): void
     {
         $reflectionMethod = new ReflectionMethod($data->class, $data->method);
+
+        // Binding is positional, so a placeholder count mismatch can never resolve at
+        // runtime — fail at registration rather than on the first request to the route
+        if (\count($data->routeParams) !== $reflectionMethod->getNumberOfParameters()) {
+            throw new RouteParameterException(
+                sprintf(
+                    'Method parameters count in the %s::%s route do not match the variables count from route URL!',
+                    $data->class,
+                    $data->method,
+                ),
+            );
+        }
 
         foreach ($reflectionMethod->getParameters() as $index => $reflectionParameter) {
             if ($reflectionParameter->getType() instanceof ReflectionUnionType) {
@@ -838,15 +915,19 @@ class Router
             default:
                 if (is_a($type, AbstractEntity::class, true)) {
                     $urlPlaceholder = $data->routeParams[$paramIndex] ?? null;
-                    if (null !== $urlPlaceholder && !(new ReflectionClass($type))->hasProperty($urlPlaceholder)) {
+
+                    if (null !== $urlPlaceholder && null === self::resolveEntityLookupField($type, $urlPlaceholder)) {
                         throw new RouteParameterException(
                             sprintf(
-                                'Entity "%s" has no property "%s" (from URL placeholder {%s}) used in %s::%s route.',
+                                'Entity "%s" has no property "%s" (from URL placeholder {%s}) used in %s::%s route, '
+                                . 'and "%s" is not a key-shaped placeholder that could fall back to "%s".',
                                 $type,
                                 $urlPlaceholder,
                                 $urlPlaceholder,
                                 $data->class,
                                 $data->method,
+                                $urlPlaceholder,
+                                self::ENTITY_LOOKUP_FALLBACK_FIELD,
                             ),
                         );
                     }
@@ -947,7 +1028,7 @@ class Router
         $methodParameters = $reflectionMethod->getParameters();
         $methodParametersCount = \count($methodParameters);
         if (0 === $methodParametersCount) {
-            if (0 !== \count(self::$routeParams)) {
+            if (0 !== \count(self::$urlParams)) {
                 throw new RouteParameterException(
                     sprintf(
                         'Method parameters count in the %s::%s route do not match the variables count from route URL!',
