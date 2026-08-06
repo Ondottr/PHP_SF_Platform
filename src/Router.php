@@ -69,7 +69,7 @@ class Router
      * foreign key rather than a property of the bound entity — see
      * {@see self::resolveEntityLookupField()}.
      */
-    private const string ENTITY_LOOKUP_FALLBACK_FIELD = 'id';
+    public const string ENTITY_LOOKUP_FALLBACK_FIELD = 'id';
 
     /**
      * URL placeholders naming a key rather than a property: `{paymentId}`, `{payment_id}`.
@@ -851,9 +851,12 @@ class Router
      * Anything else returns null so that a mistyped property placeholder stays a loud error
      * instead of silently degrading into an `id` lookup.
      *
+     * Public because the Symfony test bridge ({@see \PHP_SF\Framework\EventListener\PhpSfControllerListener})
+     * binds controller arguments on its own path and must resolve lookup fields identically.
+     *
      * @param class-string<AbstractEntity> $entityClass
      */
-    private static function resolveEntityLookupField(string $entityClass, string $urlPlaceholderName): ?string
+    public static function resolveEntityLookupField(string $entityClass, string $urlPlaceholderName): ?string
     {
         $reflectionClass = new ReflectionClass($entityClass);
 

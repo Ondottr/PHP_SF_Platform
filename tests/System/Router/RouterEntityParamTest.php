@@ -407,8 +407,6 @@ final class RouterEntityParamTest extends TestCase
 
     private function callResolveEntityLookupField(string $placeholder): ?string
     {
-        $method = new ReflectionMethod(Router::class, 'resolveEntityLookupField');
-
-        return $method->invoke(null, StubEntity::class, $placeholder);
+        return Router::resolveEntityLookupField(StubEntity::class, $placeholder);
     }
 }
