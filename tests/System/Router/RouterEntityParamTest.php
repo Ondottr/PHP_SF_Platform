@@ -2,9 +2,12 @@
 
 namespace PHP_SF\Tests\System\Router;
 
+use PHP_SF\System\Attributes\Route;
 use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Exception\RouteParameterException;
+use PHP_SF\System\Core\Response;
 use PHP_SF\System\Router;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -31,14 +34,43 @@ final class TestableRouter extends Router
         static::setRouteParameters();
     }
 
+    /**
+     * @param array<string, string> $params placeholder name => URL value, in URL order
+     */
     public static function setRouteParams(array $params): void
     {
-        (new ReflectionProperty(Router::class, 'routeParams'))->setValue(null, $params);
+        $urlParams = [];
+        foreach ($params as $name => $value) {
+            $urlParams[] = ['name' => $name, 'value' => $value];
+        }
+
+        self::setUrlParams($urlParams);
+    }
+
+    /**
+     * Positional shape, needed when one placeholder name repeats in the URL.
+     *
+     * @param list<array{name: string, value: string}> $urlParams
+     */
+    public static function setUrlParams(array $urlParams): void
+    {
+        (new ReflectionProperty(Router::class, 'urlParams'))->setValue(null, $urlParams);
+        (new ReflectionProperty(Router::class, 'routeParams'))->setValue(null, []);
     }
 
     public static function getRouteParams(): array
     {
         return (new ReflectionProperty(Router::class, 'routeParams'))->getValue(null);
+    }
+
+    public static function callRoutesFromController(string $namespace, string $fileName): void
+    {
+        static::routesFromController($namespace, $fileName);
+    }
+
+    public static function resetRoutesList(): void
+    {
+        (new ReflectionProperty(Router::class, 'routesList'))->setValue(null, []);
     }
 }
 
@@ -55,11 +87,34 @@ final class StubController
     public function actionWithPlainTypes(int $count, string $name): void {}
 
     public function actionWithMixed(StubEntity $entity, int $page): void {}
+
+    public function actionWithTwoIds(int $user, int $payment): void {}
+}
+
+// ---------------------------------------------------------------------------
+// Route fixtures for registration-time parsing. Bodies are never invoked.
+// ---------------------------------------------------------------------------
+
+final class StubCrudController
+{
+    #[Route(url: 'crud/users/{id}/payment/{id}', httpMethod: 'GET', name: 'stub_crud_repeated_ids')]
+    public function repeatedIds(?StubEntity $user, ?StubEntity $payment): Response {}
+
+    #[Route(url: 'crud/users/{id}/payment/{paymentId}', httpMethod: 'GET', name: 'stub_crud_distinct_ids')]
+    public function distinctIds(?StubEntity $user, ?StubEntity $payment): Response {}
+}
+
+final class StubArityMismatchController
+{
+    #[Route(url: 'crud/users/{id}/payment/{id}', httpMethod: 'GET', name: 'stub_crud_arity_mismatch')]
+    public function tooFewParameters(?StubEntity $user): Response {}
 }
 
 final class RouterEntityParamTest extends TestCase
 {
     private array $savedRouteParams;
+
+    private array $savedUrlParams;
 
     private mixed $savedCurrentRoute;
 
@@ -198,16 +253,136 @@ final class RouterEntityParamTest extends TestCase
         $this->assertSame([], TestableRouter::getRouteParams());
     }
 
+    // -----------------------------------------------------------------------
+    // Repeated placeholder names — /crud/users/{id}/payment/{id}
+    // -----------------------------------------------------------------------
+
+    public function testRepeatedPlaceholderNameKeepsBothValues(): void
+    {
+        // Both URL segments are named {id}; binding is positional, so neither is lost
+        TestableRouter::setUrlParams([
+            ['name' => 'id', 'value' => '7'],
+            ['name' => 'id', 'value' => '42'],
+        ]);
+        Router::$currentRoute = (object) [
+            'class' => StubController::class,
+            'method' => 'actionWithTwoIds',
+        ];
+
+        TestableRouter::callSetRouteParameters();
+
+        $this->assertSame(['user' => 7, 'payment' => 42], TestableRouter::getRouteParams());
+    }
+
+    public function testDistinctKeyShapedPlaceholdersKeepBothValues(): void
+    {
+        // Same route shape written as /crud/users/{id}/payment/{paymentId}
+        TestableRouter::setUrlParams([
+            ['name' => 'id', 'value' => '7'],
+            ['name' => 'paymentId', 'value' => '42'],
+        ]);
+        Router::$currentRoute = (object) [
+            'class' => StubController::class,
+            'method' => 'actionWithTwoIds',
+        ];
+
+        TestableRouter::callSetRouteParameters();
+
+        $this->assertSame(['user' => 7, 'payment' => 42], TestableRouter::getRouteParams());
+    }
+
+    public function testRepeatedPlaceholderCountMismatchStillThrows(): void
+    {
+        TestableRouter::setUrlParams([
+            ['name' => 'id', 'value' => '7'],
+            ['name' => 'id', 'value' => '42'],
+        ]);
+        Router::$currentRoute = (object) [
+            'class' => StubController::class,
+            'method' => 'actionWithEntity',
+        ];
+
+        $this->expectException(RouteParameterException::class);
+
+        TestableRouter::callSetRouteParameters();
+    }
+
+    // -----------------------------------------------------------------------
+    // resolveEntityLookupField — which entity property a placeholder maps to
+    // -----------------------------------------------------------------------
+
+    #[DataProvider('lookupFieldProvider')]
+    public function testResolveEntityLookupField(string $placeholder, ?string $expected): void
+    {
+        $this->assertSame($expected, $this->callResolveEntityLookupField($placeholder));
+    }
+
+    public static function lookupFieldProvider(): array
+    {
+        return [
+            'declared property' => ['slug', 'slug'],
+            'inherited id property' => ['id', 'id'],
+            'camelCase foreign key' => ['paymentId', 'id'],
+            'snake_case foreign key' => ['payment_id', 'id'],
+            'typo in property name is not silently degraded' => ['slgu', null],
+            'unknown non-key placeholder' => ['whatever', null],
+        ];
+    }
+
+    // -----------------------------------------------------------------------
+    // Route registration — both URL spellings of the same CRUD route
+    // -----------------------------------------------------------------------
+
+    public function testBothPlaceholderSpellingsRegister(): void
+    {
+        $savedRoutesList = (new ReflectionProperty(Router::class, 'routesList'))->getValue(null);
+
+        try {
+            TestableRouter::resetRoutesList();
+            TestableRouter::callRoutesFromController(__NAMESPACE__, 'StubCrudController');
+
+            $routes = Router::getRoutesList();
+
+            $this->assertSame(['id', 'id'], $routes['stub_crud_repeated_ids']['routeParams']);
+            $this->assertSame(['id', 'paymentId'], $routes['stub_crud_distinct_ids']['routeParams']);
+        } finally {
+            (new ReflectionProperty(Router::class, 'routesList'))->setValue(null, $savedRoutesList);
+        }
+    }
+
+    public function testArityMismatchThrowsAtRegistration(): void
+    {
+        $savedRoutesList = (new ReflectionProperty(Router::class, 'routesList'))->getValue(null);
+
+        try {
+            TestableRouter::resetRoutesList();
+
+            $this->expectException(RouteParameterException::class);
+
+            TestableRouter::callRoutesFromController(__NAMESPACE__, 'StubArityMismatchController');
+        } finally {
+            (new ReflectionProperty(Router::class, 'routesList'))->setValue(null, $savedRoutesList);
+        }
+    }
+
+    public function testKeyShapedPlaceholderPassesRegistrationCheck(): void
+    {
+        // {paymentId} is not a StubEntity property, but falls back to `id`
+        $this->callCheckMethodParameterType(StubEntity::class, 'entity', $this->routeData(['paymentId']), 0);
+        $this->expectNotToPerformAssertions();
+    }
+
     protected function setUp(): void
     {
-        $ref = new ReflectionProperty(Router::class, 'routeParams');
-        $this->savedRouteParams = $ref->getValue(null);
+        $this->savedRouteParams = (new ReflectionProperty(Router::class, 'routeParams'))->getValue(null);
+        $this->savedUrlParams = (new ReflectionProperty(Router::class, 'urlParams'))->getValue(null);
         $this->savedCurrentRoute = Router::$currentRoute;
     }
 
     protected function tearDown(): void
     {
         (new ReflectionProperty(Router::class, 'routeParams'))->setValue(null, $this->savedRouteParams);
+        (new ReflectionProperty(Router::class, 'urlParams'))->setValue(null, $this->savedUrlParams);
         Router::$currentRoute = $this->savedCurrentRoute;
     }
 
@@ -228,5 +403,10 @@ final class RouterEntityParamTest extends TestCase
     {
         $method = new ReflectionMethod(Router::class, 'checkMethodParameterType');
         $method->invoke(null, $type, $propertyName, $data, $paramIndex);
+    }
+
+    private function callResolveEntityLookupField(string $placeholder): ?string
+    {
+        return Router::resolveEntityLookupField(StubEntity::class, $placeholder);
     }
 }

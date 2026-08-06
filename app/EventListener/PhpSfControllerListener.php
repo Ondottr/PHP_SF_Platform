@@ -136,7 +136,12 @@ final class PhpSfControllerListener implements EventSubscriberInterface
                 $type = $reflectionType instanceof ReflectionNamedType ? $reflectionType->getName() : null;
 
                 if (null !== $type && is_a($type, AbstractEntity::class, true)) {
-                    $entity = $type::findOneBy([$urlPlaceholderName => $value]);
+                    // Same resolution as production: the placeholder name when the entity
+                    // declares it, otherwise `id` for key-shaped placeholders like {paymentId}
+                    $lookupField = Router::resolveEntityLookupField($type, $urlPlaceholderName)
+                        ?? Router::ENTITY_LOOKUP_FALLBACK_FIELD;
+
+                    $entity = $type::findOneBy([$lookupField => $value]);
 
                     if (null === $entity && false === $reflectionType->allowsNull()) {
                         if (Router::isApiRoute()) {
