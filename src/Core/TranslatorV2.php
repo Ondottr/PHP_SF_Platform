@@ -327,7 +327,7 @@ final class TranslatorV2 implements TranslatorInterface
             }
 
             $rc = new ReflectionClass($className);
-            $entityKey = camel_to_snake($rc->getShortName());
+            $entityKey = string_to_snake($rc->getShortName());
             $properties = $rc->getProperties(ReflectionProperty::IS_PROTECTED | ReflectionProperty::IS_PUBLIC);
 
             foreach ($properties as $property) {
@@ -346,7 +346,7 @@ final class TranslatorV2 implements TranslatorInterface
                     continue;
                 }
 
-                $translationKey = $entityKey . '.fields.' . camel_to_snake($property->getName());
+                $translationKey = $entityKey . '.fields.' . string_to_snake($property->getName());
 
                 foreach (LANGUAGES_LIST as $locale) {
                     if (!array_key_exists($translationKey, $this->catalogs[$locale])) {
