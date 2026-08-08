@@ -196,15 +196,6 @@ function user(): UserInterface|false
 }
 
 /**
- * @deprecated use {@see string_to_snake()} instead; this method will be removed in v3
- */
-#[Deprecated(message: 'Use string_to_snake() instead; this method will be removed in v3.', since: '2.2.0')]
-function camel_to_snake(string $input): string
-{
-    return string_to_snake($input);
-}
-
-/**
  * Converts any string format to snake_case.
  *
  * Recognises camelCase, PascalCase, SCREAMING_SNAKE, kebab-case, dot.notation,
@@ -241,15 +232,6 @@ function string_to_snake(string $input): string
 function string_to_screaming_snake(string $input): string
 {
     return StringCase::screamingSnake($input);
-}
-
-/**
- * @deprecated use {@see string_to_camel()} instead; this method will be removed in v3
- */
-#[Deprecated(message: 'Use camel_to_snake() instead; this method will be removed in v3.', since: '2.2.0')]
-function snakeToCamel(string $input): string
-{
-    return string_to_camel($input);
 }
 
 /**

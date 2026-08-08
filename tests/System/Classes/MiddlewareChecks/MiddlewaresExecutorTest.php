@@ -320,7 +320,6 @@ final class MiddlewaresExecutorTest extends TestCase
     protected function setUp(): void
     {
         $ref = new ReflectionProperty(Router::class, 'requestData');
-        $ref->setAccessible(true);
         $ref->setValue(null, new Request());
     }
 }
