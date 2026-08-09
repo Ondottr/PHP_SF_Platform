@@ -56,13 +56,12 @@ class Router
 
     /**
      * Suffix versioning the route cache keys. Bump whenever the serialized route
-     * schema gains or changes a field (e.g. the #[RouteApi] `api` flag added in 3.2),
-     * so entries written by an older version cannot shadow the new field: a stale
-     * entry lacking the field would make isApiRoute() fall back to the deprecated
-     * `/api/` prefix and misclassify freshly declared API routes until the cache
-     * naturally expires.
+     * schema gains or changes a field, so entries written by an older version cannot
+     * shadow the new field. In 4.0 the `/api/` URL-prefix fallback was removed, so the
+     * `api` flag is now authoritative for every route; the schema bump prevents stale
+     * entries (which may carry `api: null`) from being interpreted ambiguously.
      */
-    private const string ROUTE_CACHE_SCHEMA = ':v3';
+    private const string ROUTE_CACHE_SCHEMA = ':v4';
 
     /**
      * Entity property a route parameter falls back to when the URL placeholder names a
@@ -255,8 +254,7 @@ class Router
      * Whether the given route (or the currently matched one by default) is an API route.
      *
      * Uses the `api` flag resolved from #[RouteApi] attributes at route-registration time.
-     * Routes without the attribute fall back to the deprecated `/api/` URL-prefix detection
-     * (deprecated since 3.2, removed in 4.0).
+     * Routes without the attribute are non-API.
      */
     public static function isApiRoute(?object $route = null): bool
     {
@@ -266,24 +264,7 @@ class Router
             return false;
         }
 
-        if (isset($route->api)) {
-            return true === $route->api;
-        }
-
-        if (false === str_starts_with($route->url, '/api/')) {
-            return false;
-        }
-
-        trigger_deprecation(
-            'nations-original/php-simple-framework',
-            '3.2',
-            'Route "%s" is recognized as API by the "/api/" URL prefix, which is deprecated. '
-            . 'Add the #[RouteApi] attribute to the controller class or method instead; '
-            . 'prefix-based detection will be removed in 4.0.',
-            $route->url,
-        );
-
-        return true;
+        return true === ($route->api ?? false);
     }
 
     protected static function parseRoutes(): void
@@ -380,17 +361,10 @@ class Router
         $classApi = empty($classApiAttributes) ? null : end($classApiAttributes)->newInstance()->api;
 
         $routeMethods = [];
-        $explicitApiMode = null !== $classApi;
 
         foreach ($reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC) as $reflectionMethod) {
-            $routeAttributes = $reflectionMethod->getAttributes(Route::class);
-
-            if (!empty($routeAttributes)) {
+            if (!empty($reflectionMethod->getAttributes(Route::class))) {
                 $routeMethods[] = $reflectionMethod;
-
-                if (!empty($reflectionMethod->getAttributes(RouteApi::class))) {
-                    $explicitApiMode = true;
-                }
             }
         }
 
@@ -416,7 +390,7 @@ class Router
                     'name' => $arguments['name'] ?? $routeMethod->getName(),
                     'method' => $routeMethod->getName(),
                     'middleware' => $arguments['middleware'] ?? null,
-                    'api' => self::resolveRouteApiFlag($routeMethod, $explicitApiMode, $classApi),
+                    'api' => self::resolveRouteApiFlag($routeMethod, $classApi),
                 ],
             );
         }
@@ -424,20 +398,7 @@ class Router
 
     protected static function setRoute(object $data): void
     {
-        // Detect old-style {$param} and normalize to Symfony-style {param}
-        if (preg_match('/\{\$/', $data->url)) {
-            trigger_error(
-                sprintf(
-                    'Route "%s" uses deprecated {$param} URL parameter syntax. Use Symfony-style {param} instead.',
-                    $data->url,
-                ),
-                E_USER_DEPRECATED,
-            );
-            // Normalize: {$id} -> {id}
-            $data->url = preg_replace('/\{\$([^}]+)}/', '{$1}', $data->url);
-        }
-
-        // Extract params - now always in {param} format
+        // Extract params — always in {param} format
         preg_match_all('/\{([^}]+)}/', $data->url, $matches);
         $routeParams = [];
         foreach ($matches[1] as $match) {
@@ -774,20 +735,18 @@ class Router
     /**
      * Resolves the API flag of a single route from #[RouteApi] attributes.
      *
-     * Returns the declared value (method attribute wins over class attribute), or null when
-     * the route is not explicitly declared — null keeps the deprecated `/api/` URL-prefix
-     * detection as fallback. A controller enters "explicit mode" (no prefix fallback for any
-     * of its routes) as soon as the attribute appears on the class or on any routed method.
+     * Returns the declared value (method attribute wins over class attribute). Routes
+     * without any #[RouteApi] attribute are non-API.
      */
-    private static function resolveRouteApiFlag(ReflectionMethod $routeMethod, bool $explicitApiMode, ?bool $classApi): ?bool
+    private static function resolveRouteApiFlag(ReflectionMethod $routeMethod, ?bool $classApi): bool
     {
         $apiAttributes = $routeMethod->getAttributes(RouteApi::class);
 
         if (!empty($apiAttributes)) {
-            return end($apiAttributes)->newInstance()->api;
+            return end($apiAttributes)->newInstance()->api ?? false;
         }
 
-        return $explicitApiMode ? ($classApi ?? false) : null;
+        return $classApi ?? false;
     }
 
     /**
@@ -795,8 +754,7 @@ class Router
      *
      * API routes may only return a Response or JsonResponse (subclasses included) and must
      * never return a RedirectResponse — the redirect's JavaScript payload would corrupt the
-     * JSON response. Enforced at route-registration time for routes marked with #[RouteApi]
-     * and for routes classified as API by the deprecated `/api/` URL-prefix fallback.
+     * JSON response. Enforced at route-registration time for routes marked with #[RouteApi].
      * Methods without a declared return type cannot be validated statically and are skipped.
      *
      * @throws InvalidRouteReturnTypeException When the declared return type is not allowed for an API route
@@ -804,9 +762,7 @@ class Router
      */
     private static function checkApiRouteReturnType(object $data): void
     {
-        $api = $data->api ?? null;
-
-        if (false === (true === $api || (null === $api && str_starts_with($data->url, '/api/')))) {
+        if (true !== ($data->api ?? false)) {
             return;
         }
 

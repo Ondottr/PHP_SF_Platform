@@ -156,8 +156,7 @@ final class RouterApiRouteTest extends TestCase
         $routes = Router::getRoutesList();
 
         $this->assertTrue($routes['marked']['api']);
-        // the attribute is present in the class, so the deprecated /api/ prefix
-        // heuristic is off — an unmarked route is non-API despite its URL
+        // routes without the attribute are non-API, regardless of URL
         $this->assertFalse($routes['unmarked']['api']);
     }
 
@@ -180,15 +179,15 @@ final class RouterApiRouteTest extends TestCase
         $this->assertTrue($routes['optIn']['api']);
     }
 
-    public function testNoAttributeKeepsLegacyNullFlag(): void
+    public function testNoAttributeMarksRoutesNonApi(): void
     {
         $this->parseController(StubLegacyController::class);
 
         $routes = Router::getRoutesList();
 
-        // null = not declared, the deprecated prefix detection still decides
-        $this->assertNull($routes['legacy']['api']);
-        $this->assertNull($routes['page']['api']);
+        // no #[RouteApi] attribute → the route is non-API, even under an /api/ URL
+        $this->assertFalse($routes['legacy']['api']);
+        $this->assertFalse($routes['page']['api']);
     }
 
     // -----------------------------------------------------------------------
@@ -225,11 +224,13 @@ final class RouterApiRouteTest extends TestCase
         $this->parseController(StubApiScalarReturnController::class);
     }
 
-    public function testLegacyPrefixApiRouteRejectsRedirectResponseReturnType(): void
+    public function testApiPrefixUrlWithoutAttributeIsNonApi(): void
     {
-        $this->expectException(InvalidRouteReturnTypeException::class);
-
+        // A route under an /api/ URL without #[RouteApi] is a plain page route in 4.0,
+        // so a RedirectResponse return type is allowed (no API validation applies).
         $this->parseController(StubLegacyRedirectReturnController::class);
+
+        $this->assertArrayHasKey('legacyRedirect', Router::getRoutesList());
     }
 
     public function testPageRouteAllowsRedirectResponseReturnType(): void
@@ -253,28 +254,6 @@ final class RouterApiRouteTest extends TestCase
     {
         $this->assertTrue(Router::isApiRoute((object) ['url' => '/anything', 'api' => true]));
         $this->assertFalse(Router::isApiRoute((object) ['url' => '/api/anything', 'api' => false]));
-    }
-
-    public function testIsApiRouteFallsBackToPrefixWithDeprecation(): void
-    {
-        Router::$currentRoute = (object) ['url' => '/api/legacy', 'api' => null];
-
-        [$result, $deprecations] = $this->captureDeprecations(static fn (): bool => Router::isApiRoute());
-
-        $this->assertTrue($result);
-        $this->assertCount(1, $deprecations);
-        $this->assertStringContainsString('/api/legacy', $deprecations[0]);
-        $this->assertStringContainsString('#[RouteApi]', $deprecations[0]);
-    }
-
-    public function testIsApiRoutePrefixMissTriggersNoDeprecation(): void
-    {
-        Router::$currentRoute = (object) ['url' => '/page', 'api' => null];
-
-        [$result, $deprecations] = $this->captureDeprecations(static fn (): bool => Router::isApiRoute());
-
-        $this->assertFalse($result);
-        $this->assertCount(0, $deprecations);
     }
 
     public function testIsApiRouteWithoutCurrentRouteReturnsFalse(): void
@@ -309,34 +288,5 @@ final class RouterApiRouteTest extends TestCase
         $fileName = substr($controllerClass, (int) strrpos($controllerClass, '\\') + 1);
 
         ApiTestableRouter::callRoutesFromController($namespace, $fileName);
-    }
-
-    /**
-     * Runs the callback with an E_USER_DEPRECATED capturing handler installed.
-     *
-     * @param callable(): bool $callback
-     *
-     * @return array{bool, list<string>} callback result and captured deprecation messages
-     */
-    private function captureDeprecations(callable $callback): array
-    {
-        $deprecations = [];
-
-        set_error_handler(
-            static function (int $errno, string $errstr) use (&$deprecations): bool {
-                $deprecations[] = $errstr;
-
-                return true;
-            },
-            E_USER_DEPRECATED,
-        );
-
-        try {
-            $result = $callback();
-        } finally {
-            restore_error_handler();
-        }
-
-        return [$result, $deprecations];
     }
 }

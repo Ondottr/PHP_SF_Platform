@@ -133,7 +133,7 @@ final class MiddlewaresExecutorTest extends TestCase
 
     public function testAllJsonResponse(): void
     {
-        Router::$currentRoute = (object) ['url' => '/api/middleware_testing'];
+        Router::$currentRoute = (object) ['url' => '/middleware_testing', 'api' => true];
 
         $me = new MiddlewaresExecutor(MiddlewareFalse::class);
         $this->assertInstanceOf(JsonResponse::class, $me->execute());
@@ -169,7 +169,7 @@ final class MiddlewaresExecutorTest extends TestCase
 
     public function testAnyJsonResponse(): void
     {
-        Router::$currentRoute = (object) ['url' => '/api/middleware_testing'];
+        Router::$currentRoute = (object) ['url' => '/middleware_testing', 'api' => true];
 
         $me = new MiddlewaresExecutor([MiddlewareAny::class => [MiddlewareJsonResponse::class]]);
         $this->assertInstanceOf(JsonResponse::class, $me->execute());
