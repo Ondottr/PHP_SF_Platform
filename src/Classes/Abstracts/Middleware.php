@@ -2,7 +2,6 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use Deprecated;
 use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\RedirectResponse;
 use PHP_SF\System\Debug\MiddlewareTracker;
@@ -39,23 +38,5 @@ abstract class Middleware
         }
 
         return $middlewareResult;
-    }
-
-    /**
-     * @deprecated since 3.0.0 Use direct {@see Kernel::setHeaderTemplateClassName()} call instead.
-     */
-    #[Deprecated(message: 'Use direct Kernel::setHeaderTemplateClassName() call instead.', since: '3.0.0')]
-    final protected function changeHeaderTemplateClassName(string $headerClassName): void
-    {
-        Kernel::setHeaderTemplateClassName($headerClassName);
-    }
-
-    /**
-     * @deprecated since 3.0.0 Use direct {@see Kernel::setFooterTemplateClassName()} call instead.
-     */
-    #[Deprecated(message: 'Use direct Kernel::setFooterTemplateClassName() call instead.', since: '3.0.0')]
-    final protected function changeFooterTemplateClassName(string $footerClassName): void
-    {
-        Kernel::setFooterTemplateClassName($footerClassName);
     }
 }

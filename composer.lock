@@ -4,27 +4,27 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5ddd6d1bccfed55b84ba8fe62425c6fe",
+    "content-hash": "6a5d4f35c9fe1ce93e2ba4a269c39be0",
     "packages": [
         {
             "name": "nations-original/php-sf-cache",
-            "version": "v2.0.1",
+            "version": "v3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Ondottr/cache.git",
-                "reference": "65295944a99118181dc817923a80525d6df43d73"
+                "reference": "e9b3bad7bc67fa514f5debae7a08722455c43f0d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Ondottr/cache/zipball/65295944a99118181dc817923a80525d6df43d73",
-                "reference": "65295944a99118181dc817923a80525d6df43d73",
+                "url": "https://api.github.com/repos/Ondottr/cache/zipball/e9b3bad7bc67fa514f5debae7a08722455c43f0d",
+                "reference": "e9b3bad7bc67fa514f5debae7a08722455c43f0d",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.2",
                 "predis/predis": "^2.0|^3.0",
                 "psr/simple-cache": "^3.0",
-                "symfony/filesystem": "^6.0|^7.0"
+                "symfony/filesystem": "^6.0|^7.0|^8.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.95",
@@ -71,9 +71,9 @@
             "homepage": "https://github.com/Ondottr/cache",
             "support": {
                 "issues": "https://github.com/Ondottr/cache/issues",
-                "source": "https://github.com/Ondottr/cache/tree/v2.0.1"
+                "source": "https://github.com/Ondottr/cache/tree/v3.0.0"
             },
-            "time": "2026-05-07T07:42:48+00:00"
+            "time": "2026-08-09T09:35:32+00:00"
         },
         {
             "name": "predis/predis",
