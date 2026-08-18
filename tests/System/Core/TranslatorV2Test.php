@@ -369,6 +369,32 @@ final class TranslatorV2Test extends TestCase
         $this->assertSame('brand.new.key_not_translated', $parsed['brand.new.key']);
     }
 
+    public function testMissingKeyNotPersistedWhenAutoWriteDisabled(): void
+    {
+        /**
+         * Host apps that run automated suites against the real translation files can
+         * disable DEV_MODE missing-key persistence. The placeholder value is still
+         * returned so the UI shows a marker, but the YAML file must remain untouched.
+         */
+        file_put_contents($this->dir . '/' . DEFAULT_LOCALE . '.yaml', '');
+        TranslatorV2::addTranslationDir($this->dir);
+
+        TranslatorV2::setAutoWriteMissingKeys(false);
+
+        $result = TranslatorV2::getInstance()->trans('brand.new.key');
+
+        $this->assertSame('brand.new.key_not_translated', $result);
+
+        // The write must have been skipped, so the placeholder never lands in the file.
+        // An empty file parses to null rather than [], so accept either — the key must
+        // simply not be present.
+        $parsed = Yaml::parseFile($this->dir . '/' . DEFAULT_LOCALE . '.yaml');
+        $this->assertNotSame('brand.new.key_not_translated', is_array($parsed) ? ($parsed['brand.new.key'] ?? null) : null);
+
+        // Restore the default so the rest of the suite observes the historical behaviour.
+        TranslatorV2::setAutoWriteMissingKeys(true);
+    }
+
     public function testMissingKeyNotWrittenTwiceIfAlreadyPresent(): void
     {
         /**

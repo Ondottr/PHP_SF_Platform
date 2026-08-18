@@ -36,6 +36,17 @@ final class TranslatorV2 implements TranslatorInterface
     private static array $dirs = [];
 
     /**
+     * Whether DEV_MODE auto-discovery should persist missing keys (as
+     * {key}_not_translated) into the last registered translation directory.
+     *
+     * Defaults to the historical behaviour (on). Host applications that run
+     * automated suites against the real translation files should disable it (see
+     * {@see setAutoWriteMissingKeys()}), so functional tests that _t() on
+     * arbitrary/DB-derived keys never mutate committed YAML.
+     */
+    private static bool $autoWriteMissingKeys = true;
+
+    /**
      * Flat catalogs per locale: ['en' => ['some.key' => 'Some value']].
      *
      * @var array<string, array<string, string>>
@@ -123,6 +134,18 @@ final class TranslatorV2 implements TranslatorInterface
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Toggle DEV_MODE missing-key persistence.
+     *
+     * Disable before running automated suites that exercise _t() with arbitrary keys
+     * (e.g. DB-derived game_setting.*), so auto-discovery never writes {key}_not_translated
+     * placeholders into the committed translation files.
+     */
+    public static function setAutoWriteMissingKeys(bool $enabled): void
+    {
+        self::$autoWriteMissingKeys = $enabled;
     }
 
     /**
@@ -278,7 +301,10 @@ final class TranslatorV2 implements TranslatorInterface
 
             foreach ($localesToWrite as $l) {
                 $this->catalogs[$l][$id] = $id . '_not_translated';
-                $this->writeKeyToLastDir($id, $l);
+
+                if (self::$autoWriteMissingKeys) {
+                    $this->writeKeyToLastDir($id, $l);
+                }
             }
         }
 
