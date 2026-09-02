@@ -10,9 +10,9 @@ final class CKEditor_activator extends AbstractView { public function show(): vo
   <!--@formatter:on-->
 
   <script src="<?= asset('CKEditor/build/ckeditor.js') ?>"></script>
-  <script src="<?= asset('CKEditor/node_modules/showdown/dist/showdown.js') ?>"></script>
+  <script src="<?= asset('CKEditor/build/marked.js') ?>"></script>
+  <script src="<?= asset('CKEditor/build/purify.js') ?>"></script>
   <script>
-    const converter = new showdown.Converter();
     const watchdog = new CKSource.EditorWatchdog();
 
     window.watchdog = watchdog;
@@ -46,7 +46,7 @@ final class CKEditor_activator extends AbstractView { public function show(): vo
     $('form#editor').on('submit', (event) => {
       event.preventDefault();
 
-      $('#editor_data')[0].value = converter.makeHtml(editor.getData());
+      $('#editor_data')[0].value = DOMPurify.sanitize(marked.parse(editor.getData()));
 
       event.currentTarget.submit();
     })
