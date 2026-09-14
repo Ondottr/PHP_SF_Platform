@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 /**
  * PHPStan bootstrap for the framework repo.
@@ -14,7 +12,6 @@ declare(strict_types=1);
  * app/ paths; the autoloader registered here only fills the gaps. Composer's
  * autoload_files are intentionally not run — only the pieces we need are.
  */
-
 $vendorDir = __DIR__ . '/../vendor';
 
 // Composer\Autoload\ClassLoader is already declared by this package's own

@@ -42,9 +42,20 @@ parameters:
             paths:
                 - src/Traits/ModelProperty/ModelPropertyCreatedAtTrait.php
                 - src/Traits/ModelProperty/ModelPropertyUpdatedAtTrait.php
+                - src/Traits/ModelProperty/ModelPropertyUuidTrait.php
         # The bundled auth controller's registration assumes the application's User entity
         # exposes setLogin(); that setter is app-specific and intentionally not part of the
         # minimal UserInterface contract (the reference User is email-based).
         -
             message: '#Call to an undefined method .+::setLogin\(\)\.#'
             path: app/Http/Controller/AuthController.php
+        # SetUuidIfEmptyCallback is intentionally duck-typed — the entity's getId()
+        # may return string|int|null|array depending on which subclass is using it.
+        # PHPStan can only see AbstractEntity's int return type, so the runtime checks
+        # look impossible to it.
+        -
+            identifier: function.impossibleType
+            path: src/Classes/DoctrineLifecycleCallbacks/SetUuidIfEmptyCallback.php
+        -
+            identifier: notIdentical.alwaysTrue
+            path: src/Classes/DoctrineLifecycleCallbacks/SetUuidIfEmptyCallback.php
