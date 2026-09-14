@@ -8,7 +8,7 @@ use Doctrine\Common\EventArgs;
 abstract class AbstractDoctrineLifecycleCallback
 {
     public function __construct(
-        protected AbstractEntity $entity,
+        protected AbstractEntityContract $entity,
         protected EventArgs $args,
     ) {}
 

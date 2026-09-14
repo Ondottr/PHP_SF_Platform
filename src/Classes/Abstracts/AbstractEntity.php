@@ -2,153 +2,27 @@
 
 namespace PHP_SF\System\Classes\Abstracts;
 
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Persistence\Proxy;
-use JsonSerializable;
-use PHP_SF\System\Core\DoctrineCallbacksLoader;
-use PHP_SF\System\Core\Lang;
-use PHP_SF\System\Traits\EntityRepositoriesTrait;
 use PHP_SF\System\Traits\ModelProperty\ModelPropertyIdTrait;
-use ReflectionClass;
-use ReflectionProperty;
-use Symfony\Component\Translation\Loader\XliffFileLoader;
-use Symfony\Component\Translation\Translator as SymfonyTranslator;
-use Symfony\Component\Validator\Validation;
 
 /**
- * @phpstan-consistent-constructor
+ * Default PHP-SF entity base — auto-incrementing integer primary key.
+ *
+ * Inherits validation, JSON serialization, repository helpers, and lifecycle
+ * callback wiring from {@see AbstractEntityContract}. Most entities should keep
+ * extending this class.
+ *
+ * For non-integer primary keys (UUID v4/v7, ULID, manually-assigned string,
+ * composite key) extend {@see AbstractEntityContract} directly and declare
+ * your own `#[ORM\Id]` field — see the wiki page on entities for a full
+ * example.
  */
-#[ORM\MappedSuperclass]
-#[ORM\HasLifecycleCallbacks]
-abstract class AbstractEntity extends DoctrineCallbacksLoader implements JsonSerializable
+abstract class AbstractEntity extends AbstractEntityContract
 {
     use ModelPropertyIdTrait;
 
-    use EntityRepositoriesTrait;
 
-    /**
-     * @var array<string, string>
-     */
-    private array $validationErrors = [];
-
-
-    final public function validate(): bool
+    final public function getId(): int
     {
-        $this->validationErrors = [];
-
-        $violations = Validation::createValidatorBuilder()
-            ->enableAttributeMapping()
-            ->setTranslator(self::validatorTranslator())
-            ->setTranslationDomain('validators')
-            ->getValidator()
-            ->validate($this);
-
-        foreach ($violations as $violation) {
-            $pName = $violation->getPropertyPath();
-
-            $this->validationErrors[$pName] = _t('entity.field_validation_error', [
-                'field' => '@:' . $this->getTranslatablePropertyName($pName),
-                'message' => rtrim($violation->getMessage(), '.'),
-            ]);
-        }
-
-        return empty($this->validationErrors);
-    }
-
-    final public function getTranslatablePropertyName(string $propertyName): string
-    {
-        $rc = new ReflectionClass(static::class);
-
-        return string_to_snake($rc->getShortName()) . '.fields.' . string_to_snake($propertyName);
-    }
-
-    /**
-     * @return array<string, string>|bool
-     */
-    final public function getValidationErrors(): array|bool
-    {
-        if (empty($this->validationErrors)) {
-            return true;
-        }
-
-        return $this->validationErrors;
-    }
-
-    /**
-     * @return array<string, mixed>|int
-     */
-    final public function jsonSerialize(): array|int
-    {
-        if ($this instanceof Proxy) {
-            return $this->id;
-        }
-
-        $arr = [];
-
-        $reflectionClass = new ReflectionClass(static::class);
-
-        $properties = [];
-        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED) as $ReflectionProperty) {
-            $properties[] = $ReflectionProperty->getName();
-        }
-
-        foreach ($properties as $property) {
-            $arr[$property] = ($this->$property instanceof self) ? $this->$property->getId() : $this->$property;
-        }
-
-        return $arr;
-    }
-
-    final public static function new(): static
-    {
-        return new static();
-    }
-
-    public static function clearQueryBuilderCache(): void
-    {
-        ca()->deleteByKeyPattern('*doctrine_result_cache:*');
-    }
-
-    /**
-     * Returns a Symfony Translator loaded with the validator constraint translations
-     * for the current locale. Falls back to English if the locale XLF is absent.
-     * Cached per locale for the lifetime of the process.
-     */
-    private static function validatorTranslator(): SymfonyTranslator
-    {
-        static $translators = [];
-
-        $locale = Lang::getCurrentLocale();
-
-        if (isset($translators[$locale])) {
-            return $translators[$locale];
-        }
-
-        $translator = new SymfonyTranslator($locale);
-        $loader = new XliffFileLoader();
-
-        $translator->addLoader('xlf', $loader);
-
-        // symfony/validator ships its translations under Resources/translations/
-        // relative to its own root; derive it from the Validation class file path.
-        $translationsDir = dirname((new ReflectionClass(Validation::class))->getFileName())
-            . '/Resources/translations';
-
-        $localXlf = $translationsDir . '/validators.' . $locale . '.xlf';
-
-        if (file_exists($localXlf)) {
-            $translator->addResource('xlf', $localXlf, $locale, 'validators');
-        } else {
-            // Locale not bundled — fall back to English
-            $enXlf = $translationsDir . '/validators.en.xlf';
-            if (file_exists($enXlf)) {
-                $translator->addResource('xlf', $enXlf, 'en', 'validators');
-                $translator->setLocale('en');
-            }
-        }
-
-        $translators[$locale] = $translator;
-
-        return $translator;
+        return $this->id;
     }
 }
