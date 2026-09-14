@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityRepository;
  */
 abstract class AbstractEntityRepository extends EntityRepository
 {
-    final public function persist(AbstractEntity $entity, bool $flush = true): void
+    final public function persist(AbstractEntityContract $entity, bool $flush = true): void
     {
         $this->getEntityManager()->persist($entity);
 
@@ -20,7 +20,7 @@ abstract class AbstractEntityRepository extends EntityRepository
         }
     }
 
-    final public function remove(AbstractEntity $entity, bool $flush = true): void
+    final public function remove(AbstractEntityContract $entity, bool $flush = true): void
     {
         $this->getEntityManager()->remove($entity);
 

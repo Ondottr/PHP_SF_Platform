@@ -10,7 +10,7 @@ final class PaginationCursor
 {
     private function __construct(
         public readonly mixed $field,
-        public readonly int $id,
+        public readonly int|string $id,
         public readonly bool $isForward,
         private readonly string $encoded,
     ) {}
@@ -53,9 +53,17 @@ final class PaginationCursor
             throw new InvalidArgumentException('Invalid cursor: missing required keys.');
         }
 
+        $rawId = $data['id'];
+
+        // Doctrine binds the parameter based on the runtime type — `int|string` works
+        // for both auto-increment integer PKs and string UUID/ULID PKs.
+        if (false === is_int($rawId) && false === is_string($rawId)) {
+            throw new InvalidArgumentException('Invalid cursor: id must be int or string.');
+        }
+
         return new self(
             field: $data['field'],
-            id: (int) $data['id'],
+            id: $rawId,
             isForward: ($data['dir'] ?? 'next') === 'next',
             encoded: $raw,
         );

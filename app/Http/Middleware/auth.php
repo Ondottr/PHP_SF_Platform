@@ -2,7 +2,6 @@
 
 namespace PHP_SF\Framework\Http\Middleware;
 
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Abstracts\Middleware;
 use PHP_SF\System\Core\ApiResponse;
 use PHP_SF\System\Core\RedirectResponse;
@@ -28,8 +27,6 @@ class auth extends Middleware
 {
     /**
      * Holds the currently authenticated user, or {@see false} when no session is active.
-     *
-     * @var false|(UserInterface&AbstractEntity)
      */
     public static false|UserInterface $user = false;
 
@@ -62,10 +59,13 @@ class auth extends Middleware
     {
         if (false !== self::$user) {
             /**
-             * @var class-string<UserInterface&AbstractEntity> $userClass
+             * @var class-string<UserInterface> $userClass
              */
             $userClass = Kernel::getApplicationUserClassName();
 
+            // PHPStan can't see that every UserInterface implementation also uses
+            // EntityRepositoriesTrait; the static find() comes from there.
+            /** @phpstan-ignore-next-line staticMethod.notFound */
             return $userClass::find(self::$user->getId());
         }
 
@@ -100,9 +100,10 @@ class auth extends Middleware
 
             if (null !== $userId) {
                 /**
-                 * @var class-string<UserInterface&AbstractEntity> $userClass
+                 * @var class-string<UserInterface> $userClass
                  */
                 $userClass = Kernel::getApplicationUserClassName();
+                /** @phpstan-ignore-next-line staticMethod.notFound */
                 $user = $userClass::find($userId);
 
                 if (null === $user) {

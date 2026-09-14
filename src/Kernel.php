@@ -3,7 +3,6 @@
 namespace PHP_SF\System;
 
 use LogicException;
-use PHP_SF\System\Classes\Abstracts\AbstractEntity;
 use PHP_SF\System\Classes\Helpers\Locale;
 use PHP_SF\System\Core\PhpSfEventDispatcher;
 use PHP_SF\System\Core\TemplateEngineRegistry;
@@ -24,7 +23,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 final class Kernel implements HttpKernelInterface
 {
     /**
-     * @var class-string<AbstractEntity&UserInterface>
+     * @var class-string<UserInterface>
      */
     private static string $applicationUserClassName;
 
@@ -116,7 +115,7 @@ final class Kernel implements HttpKernelInterface
     }
 
     /**
-     * @param class-string<AbstractEntity&UserInterface> $className
+     * @param class-string<UserInterface> $className
      */
     public function setApplicationUserClassName(string $className): self
     {
@@ -140,7 +139,7 @@ final class Kernel implements HttpKernelInterface
     }
 
     /**
-     * @return class-string<AbstractEntity&UserInterface>
+     * @return class-string<UserInterface>
      */
     public static function getApplicationUserClassName(): string
     {
