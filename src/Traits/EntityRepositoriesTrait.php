@@ -15,7 +15,13 @@ trait EntityRepositoriesTrait
     private static array $repositories = [];
 
 
-    public static function find(int $id): ?static
+    /**
+     * @param int|string $id doctrine's `EntityRepository::find()` accepts mixed, but
+     *                       restricting to `int|string` here keeps the call-site honest:
+     *                       auto-increment integers for {@see AbstractEntity}-style PKs,
+     *                       RFC 4122 strings (UUID/ULID) for custom PK entities
+     */
+    public static function find(int|string $id): ?static
     {
         /** @var static|null $entity */
         $entity = self::rep()->find($id);
