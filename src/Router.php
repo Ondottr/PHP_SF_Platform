@@ -725,7 +725,23 @@ class Router
                 throw new ViewException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e);
             }
         } else { // if ( $response instanceof JsonResponse or RedirectResponse or plain SymfonyResponse
-            $response->send();
+            VarDumper::setHandler(null);
+            ob_start(
+                function ($b) {
+                    if (TEMPLATES_CACHE_ENABLED) {
+                        return preg_replace(['/>\s+</'], ['><'], $b);
+                    }
+
+                    return $b;
+                },
+            );
+
+            try {
+                $response->send();
+            } catch (Throwable $e) {
+                ob_end_clean();
+                throw new ViewException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine(), $e);
+            }
         }
 
         /** @noinspection PhpUnreachableStatementInspection */
